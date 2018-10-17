@@ -28,9 +28,13 @@ namespace Mchnry.Flow.Logic
 
         public async Task<bool> EvaluateAsync(bool reEvaluate, CancellationToken token)
         {
-            // Cache stores the evaluator results only
-            this.lastRunResult = engineRef.GetResult(this.definition.Identifier, this.context);
-            bool doEval = reEvaluate || !this.lastRunResult.HasValue;
+
+            bool thisResult = !this.trueCondition;
+
+            bool? knownResult = this.engineRef.GetResult(this.definition, this.context);
+            IRuleEvaluator evaluator = this.engineRef.GetEvaluator(this.definition);
+
+            bool doEval = reEvaluate || !knownResult.HasValue;
 
 
 
@@ -39,19 +43,29 @@ namespace Mchnry.Flow.Logic
                 //#TODO implement metric in evaluation
                 try
                 {
-                    this.lastRunResult = await this.rule.EvaluateAsync(this.definition, this.context, processId, state, validations, this.TrueCondition, token);
+                    thisResult = await evaluator.EvaluateAsync(
+                        this.definition,
+                        this.context,
+                        engineRef.CurrentProcessId,
+                        this.engineRef.State,
+                        this.engineRef.GetContainer(this.definition, this.context),
+                        this.trueCondition,
+                        token);
+
+                    
                 }
                 catch (Exception ex)
                 {
                     throw new EvalException(this.definition.Identifier, "Unable to run evaluator", ex);
                 }
                 // Cache stores the evaluator results only
-                this.engineRef.SetResult(this.definition.Identifier, this.context, this.lastRunResult);
+                this.engineRef.SetResult(this.definition, this.context, thisResult);
+                knownResult = thisResult;
 
 
             }
 
-            return (lastRunResult.Value == this.TrueCondition);
+            return (knownResult.Value == this.trueCondition);
         }
     }
 }
