@@ -22,31 +22,6 @@ namespace Mchnry.Flow
             if (overrides != null) this.Overrides = overrides;
         }
 
-        ReadOnlyCollection<ValidationOverride> IValidationContainer.Overrides => throw new NotImplementedException();
-
-        ReadOnlyCollection<Validation> IValidationContainer.Validations => throw new NotImplementedException();
-
-        public void AddOverride(string key, string comment, string auditCode)
-        {
-            Validation existing = this.Validations.FirstOrDefault(g => g.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
-            ValidationOverride toAdd = default(ValidationOverride);
-            if (existing != null)
-            {
-                toAdd = existing.CreateOverride(comment, auditCode);
-                toAdd.Redeemed = true;
-            } else
-            {
-                toAdd = new ValidationOverride(key, comment, auditCode);
-            }
-            this.UpsertOverride(toAdd);
-
-        }
-
-        public void AddValidation(Validation toAdd)
-        {
-            throw new NotImplementedException();
-        }
-
         public bool ResolveValidations()
         {
             throw new NotImplementedException();
@@ -74,6 +49,33 @@ namespace Mchnry.Flow
             }
 
             this.Overrides.Add(toAdd);
+        }
+
+
+        ReadOnlyCollection<ValidationOverride> IValidationContainer.Overrides => throw new NotImplementedException();
+
+        ReadOnlyCollection<Validation> IValidationContainer.Validations => throw new NotImplementedException();
+
+        void IValidationContainer.AddOverride(string key, string comment, string auditCode)
+        {
+            Validation existing = this.Validations.FirstOrDefault(g => g.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+            ValidationOverride toAdd = default(ValidationOverride);
+            if (existing != null)
+            {
+                toAdd = existing.CreateOverride(comment, auditCode);
+                toAdd.Redeemed = true;
+            }
+            else
+            {
+                toAdd = new ValidationOverride(key, comment, auditCode);
+            }
+            this.UpsertOverride(toAdd);
+
+        }
+
+        void IValidationContainer.AddValidation(Validation toAdd)
+        {
+            throw new NotImplementedException();
         }
     }
 }
