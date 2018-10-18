@@ -13,5 +13,16 @@
             set { this.context = value; }
         }
 
+        public override string ToString()
+        {
+
+            string toReturn = this.Id;
+            if (!string.IsNullOrEmpty(this.context))
+            {
+                toReturn = string.Format("{0}.{1}", this.Id, this.context);
+            }
+            return toReturn;
+        }
+
     }
 }

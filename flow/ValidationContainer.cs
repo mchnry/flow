@@ -11,54 +11,63 @@ namespace Mchnry.Flow
     {
 
         [JsonProperty]
-        internal List<Validation> Validations { get; set; } = new List<Validation>();
+        internal List<Validation> MyValidations { get; set; } = new List<Validation>();
         [JsonProperty]
-        internal List<ValidationOverride> Overrides { get; set; } = new List<ValidationOverride>();
+        internal List<ValidationOverride> MyOverrides { get; set; } = new List<ValidationOverride>();
 
         public ValidationContainer() { }
-        public ValidationContainer(List<Validation> validations, List<ValidationOverride> overrides) : this()
-        {
-            if (validations != null) this.Validations = validations;
-            if (overrides != null) this.Overrides = overrides;
-        }
 
         public bool ResolveValidations()
         {
             throw new NotImplementedException();
         }
 
-        internal virtual void UpsertValidation(Validation toAdd)
+        private void UpsertValidation(Validation toAdd)
         {
 
-            var current = this.Validations.FirstOrDefault(g => g.Key.Equals(toAdd.Key, StringComparison.OrdinalIgnoreCase));
+            var current = this.MyValidations.FirstOrDefault(g => g.Key.Equals(toAdd.Key, StringComparison.OrdinalIgnoreCase));
             if (current != null)
             {
-                this.Validations.Remove(current);
+                this.MyValidations.Remove(current);
             }
 
-            this.Validations.Add(toAdd);
+            this.MyValidations.Add(toAdd);
 
         }
 
-        internal virtual void UpsertOverride(ValidationOverride toAdd)
+        private void UpsertOverride(ValidationOverride toAdd)
         {
-            var current = this.Overrides.FirstOrDefault(g => g.Key.Equals(toAdd.Key, StringComparison.OrdinalIgnoreCase));
+            var current = this.MyOverrides.FirstOrDefault(g => g.Key.Equals(toAdd.Key, StringComparison.OrdinalIgnoreCase));
             if (current != null)
             {
-                this.Overrides.Remove(current);
+                this.MyOverrides.Remove(current);
             }
 
-            this.Overrides.Add(toAdd);
+            this.MyOverrides.Add(toAdd);
         }
 
 
-        ReadOnlyCollection<ValidationOverride> IValidationContainer.Overrides => throw new NotImplementedException();
+        public ReadOnlyCollection<ValidationOverride> Overrides => throw new NotImplementedException();
 
-        ReadOnlyCollection<Validation> IValidationContainer.Validations => throw new NotImplementedException();
+        public ReadOnlyCollection<Validation> Validations => throw new NotImplementedException();
+
+        public IValidationContainer Scope(string scopeId)
+        {
+            return new ValidationContainer()
+            {
+                scopeId = scopeId,
+                MyOverrides = this.MyOverrides,
+                MyValidations = this.MyValidations
+            };
+        }
+
+        private string scopeId { get; set; }
+        string IValidationContainer.ScopeId { get => this.scopeId; }
 
         void IValidationContainer.AddOverride(string key, string comment, string auditCode)
         {
-            Validation existing = this.Validations.FirstOrDefault(g => g.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+            string keyToAdd = string.Format("{0}.{1}", this.scopeId, key);
+            Validation existing = this.MyValidations.FirstOrDefault(g => g.Key.Equals(keyToAdd, StringComparison.OrdinalIgnoreCase));
             ValidationOverride toAdd = default(ValidationOverride);
             if (existing != null)
             {
@@ -67,7 +76,7 @@ namespace Mchnry.Flow
             }
             else
             {
-                toAdd = new ValidationOverride(key, comment, auditCode);
+                toAdd = new ValidationOverride(keyToAdd, comment, auditCode);
             }
             this.UpsertOverride(toAdd);
 
@@ -75,7 +84,24 @@ namespace Mchnry.Flow
 
         void IValidationContainer.AddValidation(Validation toAdd)
         {
-            throw new NotImplementedException();
+            string keyToAdd = string.Format("{0}.{1}", this.scopeId, toAdd.Key);
+
+            Validation existing = this.MyValidations.FirstOrDefault(g => g.Key.Equals(keyToAdd, StringComparison.OrdinalIgnoreCase));
+
+
+            toAdd.Key = keyToAdd;
+            this.UpsertValidation(toAdd);
+
+            if (existing == null)
+            {
+                ValidationOverride existingOverride = this.MyOverrides.FirstOrDefault(g => g.Key.Equals(keyToAdd, StringComparison.OrdinalIgnoreCase));
+                if (existingOverride != null)
+                {
+                    existingOverride.Redeemed = true;
+
+                }
+
+            }
         }
     }
 }
