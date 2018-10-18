@@ -1,38 +1,36 @@
-﻿using Mchnry.Core.Cache;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Mchnry.Flow.Logic
+﻿namespace Mchnry.Flow.Logic
 {
+    using Mchnry.Core.Cache;
+    using Mchnry.Flow.Logic.Define;
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
 
-    public struct EvaluatorKey
+
+    public class RuleEngine : IRuleEngine
     {
-        private string context;
+        public string CurrentProcessId => throw new NotImplementedException();
 
-        public string Id { get; set; }
-        public string Context {
-            get {
-                return this.context ?? string.Empty;
+        public ICacheManager State { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-            } set { this.context = value; }
+        public IValidationContainer GetContainer(Evaluator definition, string context)
+        {
+            throw new NotImplementedException();
         }
 
-    }
+        public IRuleEvaluator GetEvaluator(Evaluator definition)
+        {
+            throw new NotImplementedException();
+        }
 
-    public interface IRuleEngine
-    {
-        IRuleEvaluator GetEvaluator(Define.Evaluator definition);
+        public bool? GetResult(Evaluator defintion, string context)
+        {
+            throw new NotImplementedException();
+        }
 
-        bool? GetResult(Define.Evaluator defintion, string context);
-        void SetResult(Define.Evaluator definition, string context, bool result);
-        string CurrentProcessId { get; }
-        ICacheManager State { get; set; }
-
-        IValidationContainer GetContainer(Define.Evaluator definition, string context);
-    }
-
-    public class RuleEngine
-    {
+        public void SetResult(Evaluator definition, string context, bool result)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

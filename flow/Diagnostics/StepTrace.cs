@@ -12,7 +12,7 @@
         {
             return new StepTrace(value);
         }
-        \
+        
         public StepTrace(string value, List<KeyValuePair<string, StepTrace>> nodes) : this(value)
         {
             if ((nodes != null) && (nodes.Count > 0))
