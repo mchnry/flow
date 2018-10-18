@@ -10,9 +10,9 @@ namespace Mchnry.Flow
         ReadOnlyCollection<ValidationOverride> Overrides { get; }
         ReadOnlyCollection<Validation> Validations { get; }
 
-        void AddOverride(ValidationOverride toAdd);
+        void AddOverride(string key, string comment, string auditCode);
         void AddValidation(Validation toAdd);
-        void RedeemValidation(ValidationOverride toRedeem);
+        
         bool ResolveValidations();
     }
 }
