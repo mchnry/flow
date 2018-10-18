@@ -13,9 +13,4 @@
     <PackageReference Include="newtonsoft.json" Version="11.0.2" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Diagnostics\" />
-    <Folder Include="Exception\" />
-  </ItemGroup>
-
 </Project>

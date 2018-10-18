@@ -7,13 +7,14 @@ namespace Mchnry.Flow.Logic.Define
 {
     public class Equation
     {
+
         public string Id { get; set; }
         
         [JsonProperty("f")]
-        public string First { get; set; }
+        public Rule First { get; set; }
 
         [JsonProperty("s")]
-        public string Second { get; set; }
+        public Rule Second { get; set; }
 
         [JsonProperty("c")]
         public Operand Condition { get; set; }

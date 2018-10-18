@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Mchnry.Flow.Exception;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -54,9 +55,9 @@ namespace Mchnry.Flow.Logic
 
                     
                 }
-                catch (Exception ex)
+                catch (EvaluateException ex)
                 {
-                    throw new EvalException(this.definition.Identifier, "Unable to run evaluator", ex);
+                    throw new EvaluateException(this.definition.Id, this.context, ex);
                 }
                 // Cache stores the evaluator results only
                 this.engineRef.SetResult(this.definition, this.context, thisResult);
