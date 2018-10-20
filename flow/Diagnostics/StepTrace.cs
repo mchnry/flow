@@ -1,52 +1,49 @@
 ﻿namespace Mchnry.Flow.Diagnostics
 {
+    using System;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
+    using System.Linq;
 
-    public class StepTrace
+    public class StepTrace<T>
     {
 
-
-        private Dictionary<string, StepTrace> children;
-        private string value;
-        public static implicit operator StepTrace(string value)
+        public StepTrace(string step, T value)
         {
-            return new StepTrace(value);
+            this.Step = step;
+            this.Value = value;
+        }
+
+        public string Step { get; }
+        public T Value { get; }
+    }
+
+    public class StepTraceNode<T>
+    {
+
+        public StepTraceNode<T> Parent { get; }
+
+        internal StepTraceNode(StepTraceNode<T> parent, string step, T value)
+        {
+            this.Node = new StepTrace<T>(step, value);
+            this.Parent = parent;
+        }
+        internal StepTraceNode<T> AddChild(string step, T value)
+        {
+            StepTraceNode<T> toAdd = new StepTraceNode<T>(this, step, value);
+            this.Children.Add(toAdd);
+            return toAdd;
+        }
+
+        public StepTrace<T> Node { get; private set; }
+        internal List<StepTraceNode<T>> Children { get; set; } = new List<StepTraceNode<T>>();
+
+        public ReadOnlyCollection<StepTraceNode<T>> ChildNodes { get {
+                return this.Children.AsReadOnly();
+            }
         }
         
-        public StepTrace(string value, List<KeyValuePair<string, StepTrace>> nodes) : this(value)
-        {
-            if ((nodes != null) && (nodes.Count > 0))
-            {
-                this.children = new Dictionary<string, StepTrace>();
-                nodes.ForEach(g =>
-                {
-                    this.children.Add(g.Key, g.Value);
-                });
-            }
-        }
 
-        internal StepTrace(string value)
-        {
-            this.value = value;
-
-        }
-
-        public string Value {
-            get {
-                return this.value ?? string.Empty;
-            }
-            set {
-                this.value = value;
-            }
-        }
-
-        public Dictionary<string, StepTrace> Nodes {
-            get {
-                return this.children;
-            }
-            set {
-                this.children = value;
-            }
-        }
+        
     }
 }

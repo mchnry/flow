@@ -4,13 +4,13 @@
 
     public interface IRuleEngine
     {
-        IRuleEvaluator GetEvaluator(Define.Evaluator definition);
+        IRuleEvaluator GetEvaluator(string id);
 
-        bool? GetResult(Define.Evaluator defintion, string context);
-        void SetResult(Define.Evaluator definition, string context, bool result);
+        bool? GetResult(Define.Rule definition);
+        void SetResult(Define.Rule definition, bool result);
         string CurrentProcessId { get; }
-        ICacheManager State { get; set; }
+        ICacheManager State { get; }
 
-        IValidationContainer GetContainer(Define.Evaluator definition, string context);
+        IValidationContainer GetContainer(Define.Rule rule);
     }
 }

@@ -1,4 +1,5 @@
-﻿using Mchnry.Flow.Exception;
+﻿using Mchnry.Flow.Diagnostics;
+using Mchnry.Flow.Exception;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -9,31 +10,28 @@ namespace Mchnry.Flow.Logic
 {
     public class Rule : IRule
     {
-        private readonly bool trueCondition;
-        private readonly string context;
-        private readonly Define.Evaluator definition;
+
+        private readonly Define.Rule definition;
         private readonly IRuleEngine engineRef;
 
         internal Rule(
-            bool trueCondition, 
-            string context,
-            Define.Evaluator definition,
+            
+            Define.Rule definition,
             IRuleEngine EngineRef
             )
         {
-            this.trueCondition = trueCondition;
-            this.context = context;
+
             this.definition = definition;
             this.engineRef = EngineRef;
         }
 
-        public async Task<bool> EvaluateAsync(bool reEvaluate, CancellationToken token)
+        public async Task<bool> EvaluateAsync(bool reEvaluate, IStepTracer<string> tracer, CancellationToken token)
         {
 
-            bool thisResult = !this.trueCondition;
+            bool thisResult = !this.definition.TrueCondition;
 
-            bool? knownResult = this.engineRef.GetResult(this.definition, this.context);
-            IRuleEvaluator evaluator = this.engineRef.GetEvaluator(this.definition);
+            bool? knownResult = this.engineRef.GetResult(this.definition);
+            IRuleEvaluator evaluator = this.engineRef.GetEvaluator(this.definition.Id);
 
             bool doEval = reEvaluate || !knownResult.HasValue;
 
@@ -46,27 +44,26 @@ namespace Mchnry.Flow.Logic
                 {
                     thisResult = await evaluator.EvaluateAsync(
                         this.definition,
-                        this.context,
                         engineRef.CurrentProcessId,
                         this.engineRef.State,
-                        this.engineRef.GetContainer(this.definition, this.context),
-                        this.trueCondition,
+                        this.engineRef.GetContainer(this.definition),
+                        tracer,
                         token);
 
                     
                 }
                 catch (EvaluateException ex)
                 {
-                    throw new EvaluateException(this.definition.Id, this.context, ex);
+                    throw new EvaluateException(this.definition.Id, this.definition.Context, ex);
                 }
                 // Cache stores the evaluator results only
-                this.engineRef.SetResult(this.definition, this.context, thisResult);
+                this.engineRef.SetResult(this.definition, thisResult);
                 knownResult = thisResult;
 
 
             }
 
-            return (knownResult.Value == this.trueCondition);
+            return (knownResult.Value == this.definition.TrueCondition);
         }
     }
 }

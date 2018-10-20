@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 
 namespace Mchnry.Flow
 {
@@ -19,7 +18,37 @@ namespace Mchnry.Flow
 
         public bool ResolveValidations()
         {
-            throw new NotImplementedException();
+            List<ValidationOverride> orides;
+            List<Validation> vals;
+
+            if (!string.IsNullOrEmpty(this.scopeId))
+            {
+                orides = this.MyOverrides.Where(g => g.Key.ToLower().StartsWith(this.scopeId.ToLower() + ".")).ToList();
+                vals = this.MyValidations.Where(g => g.Key.ToLower().StartsWith(this.scopeId.ToLower() + ".")).ToList();
+            }
+            else
+            {
+                orides = this.MyOverrides;
+                vals = this.MyValidations;
+            }
+
+            bool toReturn = true;
+            if (vals.Count() > 0)
+            {
+                toReturn = false;
+
+                if (orides.Count > 0)
+                {
+                    toReturn = true;
+                    vals.Where(v => v.Severity != ValidationSeverity.Fatal).ToList().ForEach(v =>
+                    {
+                        toReturn = toReturn && orides.Count(o => o.Key.Equals(v.Key, StringComparison.OrdinalIgnoreCase)) > 0;
+                    });
+                }
+
+            }
+
+            return toReturn;
         }
 
         private void UpsertValidation(Validation toAdd)
@@ -47,9 +76,14 @@ namespace Mchnry.Flow
         }
 
 
-        public ReadOnlyCollection<ValidationOverride> Overrides => throw new NotImplementedException();
+        public ReadOnlyCollection<ValidationOverride> Overrides => this.MyOverrides.Where(g => this.scopeId == string.Empty || g.Key.StartsWith(this.scopeId + ".")).ToList().AsReadOnly();
 
-        public ReadOnlyCollection<Validation> Validations => throw new NotImplementedException();
+        public ReadOnlyCollection<Validation> Validations {
+            get {
+                return this.MyValidations.Where(g => this.scopeId == string.Empty || g.Key.StartsWith(this.scopeId + ".")).ToList().AsReadOnly();
+            }
+        }
+
 
         public IValidationContainer Scope(string scopeId)
         {
@@ -61,7 +95,7 @@ namespace Mchnry.Flow
             };
         }
 
-        private string scopeId { get; set; }
+        private string scopeId { get; set; } = string.Empty;
         string IValidationContainer.ScopeId { get => this.scopeId; }
 
         void IValidationContainer.AddOverride(string key, string comment, string auditCode)

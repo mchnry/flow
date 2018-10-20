@@ -1,4 +1,5 @@
 ﻿using Mchnry.Core.Cache;
+using Mchnry.Flow.Diagnostics;
 using Mchnry.Flow.Logic.Define;
 using System;
 using System.Collections.Generic;
@@ -21,7 +22,7 @@ namespace Mchnry.Flow.Logic
         /// <param name="expected"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        Task<bool> EvaluateAsync(Evaluator definition, string context, string processId, ICacheManager state, IValidationContainer validations, bool expected, CancellationToken token);
+        Task<bool> EvaluateAsync(Define.Rule definition, string processId, ICacheManager state, IValidationContainer validations, IStepTracer<string> tracer, CancellationToken token);
 
     }
 }

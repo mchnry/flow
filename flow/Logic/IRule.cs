@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Mchnry.Flow.Diagnostics;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -8,7 +9,7 @@ namespace Mchnry.Flow.Logic
 {
     public interface IRule
     {
-        Task<bool> EvaluateAsync(bool reEvaluate, CancellationToken token);
+        Task<bool> EvaluateAsync(bool reEvaluate, IStepTracer<string> tracer, CancellationToken token);
 
     }
 }
