@@ -7,6 +7,7 @@
     using System.Collections.Generic;
     using System.Text;
     using System.Linq;
+    using Mchnry.Flow.Test;
 
     public class RuleEngine : IRuleEngine
     {
@@ -148,6 +149,13 @@
                 IRule loaded = LoadRule(eqRule, root);
             });
         }
+
+
+        public bool Lint(Action<Linter> Lint)
+        {
+
+        }
+
     }
 
 
