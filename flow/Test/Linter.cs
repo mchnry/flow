@@ -81,11 +81,12 @@ namespace Mchnry.Flow.Test
             return toAdd;
         }
 
-        public ValidationContainer Lint()
+        public List<LogicTest> Lint()
         {
-            ValidationContainer toReturn = new ValidationContainer();
 
-            List<List<Case>> SubCases = new List<List<Case>>();
+
+            List<LogicTest> toReturn = new List<LogicTest>();
+
 
             //loop through roots
             Func<List<Case>, List<Rule>, int, List<Case>> buildCases = null;
@@ -164,7 +165,7 @@ namespace Mchnry.Flow.Test
             List<string> intentRules = (from i in this.Intents select i.evaluatorId).ToList();
             this.roots.ForEach(r =>
             {
-
+                List<List<Case>> SubCases = new List<List<Case>>();
                 Equation toTest = this.equationDefinitions.FirstOrDefault(g => g.Id.Equals(r));
                 List<Rule> equationRules = ExtractRules(toTest);
 
@@ -196,9 +197,44 @@ namespace Mchnry.Flow.Test
                         SubCases.Add(intentCases);
                     });
                     
+
+
                 }
 
+                LogicTest equationTest = new LogicTest(r);
+                if (SubCases.Count > 1)
+                {
+                    List<Case> merged = new List<Case>((from c in SubCases[0] select (Case)c.Clone()));
 
+
+                    //merge subcases
+                    for (int i = 1; i < SubCases.Count; i ++)
+                    {
+                        
+                        List<Case> toMerge = SubCases[i];
+                        List<Case> thisMerge = new List<Case>();
+
+                        for (int j = 0; j < merged.Count; j++)
+                        {
+                            for (int q = 0; q < toMerge.Count; q ++)
+                            {
+                                Case cloneMerged = (Case)merged[j].Clone();
+                                Case cloneThis = (Case)toMerge[q].Clone();
+                                cloneMerged.Rules.AddRange(cloneThis.Rules);
+                                Case toAdd = new Case(cloneMerged.Rules);
+                                thisMerge.Add(toAdd);
+                            }
+                        }
+                        merged = thisMerge;
+
+                    }
+
+                    equationTest.TestCases = merged;
+                } else
+                {
+                    equationTest.TestCases = SubCases[0];
+                }
+                toReturn.Add(equationTest);
 
             });
 

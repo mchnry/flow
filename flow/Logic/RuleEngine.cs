@@ -151,16 +151,16 @@
         }
 
 
-        public bool Lint(Action<Linter> addIntents)
+        public List<LogicTest> Lint(Action<Linter> addIntents)
         {
             Linter linter = new Linter(this.EvaluatorDefinitions, this.EquationDefinitions);
             addIntents(linter);
 
 
-            linter.Lint();
+            List<LogicTest> toReturn =linter.Lint();
 
 
-            return false;
+            return toReturn;
         }
 
     }

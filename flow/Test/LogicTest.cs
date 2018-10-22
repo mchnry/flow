@@ -15,6 +15,8 @@ namespace Mchnry.Flow.Test
             this.EquationId = equationId;
         }
 
+        public List<Case> TestCases { get; set; }
+
         public string EquationId { get; internal set; }
 
     }
