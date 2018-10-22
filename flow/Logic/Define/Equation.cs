@@ -1,15 +1,12 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Mchnry.Flow.Logic.Define
 {
-    public class Equation
+    public struct Equation
     {
 
         public string Id { get; set; }
-        
+
         [JsonProperty("f")]
         public Rule First { get; set; }
 

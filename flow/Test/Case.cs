@@ -7,6 +7,6 @@ namespace Mchnry.Flow.Test
 {
     internal class Case
     {
-        public List<Rule> Rules { get; set; }
+        public List<Rule> Rules { get; set; } = new List<Rule>();
     }
 }

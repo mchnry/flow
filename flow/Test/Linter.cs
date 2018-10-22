@@ -25,11 +25,11 @@ namespace Mchnry.Flow.Test
             this.equationDefinitions = equationDefinitions;
             //infer intents
             this.lefts = (from e in this.equationDefinitions
-                                  where e.First != null
+                                  where !string.IsNullOrEmpty(e.First.Id)
                                   select e.First.Id).ToList();
 
             this.rights = (from e in this.equationDefinitions
-                                   where e.Second != null
+                                   where !string.IsNullOrEmpty(e.Second.Id)
                                    select e.Second.Id).ToList();
 
             this.roots = (from e in this.equationDefinitions
@@ -44,11 +44,11 @@ namespace Mchnry.Flow.Test
         {
             List<string> evalIds = (from e in this.evaluatorDefinitions select e.Id).ToList();
             List<Rule> evalRules = (from l in this.equationDefinitions
-                                    where l.First != null
+                                    where !string.IsNullOrEmpty(l.First.Id)
                                     && evalIds.Contains(l.First.Id)
                                     select l.First)
                                     .Union(from r in this.equationDefinitions
-                                           where r.Second != null
+                                           where !string.IsNullOrEmpty(r.Second.Id)
                                            && evalIds.Contains(r.Second.Id)
                                            select r.Second).ToList();
             List<string> hasContext = (from r in evalRules where !string.IsNullOrEmpty(r.Context) select r.Id).Distinct().ToList();
@@ -85,7 +85,31 @@ namespace Mchnry.Flow.Test
         {
             ValidationContainer toReturn = new ValidationContainer();
 
+            List<Rule> NoIntent = new List<Rule>();
+            List<List<Rule>> WithIntent = new List<List<Rule>>();
+
             //loop through roots
+            Func<Case, List<Rule>, int, Case> travers = null;
+            travers = (childCase, rules, ordinal) =>
+            {
+                Case resolved = new Case();
+                new bool[] { true, false }.ToList().ForEach(t =>
+                  {
+                      Rule conditional = rules[ordinal];
+                      conditional.TrueCondition = true;
+
+                      if (childCase != null)
+                      {
+                          List<Rule> merged = (from r in childCase.Rules)
+                      }
+
+                  });
+                
+
+
+
+                return resolved;
+            };
 
         }
        

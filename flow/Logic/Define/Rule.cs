@@ -1,11 +1,9 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Mchnry.Flow.Logic.Define
 {
-    public class Rule
+    public struct Rule
     {
 
         public static implicit operator Rule(string shortHand)
@@ -25,7 +23,7 @@ namespace Mchnry.Flow.Logic.Define
             }
 
             return new Rule() { Id = id, TrueCondition = trueCondition, Context = ctx };
-            
+
         }
 
         [JsonProperty(PropertyName = "Id")]
