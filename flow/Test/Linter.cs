@@ -193,9 +193,9 @@ namespace Mchnry.Flow.Test
                         {
                             intentCases.RemoveAll((c) => c.Rules.Count(t => !t.TrueCondition) == c.Rules.Count());
                         }
-
+                        SubCases.Add(intentCases);
                     });
-                    SubCases.Add(noIntentCases);
+                    
                 }
 
             });
