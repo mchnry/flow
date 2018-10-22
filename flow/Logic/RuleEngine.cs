@@ -85,11 +85,11 @@
             this.EvaluatorDefinitions.Add(trueDef);
 
             List<string> lefts = (from e in this.EquationDefinitions
-                                  where e.First != null
+                                  where !string.IsNullOrEmpty(e.First.Id)
                                   select e.First.Id).ToList();
 
             List<string> rights = (from e in this.EquationDefinitions
-                                   where e.Second != null
+                                   where !string.IsNullOrEmpty(e.Second.Id)
                                    select e.Second.Id).ToList();
 
             List<string> roots = (from e in this.EquationDefinitions
@@ -105,10 +105,10 @@
                 IRule toReturn = null;
                 //if id is an equation, we are creating an expression
                 Define.Equation eq = this.EquationDefinitions.FirstOrDefault(g => g.Id.Equals(rule.Id));
-                if (eq != null)
+                if (!string.IsNullOrEmpty( eq.Id))
                 {
                     IRule first = null, second = null;
-                    if (eq.First != null)
+                    if (!string.IsNullOrEmpty(eq.First.Id))
                     {
                         first = LoadRule(eq.First, step);
                     } else {
@@ -118,7 +118,7 @@
                             (IRuleEngine)this);
                     }
 
-                    if (eq.Second != null)
+                    if (!string.IsNullOrEmpty(eq.Second.Id))
                     {
                         second = LoadRule(eq.Second.Id, step);
                     }
@@ -134,7 +134,7 @@
                 } else
                 {
                     Define.Evaluator ev = this.EvaluatorDefinitions.FirstOrDefault(g => g.Id.Equals(rule.Id));
-                    if (ev != null)
+                    if (!string.IsNullOrEmpty(ev.Id))
                     {
                         toReturn = new Rule(rule, this);
                     }
@@ -151,9 +151,16 @@
         }
 
 
-        public bool Lint(Action<Linter> Lint)
+        public bool Lint(Action<Linter> addIntents)
         {
+            Linter linter = new Linter(this.EvaluatorDefinitions, this.EquationDefinitions);
+            addIntents(linter);
 
+
+            linter.Lint();
+
+
+            return false;
         }
 
     }

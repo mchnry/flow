@@ -51,6 +51,8 @@ namespace Mchnry.Flow.Test
     public interface IContext
     {
         List<string> Values { get; }
+        ValidateOptions ListType { get; }
+        bool Exclusive { get; }
     }
 
     public class Context<T>: IContext
@@ -59,6 +61,8 @@ namespace Mchnry.Flow.Test
 
 
         internal ValidateOptions ListType { get; set; } = ValidateOptions.OneOf;
+        ValidateOptions IContext.ListType { get => this.ListType; }
+        bool IContext.Exclusive { get => this.Exclusive; }
         internal List<T> Values { get; set; } = new List<T>();
         internal bool Exclusive { get; set; } = false;
 
@@ -75,8 +79,9 @@ namespace Mchnry.Flow.Test
             values.ForEach(s =>
             {
                 //box/unbox
-                object toAdd = s;
-                this.Values.Add((T)toAdd);
+                T toAdd = (T)Convert.ChangeType(s, typeof(T));
+                
+                this.Values.Add(toAdd);
             });
             return this;
         }

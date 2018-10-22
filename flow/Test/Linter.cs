@@ -85,31 +85,122 @@ namespace Mchnry.Flow.Test
         {
             ValidationContainer toReturn = new ValidationContainer();
 
-            List<Rule> NoIntent = new List<Rule>();
-            List<List<Rule>> WithIntent = new List<List<Rule>>();
+            List<List<Case>> SubCases = new List<List<Case>>();
 
             //loop through roots
-            Func<Case, List<Rule>, int, Case> travers = null;
-            travers = (childCase, rules, ordinal) =>
+            Func<List<Case>, List<Rule>, int, List<Case>> buildCases = null;
+            buildCases = (childCases, rules, ordinal) =>
             {
-                Case resolved = new Case();
+                List<Case> resolved = new List<Case>();
                 new bool[] { true, false }.ToList().ForEach(t =>
                   {
                       Rule conditional = rules[ordinal];
-                      conditional.TrueCondition = true;
-
-                      if (childCase != null)
+                      conditional.TrueCondition = t;
+                      
+                      if (childCases != null)
                       {
-                          List<Rule> merged = (from r in childCase.Rules)
+                          childCases.ForEach(c =>
+                          {
+                              Case cloned = (Case)c.Clone();
+                              Case toAdd = new Case(cloned.Rules);
+                              toAdd.Rules.Add(conditional);
+                              resolved.Add(toAdd);
+                          });
+                      } else
+                      {
+                          resolved.Add(new Case(new List<Rule>() { conditional }));
                       }
 
+
                   });
-                
 
-
+                if (ordinal < (rules.Count - 1))
+                {
+                    resolved = buildCases(resolved, rules, ordinal + 1);
+                }
 
                 return resolved;
+
             };
+
+            Func<Equation, List<Rule>> ExtractRules = null;
+            ExtractRules = (s) =>
+            {
+                List<Rule> extracted = new List<Rule>();
+                if (!string.IsNullOrEmpty(s.First.Id))
+                {
+                    Equation qMatch = this.equationDefinitions.FirstOrDefault(g => g.Id.Equals(s.First.Id));
+                    //if first is another euqation, extract it's rules
+                    if (!string.IsNullOrEmpty(qMatch.Id))
+                    {
+                        List<Rule> fromEq = ExtractRules(qMatch);
+                        extracted.AddRange(fromEq);
+                    }
+                    else //otherwise, get the rule
+                    {
+                        extracted.Add(s.First);
+                    }
+                    
+                }
+                if (!string.IsNullOrEmpty(s.Second.Id))
+                {
+                    Equation qMatch = this.equationDefinitions.FirstOrDefault(g => g.Id.Equals(s.Second.Id));
+                    //if first is another euqation, extract it's rules
+                    if (!string.IsNullOrEmpty(qMatch.Id))
+                    {
+                        List<Rule> fromEq = ExtractRules(qMatch);
+                        extracted.AddRange(fromEq);
+                    }
+                    else //otherwise, get the rule
+                    {
+                        extracted.Add(s.Second);
+                    }
+
+                }
+
+                return extracted;
+            };
+
+            List<string> intentRules = (from i in this.Intents select i.evaluatorId).ToList();
+            this.roots.ForEach(r =>
+            {
+
+                Equation toTest = this.equationDefinitions.FirstOrDefault(g => g.Id.Equals(r));
+                List<Rule> equationRules = ExtractRules(toTest);
+
+                //build cases for no-intent
+                List<Rule> noIntent = (from z in equationRules where !intentRules.Contains(z.Id) select z).ToList();
+                List<Case> noIntentCases = buildCases(null, noIntent, 0);
+                SubCases.Add(noIntentCases);
+
+                if (this.Intents.Count > 0)
+                {
+                    List<string> myEvals = (from i in equationRules select i.Id).Distinct().ToList();
+                    List<Intent> myIntents = (from i in this.Intents where myEvals.Contains(i.evaluatorId) select i).ToList();
+
+                    myIntents.ForEach(i =>
+                    {
+                        List<Rule> myIntentRules = (from e in equationRules where e.Id == i.evaluatorId select e).ToList();
+                        List<Case> intentCases = buildCases(null, myIntentRules, 0);
+
+                        //if intent is oneOf, get rid of any cases where more than one rule is true
+                        if (i.Context.ListType == ValidateOptions.OneOf)
+                        {
+                            intentCases.RemoveAll((c) => c.Rules.Count(t => t.TrueCondition) > 1);
+                        }
+                        //if exclusive, get rid of all false case
+                        if (i.Context.Exclusive)
+                        {
+                            intentCases.RemoveAll((c) => c.Rules.Count(t => !t.TrueCondition) == c.Rules.Count());
+                        }
+
+                    });
+                    SubCases.Add(noIntentCases);
+                }
+
+            });
+
+            return toReturn;
 
         }
        
