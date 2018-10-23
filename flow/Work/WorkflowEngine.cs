@@ -8,6 +8,9 @@ namespace Mchnry.Flow.Work
 {
     public class WorkflowEngine : IWorkflowEngine
     {
+
+
+
         public StepTraceNode<ActivityProcess> ProcessRoot => throw new NotImplementedException();
 
         StepTraceNode<ActivityProcess> IWorkflowEngine.CurrentProcess => throw new NotImplementedException();
