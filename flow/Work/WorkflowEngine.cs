@@ -12,6 +12,8 @@ namespace Mchnry.Flow.Work
         private readonly IActionFactory actionFactory;
         private readonly Logic.IRuleEvaluatorFactory ruleEvaluatorFactory;
 
+        internal Dictionary<string, IAction> Actions { get; set; }
+
         public WorkflowEngine(Define.Workflow workflow, IActionFactory actionFactory, Logic.IRuleEvaluatorFactory ruleEvaluatorFactory)
         {
             this.workflow = workflow;
@@ -45,10 +47,10 @@ namespace Mchnry.Flow.Work
             throw new NotImplementedException();
         }
 
-        void IWorkflowEngine.Inject(Activity activityDefinition, object model)
-        {
-            throw new NotImplementedException();
-        }
+        //void IWorkflowEngine.Inject(Activity activityDefinition, object model)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         void IWorkflowEngine.SetStateObject<T>(ActivityProcess currentProcess, string key, T toSave)
         {
