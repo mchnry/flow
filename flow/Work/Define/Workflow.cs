@@ -12,13 +12,13 @@ namespace Mchnry.Flow.Work.Define
         {
             this.Evaluators = new List<Evaluator>();
             this.Equations = new List<Equation>();
-            this.Actions = new List<Action>();
+            this.Actions = new List<ActionDefinition>();
             this.Activities = new List<Activity>();
 
         }
         public List<Evaluator> Evaluators { get; set; }
         public List<Equation> Equations { get; set; }
-        public List<Action> Actions { get; set; }
+        public List<ActionDefinition> Actions { get; set; }
         public List<Activity> Activities { get; set; }
     }
 }

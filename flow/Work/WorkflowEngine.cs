@@ -8,8 +8,19 @@ namespace Mchnry.Flow.Work
 {
     public class WorkflowEngine : IWorkflowEngine
     {
+        private readonly Workflow workflow;
+        private readonly IActionFactory actionFactory;
+        private readonly Logic.IRuleEvaluatorFactory ruleEvaluatorFactory;
+
+        public WorkflowEngine(Define.Workflow workflow, IActionFactory actionFactory, Logic.IRuleEvaluatorFactory ruleEvaluatorFactory)
+        {
+            this.workflow = workflow;
+            this.actionFactory = actionFactory;
+            this.ruleEvaluatorFactory = ruleEvaluatorFactory;
 
 
+
+        }
 
         public StepTraceNode<ActivityProcess> ProcessRoot => throw new NotImplementedException();
 
