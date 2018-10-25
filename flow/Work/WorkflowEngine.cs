@@ -6,6 +6,9 @@ using Mchnry.Flow.Work.Define;
 
 namespace Mchnry.Flow.Work
 {
+
+
+
     public class WorkflowEngine : IWorkflowEngine
     {
         private readonly Workflow workflow;
@@ -13,6 +16,8 @@ namespace Mchnry.Flow.Work
         private readonly Logic.IRuleEvaluatorFactory ruleEvaluatorFactory;
 
         internal Dictionary<string, IAction> Actions { get; set; }
+
+        internal EngineStepTracer processTracer;
 
         public WorkflowEngine(Define.Workflow workflow, IActionFactory actionFactory, Logic.IRuleEvaluatorFactory ruleEvaluatorFactory)
         {
@@ -24,13 +29,19 @@ namespace Mchnry.Flow.Work
 
         }
 
-        public StepTraceNode<ActivityProcess> ProcessRoot => throw new NotImplementedException();
 
-        StepTraceNode<ActivityProcess> IWorkflowEngine.CurrentProcess => throw new NotImplementedException();
+        public StepTraceNode<ActivityProcess> Process {
+            get {
+                //only return if engine started
+                throw new NotImplementedException();
+            }
+        }
+
+        StepTraceNode<ActivityProcess> IWorkflowEngine.CurrentProcess => this.processTracer.CurrentStep;
 
         IActionFactory IWorkflowEngine.ActionFactory => throw new NotImplementedException();
 
-        public StepTracer<string> Trace => throw new NotImplementedException();
+        
 
         void IWorkflowEngine.Defer(IAction action, bool onlyIfValidationsResolved)
         {

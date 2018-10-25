@@ -8,6 +8,36 @@ namespace Mchnry.Flow.Diagnostics
         void TraceStep(string step, T value);
     }
 
+    internal class EngineStepTracer : IStepTracer<ActivityProcess>
+    {
+
+        private StepTracer<ActivityProcess> tracer;
+
+        public StepTraceNode<ActivityProcess> Root { get; set; }
+        public StepTraceNode<ActivityProcess> CurrentStep { get; set; }
+
+        private EngineStepTracer(string step, ActivityProcess process)
+        {
+            this.tracer = new StepTracer<ActivityProcess>();
+            this.Root = this.CurrentStep = this.tracer.TraceFirst(step, process);
+        }
+
+        public static EngineStepTracer StartRuleEngine()
+        {
+            return new EngineStepTracer("StartRuleEngine", new ActivityProcess("Start", ActivityStatusOptions.RuleEngine_Begin, DateTimeOffset.UtcNow));
+        }
+        public static EngineStepTracer StartWorkflowEngine()
+        {
+            return new EngineStepTracer("StartWorkflowEngine", new ActivityProcess("Start", ActivityStatusOptions.WorkflowEngine_Begin, DateTimeOffset.UtcNow));
+        }
+
+        public void TraceStep(string step, ActivityProcess value)
+        {
+            this.tracer.TraceNext(this.CurrentStep, step, value);
+        }
+    }
+
+
     public class StepTracer<T>
     {
 

@@ -7,12 +7,11 @@ namespace Mchnry.Flow.Work
     public interface IWorkflowEngine
     {
 
-        StepTraceNode<ActivityProcess> ProcessRoot { get; }
+        StepTraceNode<ActivityProcess> Process { get; }
         StepTraceNode<ActivityProcess> CurrentProcess { get; }
 
         IActionFactory ActionFactory { get; }
 
-        StepTracer<string> Trace { get; }
 
         void SetStateObject<T>(ActivityProcess currentProcess, string key, T toSave);
         void SetStateObject<T>(string key, T toSave);
@@ -20,7 +19,7 @@ namespace Mchnry.Flow.Work
         T GetStateObject<T>(string key);
 
         void Defer(IAction action, bool onlyIfValidationsResolved = true);
-        void Inject(Define.Activity activityDefinition, object model);
+        //void Inject(Define.Activity activityDefinition, object model);
 
         
     }
