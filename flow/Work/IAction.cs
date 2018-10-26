@@ -5,7 +5,7 @@ namespace Mchnry.Flow.Work
 {
     public interface IAction
     {
-        Task<bool> CompleteAsync(IWorkflowEngine scope, string context, CancellationToken token);
+        Task<bool> CompleteAsync(IWorkflowEngineScope scope, string context, CancellationToken token);
 
     }
 }

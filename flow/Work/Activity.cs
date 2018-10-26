@@ -21,12 +21,18 @@ namespace Mchnry.Flow.Work
         public bool Executed { get; set; } = false;
         public List<Reaction> Reactions { get; set; }
 
-        public async Task Execute(IStepTracer<string> tracer, CancellationToken token)
+        public async Task Execute(EngineStepTracer tracer, CancellationToken token)
         {
             //execute action
             IAction toExecute = this.engineRef.Actions[this.activityDefinition.Action.ActionId];
 
+            
+
             bool result = await toExecute.CompleteAsync(this.engineRef, this.activityDefinition.Action.Context, token);
+            
+            StepTraceNode<ActivityProcess> thisStep = tracer.TraceStep(this.activityDefinition.Id, new ActivityProcess(this.activityDefinition.Id, ActivityStatusOptions.))
+
+            this.Executed = true;
             if (result)
             {
                 

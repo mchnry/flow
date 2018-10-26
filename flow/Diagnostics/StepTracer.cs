@@ -13,7 +13,7 @@ namespace Mchnry.Flow.Diagnostics
 
         private StepTracer<ActivityProcess> tracer;
 
-        public StepTraceNode<ActivityProcess> Root { get; set; }
+        public StepTraceNode<ActivityProcess> Root { get; private set; }
         public StepTraceNode<ActivityProcess> CurrentStep { get; set; }
 
         private EngineStepTracer(string step, ActivityProcess process)
@@ -31,10 +31,22 @@ namespace Mchnry.Flow.Diagnostics
             return new EngineStepTracer("StartWorkflowEngine", new ActivityProcess("Start", ActivityStatusOptions.WorkflowEngine_Begin, DateTimeOffset.UtcNow));
         }
 
-        public void TraceStep(string step, ActivityProcess value)
+        void IStepTracer<ActivityProcess>.TraceStep(string step, ActivityProcess value)
         {
-            this.tracer.TraceNext(this.CurrentStep, step, value);
+            this.CurrentStep = this.tracer.TraceNext(this.CurrentStep, step, value);
         }
+
+        public StepTraceNode<ActivityProcess> TraceStep(string step, ActivityProcess value)
+        {
+            this.CurrentStep = this.tracer.TraceNext(this.CurrentStep, step, value);
+            return this.CurrentStep;
+        }
+        public StepTraceNode<ActivityProcess> TraceStep(StepTraceNode<ActivityProcess> parent, string step, ActivityProcess value)
+        {
+            this.CurrentStep = this.tracer.TraceNext(parent, step, value);
+            return this.CurrentStep;
+        }
+
     }
 
 

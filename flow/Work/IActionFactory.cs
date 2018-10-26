@@ -2,6 +2,6 @@
 {
     public interface IActionFactory
     {
-        IAction GetAction(Define.Action definition);
+        IAction GetAction(Define.ActionDefinition definition);
     }
 }

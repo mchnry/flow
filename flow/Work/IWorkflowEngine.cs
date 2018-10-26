@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Mchnry.Flow.Work
 {
-    public interface IWorkflowEngine
+    public interface IWorkflowEngineScope
     {
 
         StepTraceNode<ActivityProcess> Process { get; }
