@@ -33,18 +33,18 @@ namespace Mchnry.Flow.Diagnostics
 
         void IStepTracer<ActivityProcess>.TraceStep(string step, ActivityProcess value)
         {
-            this.CurrentStep = this.tracer.TraceNext(this.CurrentStep, step, value);
+            this.tracer.TraceNext(this.CurrentStep, step, value);
         }
 
         public StepTraceNode<ActivityProcess> TraceStep(string step, ActivityProcess value)
         {
-            this.CurrentStep = this.tracer.TraceNext(this.CurrentStep, step, value);
-            return this.CurrentStep;
+            return this.tracer.TraceNext(this.CurrentStep, step, value);
+            
         }
         public StepTraceNode<ActivityProcess> TraceStep(StepTraceNode<ActivityProcess> parent, string step, ActivityProcess value)
         {
-            this.CurrentStep = this.tracer.TraceNext(parent, step, value);
-            return this.CurrentStep;
+            return this.tracer.TraceNext(parent, step, value);
+            
         }
 
     }
