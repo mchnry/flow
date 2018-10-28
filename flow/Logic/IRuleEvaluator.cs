@@ -11,18 +11,8 @@ namespace Mchnry.Flow.Logic
 {
     public interface IRuleEvaluator
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="definition"></param>
-        /// <param name="context"></param>
-        /// <param name="processId"></param>
-        /// <param name="state"></param>
-        /// <param name="validations"></param>
-        /// <param name="expected"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        Task<bool> EvaluateAsync(Define.Rule definition, string processId, ICacheManager state, IValidationContainer validations, IStepTracer<string> tracer, CancellationToken token);
+
+        Task<bool> EvaluateAsync(IEngineScope scope, LogicEngineTrace trace, CancellationToken token);
 
     }
 }

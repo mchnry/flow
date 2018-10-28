@@ -1,8 +1,4 @@
-﻿using Mchnry.Flow.Diagnostics;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 
 namespace Mchnry.Flow.Logic
@@ -14,13 +10,13 @@ namespace Mchnry.Flow.Logic
         private readonly Operand condition;
         private readonly IRule first;
         private readonly IRule second;
-        private readonly IRuleEngine engineRef;
+        private readonly Engine engineRef;
 
         internal Expression(Define.Rule definition,
             Operand condition,
             IRule first,
             IRule second,
-            IRuleEngine engineRef)
+            Engine engineRef)
         {
             this.definition = definition;
             this.condition = condition;
@@ -29,30 +25,33 @@ namespace Mchnry.Flow.Logic
             this.engineRef = engineRef;
         }
 
-        public async Task<bool> EvaluateAsync(bool reEvaluate, IStepTracer<string> tracer, CancellationToken token)
+        public async Task<bool> EvaluateAsync(bool reEvaluate, CancellationToken token)
         {
             bool toReturn = true;
-            bool testFirst = await first.EvaluateAsync(reEvaluate, tracer, token);
-            
+            bool testFirst = await first.EvaluateAsync(reEvaluate, token);
+
             if (this.condition == Operand.And)
             {
                 if (!testFirst)
                 {
                     toReturn = false;
-                } else
+                }
+                else
                 {
-                    bool testSecond = await second.EvaluateAsync(reEvaluate, tracer, token);
+                    bool testSecond = await second.EvaluateAsync(reEvaluate, token);
                     toReturn = testFirst && testSecond;
                 }
 
-            } else
+            }
+            else
             {
                 if (testFirst)
                 {
                     toReturn = true;
-                } else
+                }
+                else
                 {
-                    bool testSecond = await second.EvaluateAsync(reEvaluate, tracer, token);
+                    bool testSecond = await second.EvaluateAsync(reEvaluate, token);
                     toReturn = testSecond;
                 }
             }

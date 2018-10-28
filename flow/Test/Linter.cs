@@ -29,8 +29,8 @@ namespace Mchnry.Flow.Test
                                   select e.First.Id).ToList();
 
             this.rights = (from e in this.equationDefinitions
-                                   where !string.IsNullOrEmpty(e.Second.Id)
-                                   select e.Second.Id).ToList();
+                                   where null != e.Second
+                                   select e.Second.Value.Id).ToList();
 
             this.roots = (from e in this.equationDefinitions
                                   where !lefts.Contains(e.Id) && !rights.Contains(e.Id)
@@ -44,13 +44,12 @@ namespace Mchnry.Flow.Test
         {
             List<string> evalIds = (from e in this.evaluatorDefinitions select e.Id).ToList();
             List<Rule> evalRules = (from l in this.equationDefinitions
-                                    where !string.IsNullOrEmpty(l.First.Id)
-                                    && evalIds.Contains(l.First.Id)
+                                    where evalIds.Contains(l.First.Id)
                                     select l.First)
                                     .Union(from r in this.equationDefinitions
-                                           where !string.IsNullOrEmpty(r.Second.Id)
-                                           && evalIds.Contains(r.Second.Id)
-                                           select r.Second).ToList();
+                                           where null != r.Second
+                                           && evalIds.Contains(r.Second.Value.Id)
+                                           select r.Second.Value).ToList();
             List<string> hasContext = (from r in evalRules where !string.IsNullOrEmpty(r.Context) select r.Id).Distinct().ToList();
             hasContext.ForEach(x =>
             {
@@ -143,9 +142,9 @@ namespace Mchnry.Flow.Test
                     }
                     
                 }
-                if (!string.IsNullOrEmpty(s.Second.Id))
+                if (null != s.Second)
                 {
-                    Equation qMatch = this.equationDefinitions.FirstOrDefault(g => g.Id.Equals(s.Second.Id));
+                    Equation qMatch = this.equationDefinitions.FirstOrDefault(g => g.Id.Equals(s.Second.Value.Id));
                     //if first is another euqation, extract it's rules
                     if (!string.IsNullOrEmpty(qMatch.Id))
                     {
@@ -154,7 +153,7 @@ namespace Mchnry.Flow.Test
                     }
                     else //otherwise, get the rule
                     {
-                        extracted.Add(s.Second);
+                        extracted.Add(s.Second.Value);
                     }
 
                 }

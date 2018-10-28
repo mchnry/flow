@@ -1,11 +1,12 @@
-﻿using System.Threading;
+﻿using Mchnry.Flow.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Mchnry.Flow.Work
 {
     public interface IAction
     {
-        Task<bool> CompleteAsync(IWorkflowEngineScope scope, string context, CancellationToken token);
+        Task<bool> CompleteAsync(IEngineScope scope, WorkflowEngineTrace trace, CancellationToken token);
 
     }
 }

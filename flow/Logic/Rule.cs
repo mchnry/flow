@@ -12,12 +12,12 @@ namespace Mchnry.Flow.Logic
     {
 
         private readonly Define.Rule definition;
-        private readonly IRuleEngine engineRef;
+        private Engine engineRef;
 
         internal Rule(
             
             Define.Rule definition,
-            IRuleEngine EngineRef
+            Engine EngineRef
             )
         {
 
@@ -25,7 +25,7 @@ namespace Mchnry.Flow.Logic
             this.engineRef = EngineRef;
         }
 
-        public async Task<bool> EvaluateAsync(bool reEvaluate, IStepTracer<string> tracer, CancellationToken token)
+        public async Task<bool> EvaluateAsync(bool reEvaluate, CancellationToken token)
         {
 
             bool thisResult = !this.definition.TrueCondition;
@@ -43,11 +43,7 @@ namespace Mchnry.Flow.Logic
                 try
                 {
                     thisResult = await evaluator.EvaluateAsync(
-                        this.definition,
-                        engineRef.CurrentProcessId,
-                        this.engineRef.State,
-                        this.engineRef.GetContainer(this.definition),
-                        tracer,
+                        this.engineRef,
                         token);
 
                     

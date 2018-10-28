@@ -11,7 +11,7 @@ namespace Mchnry.Flow.Logic.Define
         public Rule First { get; set; }
 
         [JsonProperty("s")]
-        public Rule Second { get; set; }
+        public Rule? Second { get; set; }
 
         [JsonProperty("c")]
         public Operand Condition { get; set; }

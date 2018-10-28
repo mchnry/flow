@@ -17,7 +17,9 @@
         Rule_Failed = 204,
         Rule_Evaluating = 205,
         RuleEngine_Begin = 210,
-        RuleEngine_Stop = 211
+        RuleEngine_Stop = 211,
 
+        Engine_Loading = 300
+        
     }
 }
