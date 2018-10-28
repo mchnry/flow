@@ -35,7 +35,8 @@ namespace Mchnry.Flow.Logic
 
             bool doEval = reEvaluate || !knownResult.HasValue;
 
-
+            this.engineRef.CurrentRuleDefinition = this.definition;
+            this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Rule_Evaluating;
 
             if (doEval)
             {
@@ -46,10 +47,12 @@ namespace Mchnry.Flow.Logic
                         this.engineRef,
                         token);
 
+                    this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Rule_Evaluated;
                     
                 }
                 catch (EvaluateException ex)
                 {
+                    this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Rule_Failed;
                     throw new EvaluateException(this.definition.Id, this.definition.Context, ex);
                 }
                 // Cache stores the evaluator results only
@@ -57,6 +60,9 @@ namespace Mchnry.Flow.Logic
                 knownResult = thisResult;
 
 
+            } else
+            {
+                this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Rule_NotRun_Cached;
             }
 
             return (knownResult.Value == this.definition.TrueCondition);

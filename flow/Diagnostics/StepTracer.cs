@@ -15,7 +15,7 @@ namespace Mchnry.Flow.Diagnostics
         public void TraceStep(string toTrace)
         {
             string currentStep = tracer.CurrentStep.Node.Value.ActivityId;
-            tracer.TraceStep(new ActivityProcess(currentStep, ActivityStatusOptions.Action_Running, DateTimeOffset.UtcNow));
+            tracer.TraceStep(new ActivityProcess(currentStep, ActivityStatusOptions.Action_Running, toTrace));
         }
     }
 
@@ -31,7 +31,7 @@ namespace Mchnry.Flow.Diagnostics
         public void TraceStep(string toTrace)
         {
             string currentStep = tracer.CurrentStep.Node.Value.ActivityId;
-            tracer.TraceStep(new ActivityProcess(currentStep, ActivityStatusOptions.Rule_Evaluating, DateTimeOffset.UtcNow));
+            tracer.TraceStep(new ActivityProcess(currentStep, ActivityStatusOptions.Rule_Evaluating, toTrace));
         }
     }
 
@@ -43,19 +43,10 @@ namespace Mchnry.Flow.Diagnostics
         public StepTraceNode<ActivityProcess> Root { get; private set; }
         public StepTraceNode<ActivityProcess> CurrentStep { get; set; }
 
-        private EngineStepTracer(ActivityProcess process)
+        internal EngineStepTracer(ActivityProcess process)
         {
             this.tracer = new StepTracer<ActivityProcess>();
             this.Root = this.CurrentStep = this.tracer.TraceFirst(process);
-        }
-
-        public static EngineStepTracer StartRuleEngine()
-        {
-            return new EngineStepTracer(new ActivityProcess("Start", ActivityStatusOptions.RuleEngine_Begin, DateTimeOffset.UtcNow));
-        }
-        public static EngineStepTracer StartWorkflowEngine()
-        {
-            return new EngineStepTracer( new ActivityProcess("Start", ActivityStatusOptions.WorkflowEngine_Begin, DateTimeOffset.UtcNow));
         }
 
 

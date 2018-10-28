@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System;
+using System.Diagnostics;
 
 namespace Mchnry.Flow.Work
 {
@@ -21,18 +23,42 @@ namespace Mchnry.Flow.Work
 
         public async Task Execute(EngineStepTracer tracer, CancellationToken token)
         {
+            this.engineRef.CurrentActivity = this.activityDefinition;
+            this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Action_Running;
+            bool result = false;
             //execute action
             IAction toExecute = this.engineRef.GetAction(this.activityDefinition.Action.ActionId);
 
+            this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(
+                new ActivityProcess(this.activityDefinition.Id, ActivityStatusOptions.Action_Running, null));
 
 
-            bool result = await toExecute.CompleteAsync(this.engineRef, token);
+            try
+            {
+                Stopwatch t = new Stopwatch(); t.Start();
 
+                result = await toExecute.CompleteAsync(this.engineRef, new WorkflowEngineTrace(this.engineRef.Tracer), token);
+
+                t.Stop();
+
+                this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Action_Completed;
+                this.engineRef.Tracer.TraceStep(new ActivityProcess(this.activityDefinition.Action.ActionId, ActivityStatusOptions.Action_Completed, null, t.Elapsed));
+
+            } catch (System.Exception ex)
+            {
+                this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Action_Failed;
+                this.engineRef.Tracer.TraceStep(new ActivityProcess(this.activityDefinition.Action.ActionId, ActivityStatusOptions.Action_Failed, ex.Message));
+            }
 
             this.Executed = true;
             if (result)
             {
-
+                //reactions.  
+                throw new NotImplementedException();
+            } else
+            {
+                //trace that each raction is not run b/c i failed.
+                throw new NotImplementedException();
             }
 
         }
