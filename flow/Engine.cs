@@ -37,10 +37,11 @@ namespace Mchnry.Flow
             this.workFlow = workFlow;
             this.Tracer = new EngineStepTracer(new ActivityProcess("CreateEngine", ActivityStatusOptions.Engine_Loading, null));
         }
-        public IEngineLoader CreateEngine(WorkDefine.Workflow workflow)
+        public static IEngineLoader CreateEngine(WorkDefine.Workflow workFlow)
         {
             return new Engine(workFlow);
         }
+
 
         internal EngineStepTracer Tracer { get; set; }
         internal ActivityStatusOptions CurrentActivityStatus { get; set; } = ActivityStatusOptions.Engine_Loading;

@@ -2,6 +2,7 @@
 using Mchnry.Flow.Exception;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,21 +39,30 @@ namespace Mchnry.Flow.Logic
             this.engineRef.CurrentRuleDefinition = this.definition;
             this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Rule_Evaluating;
 
+            StepTraceNode<ActivityProcess> mark =  this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(
+                new ActivityProcess(this.definition.Id, ActivityStatusOptions.Rule_Evaluating, null));
+            
             if (doEval)
             {
                 //#TODO implement metric in evaluation
                 try
                 {
+                    Stopwatch t = new Stopwatch(); t.Start();
+
                     thisResult = await evaluator.EvaluateAsync(
                         this.engineRef,
+                        new LogicEngineTrace(this.engineRef.Tracer),
                         token);
-
+                    t.Stop();
                     this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Rule_Evaluated;
-                    
+
+                    this.engineRef.Tracer.TraceStep(new ActivityProcess(this.definition.Id, ActivityStatusOptions.Rule_Evaluated, null, t.Elapsed));
+
                 }
                 catch (EvaluateException ex)
                 {
                     this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Rule_Failed;
+                    this.engineRef.Tracer.TraceStep(new ActivityProcess(this.definition.Id, ActivityStatusOptions.Rule_Failed, ex.Message));
                     throw new EvaluateException(this.definition.Id, this.definition.Context, ex);
                 }
                 // Cache stores the evaluator results only

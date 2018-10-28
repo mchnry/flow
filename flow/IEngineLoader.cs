@@ -1,4 +1,5 @@
 ﻿using Mchnry.Flow.Logic;
+using Mchnry.Flow.Test;
 using Mchnry.Flow.Work;
 using System;
 using System.Collections.Generic;
@@ -15,5 +16,6 @@ namespace Mchnry.Flow
         IEngineLoader SetActionFactory(IActionFactory factory);
 
         IEngineRunner Start();
+        List<LogicTest> Lint(Action<Linter> addIntents);
     }
 }

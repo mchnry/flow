@@ -5,7 +5,7 @@ using Mchnry.Flow.Logic;
 using Define = Mchnry.Flow.Logic.Define;
 using Moq;
 using Xunit;
-
+using Mchnry.Flow;
 
 namespace Test.Lint
 {
@@ -32,9 +32,9 @@ namespace Test.Lint
                 new Define.Equation() { Id = "eq1", Condition = Operand.And, First = "ev1", Second = "eq1.1" }
             };
 
-            RuleEngine engine = new RuleEngine(mkFactory.Object, evals, eqs);
+            IEngineLoader e = Engine.CreateEngine(new Mchnry.Flow.Work.Define.Workflow() { Equations = eqs, Evaluators = evals });
 
-            engine.Lint((l) => { });
+            e.Lint((l) => { });
 
         }
 
@@ -58,7 +58,8 @@ namespace Test.Lint
                 new Define.Equation() { Id = "eq1", Condition = Operand.And, First = "ev1", Second = "eq1.1" }
             };
 
-            RuleEngine engine = new RuleEngine(mkFactory.Object, evals, eqs);
+            IEngineLoader engine = Engine.CreateEngine(new Mchnry.Flow.Work.Define.Workflow() { Equations = eqs, Evaluators = evals })
+                .SetEvaluatorFactory(mkFactory.Object);
 
             var tests = engine.Lint((l) => { l.Intent("ev2").HasContext<int>().OneOfInclusive(); });
 

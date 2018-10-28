@@ -29,7 +29,7 @@ namespace Mchnry.Flow.Work
             //execute action
             IAction toExecute = this.engineRef.GetAction(this.activityDefinition.Action.ActionId);
 
-            this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(
+            StepTraceNode<ActivityProcess> mark  = this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(
                 new ActivityProcess(this.activityDefinition.Id, ActivityStatusOptions.Action_Running, null));
 
 
