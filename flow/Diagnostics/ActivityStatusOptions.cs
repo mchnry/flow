@@ -20,7 +20,8 @@
         RuleEngine_Stop = 211,
 
         Engine_Loading = 300,
-        Engine_Begin = 301
+        Engine_Begin = 301,
+        Engine_Finalizing = 302
         
     }
 }

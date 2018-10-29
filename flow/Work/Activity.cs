@@ -19,7 +19,7 @@ namespace Mchnry.Flow.Work
         }
 
         public bool Executed { get; set; } = false;
-        public List<Reaction> Reactions { get; set; }
+        public List<Reaction> Reactions { get; set; } = new List<Reaction>();
 
         public async Task Execute(EngineStepTracer tracer, CancellationToken token)
         {
@@ -51,18 +51,26 @@ namespace Mchnry.Flow.Work
             }
 
             this.Executed = true;
-            foreach (Reaction r in this.Reactions)
+            
+            //if i have reactions, loop through each and run
+            if (this.Reactions.Count > 0)
             {
-                this.engineRef.Tracer.CurrentStep = mark;
-                if (result)
+                StepTraceNode<ActivityProcess> reactionMark = this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(
+                new ActivityProcess(this.activityDefinition.Id, ActivityStatusOptions.Action_Running, "React"));
+                foreach (Reaction react in this.Reactions)
                 {
+                    this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(reactionMark,
+                        new ActivityProcess(react.Activity.activityDefinition.Id, ActivityStatusOptions.Action_Running, "Evaluating"));
+                    bool doReact = await this.engineRef.Evaluate(react.LogicEquationId, token);
 
-                } else
-                {
-
+                    if (doReact)
+                    {
+                        this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(reactionMark,
+                            new ActivityProcess(react.Activity.activityDefinition.Id, ActivityStatusOptions.Action_Running, "Reacting"));
+                        await react.Activity.Execute(this.engineRef.Tracer, token);
+                    }
                 }
             }
-
         }
 
 

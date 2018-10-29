@@ -19,7 +19,7 @@ namespace Mchnry.Flow
 
         void AddValidation(Validation toAdd);
 
-        void Defer(IAction action, bool onlyIfValidationsResolved);
+        void Defer(IDeferredAction action, bool onlyIfValidationsResolved);
 
         StepTraceNode<ActivityProcess> Process { get; }
     }

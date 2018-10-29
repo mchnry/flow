@@ -25,8 +25,8 @@ namespace Mchnry.Flow
         private EngineStatusOptions engineStatus = EngineStatusOptions.NotStarted;
         private ValidationContainer container = new ValidationContainer();
 
-        private List<IAction> finalize = new List<IAction>();
-        private List<IAction> finalizeAlways = new List<IAction>(); //actions to complete at end regardless of validation state
+        private List<IDeferredAction> finalize = new List<IDeferredAction>();
+        private List<IDeferredAction> finalizeAlways = new List<IDeferredAction>(); //actions to complete at end regardless of validation state
         private ICacheManager state;
         private IActionFactory actionFactory;
         private IRuleEvaluatorFactory ruleEvaluatorFactory;
@@ -91,7 +91,7 @@ namespace Mchnry.Flow
 
         }
 
-        void IEngineScope.Defer(IAction action, bool onlyIfValidationsResolved)
+        void IEngineScope.Defer(IDeferredAction action, bool onlyIfValidationsResolved)
         {
             if (onlyIfValidationsResolved)
             {
@@ -123,21 +123,26 @@ namespace Mchnry.Flow
 
         async Task<IEngineComplete> IEngineFinalize.FinalizeAsync(CancellationToken token)
         {
-            this.Tracer.CurrentStep = this.Tracer.TraceStep(this.Tracer.Root, new ActivityProcess("Finalize", ActivityStatusOptions.Engine_Begin, null));
+            StepTraceNode<ActivityProcess> mark =  this.Tracer.CurrentStep = this.Tracer.TraceStep(this.Tracer.Root, new ActivityProcess("Finalize", ActivityStatusOptions.Engine_Finalizing, null));
             if (this.container.ResolveValidations())
             {
+                
 
-
-                foreach (IAction toFinalize in this.finalize)
+                foreach (IDeferredAction toFinalize in this.finalize)
                 {
+                    this.Tracer.CurrentStep = this.Tracer.TraceStep(mark, new ActivityProcess(toFinalize.Id, ActivityStatusOptions.Action_Running, null));
+
                     await toFinalize.CompleteAsync(this, new WorkflowEngineTrace(this.Tracer), token);
+
                 }
 
 
             }
 
-            foreach (IAction toFinalize in this.finalizeAlways)
+            foreach (IDeferredAction toFinalize in this.finalizeAlways)
             {
+                this.Tracer.CurrentStep = this.Tracer.TraceStep(mark, new ActivityProcess(toFinalize.Id, ActivityStatusOptions.Action_Running, null));
+
                 await toFinalize.CompleteAsync(this, new WorkflowEngineTrace(this.Tracer), token);
             }
 
@@ -226,12 +231,33 @@ namespace Mchnry.Flow
 
         internal IAction GetAction(string actionId)
         {
-            return this.actions[actionId];
+            IAction toReturn = default(IAction);
+            if (!this.actions.ContainsKey(actionId))
+            {
+                WorkDefine.ActionDefinition def = this.workFlow.Actions.FirstOrDefault(g => g.Id.Equals(actionId));
+                toReturn = this.actionFactory.GetAction(def);
+                this.actions.Add(actionId, toReturn);
+            } else
+            {
+                toReturn = this.actions[actionId];
+            }
+            return toReturn;
         }
 
         internal IRuleEvaluator GetEvaluator(string id)
         {
-            return this.evaluators[id];
+            IRuleEvaluator toReturn = default(IRuleEvaluator);
+            if (!this.evaluators.ContainsKey(id))
+            {
+                LogicDefine.Evaluator def = this.workFlow.Evaluators.FirstOrDefault(g => g.Id.Equals(id));
+                toReturn = this.ruleEvaluatorFactory.GetRuleEvaluator(def);
+                this.evaluators.Add(def.Id, toReturn);
+            }
+            else
+            {
+                toReturn = this.evaluators[id];
+            }
+            return toReturn;
         }
 
         internal async Task<bool> Evaluate(string equationId, CancellationToken token)

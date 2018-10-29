@@ -9,4 +9,8 @@ namespace Mchnry.Flow.Work
         Task<bool> CompleteAsync(IEngineScope scope, WorkflowEngineTrace trace, CancellationToken token);
 
     }
+    public interface IDeferredAction: IAction
+    {
+        string Id { get; }
+    }
 }
