@@ -7,7 +7,7 @@ namespace Mchnry.Flow
     {
 
         EngineStatusOptions Status { get; }
-        ValidationContainer Validations { get; }
+        IValidationContainer Validations { get; }
         StepTraceNode<ActivityProcess> Process { get; }
 
         T GetModel<T>(string key);

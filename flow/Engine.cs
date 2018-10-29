@@ -24,18 +24,21 @@ namespace Mchnry.Flow
         internal WorkDefine.Workflow workFlow;
         private EngineStatusOptions engineStatus = EngineStatusOptions.NotStarted;
         private ValidationContainer container = new ValidationContainer();
-       
+
         private List<IAction> finalize = new List<IAction>();
         private List<IAction> finalizeAlways = new List<IAction>(); //actions to complete at end regardless of validation state
         private ICacheManager state;
         private IActionFactory actionFactory;
         private IRuleEvaluatorFactory ruleEvaluatorFactory;
-        
+
 
         internal Engine(WorkDefine.Workflow workFlow)
         {
             this.workFlow = workFlow;
             this.Tracer = new EngineStepTracer(new ActivityProcess("CreateEngine", ActivityStatusOptions.Engine_Loading, null));
+
+            this.state = new MemoryCacheManager();
+
         }
         public static IEngineLoader CreateEngine(WorkDefine.Workflow workFlow)
         {
@@ -58,7 +61,7 @@ namespace Mchnry.Flow
 
         EngineStatusOptions IEngineComplete.Status => this.engineStatus;
 
-        ValidationContainer IEngineComplete.Validations => this.container;
+        IValidationContainer IEngineComplete.Validations => this.container;
 
 
         void IEngineScope.AddValidation(Validation toAdd)
@@ -93,45 +96,76 @@ namespace Mchnry.Flow
             if (onlyIfValidationsResolved)
             {
                 this.finalize.Add(action);
-            } else
+            }
+            else
             {
                 this.finalizeAlways.Add(action);
             }
         }
 
-        Task<IEngineFinalize> IEngineRunner.ExecuteAsync(string activityId, CancellationToken token)
+        async Task<IEngineFinalize> IEngineRunner.ExecuteAsync(string activityId, CancellationToken token)
         {
-            throw new NotImplementedException();
+            Activity toLoad = this.LoadActivity(activityId);
+
+            this.Tracer.CurrentStep = this.Tracer.TraceStep(this.Tracer.Root, new ActivityProcess("Execute", ActivityStatusOptions.Engine_Begin, null));
+            await (toLoad.Execute(this.Tracer, token));
+
+            return this;
+
         }
 
-        Task<IEngineComplete> IEngineRunner.ExecuteAutoFinalizeAsync(string activityId, CancellationToken token)
+        async Task<IEngineComplete> IEngineRunner.ExecuteAutoFinalizeAsync(string activityId, CancellationToken token)
         {
-            throw new NotImplementedException();
+            IEngineFinalize finalizer = await ((IEngineRunner)this).ExecuteAsync(activityId, token);
+            return await finalizer.FinalizeAsync(token);
+
         }
 
-        Task<IEngineComplete> IEngineFinalize.FinalizeAsync(CancellationToken token)
+        async Task<IEngineComplete> IEngineFinalize.FinalizeAsync(CancellationToken token)
         {
-            throw new NotImplementedException();
+            this.Tracer.CurrentStep = this.Tracer.TraceStep(this.Tracer.Root, new ActivityProcess("Finalize", ActivityStatusOptions.Engine_Begin, null));
+            if (this.container.ResolveValidations())
+            {
+
+
+                foreach (IAction toFinalize in this.finalize)
+                {
+                    await toFinalize.CompleteAsync(this, new WorkflowEngineTrace(this.Tracer), token);
+                }
+
+
+            }
+
+            foreach (IAction toFinalize in this.finalizeAlways)
+            {
+                await toFinalize.CompleteAsync(this, new WorkflowEngineTrace(this.Tracer), token);
+            }
+
+            return this;
         }
 
         T IEngineScope.GetActivityModel<T>(string key)
         {
-            throw new NotImplementedException();
+            string activityId = this.CurrentActivity.Value.Id;
+            return this.state.Spawn(activityId).Read<T>(key);
         }
 
         T IEngineScope.GetModel<T>(string key)
         {
-            throw new NotImplementedException();
+            return this.state.Read<T>(key);
         }
 
         T IEngineComplete.GetModel<T>(string key)
         {
-            throw new NotImplementedException();
+            return this.state.Read<T>(key);
         }
 
-        IEngineLoader IEngineLoader.OverrideValidations(ValidationContainer overrides)
+        IEngineLoader IEngineLoader.OverrideValidation(ValidationOverride oride)
         {
-            throw new NotImplementedException();
+
+            ((IValidationContainer)this.container).AddOverride(oride.Key, oride.Comment, oride.AuditCode);
+
+            return this;
         }
 
         IEngineLoader IEngineLoader.SetActionFactory(IActionFactory factory)
@@ -140,9 +174,10 @@ namespace Mchnry.Flow
             return this;
         }
 
-        T IEngineScope.SetActivityModel<T>(string key, T value)
+        void IEngineScope.SetActivityModel<T>(string key, T value)
         {
-            throw new NotImplementedException();
+            string activityId = this.CurrentActivity.Value.Id;
+            this.state.Spawn(activityId).Insert<T>(key, value);
         }
 
         IEngineLoader IEngineLoader.SetEvaluatorFactory(IRuleEvaluatorFactory factory)
@@ -153,12 +188,16 @@ namespace Mchnry.Flow
 
         IEngineLoader IEngineLoader.SetModel<T>(string key, T model)
         {
-            throw new NotImplementedException();
+            this.state.Insert<T>(key, model);
+            return this;
         }
 
-        T IEngineScope.SetModel<T>(string key, T value)
+        void IEngineScope.SetModel<T>(string key, T value)
         {
-            throw new NotImplementedException();
+            this.state.Insert<T>(key, value);
+
+
+
         }
 
         IEngineRunner IEngineLoader.Start()
@@ -195,6 +234,18 @@ namespace Mchnry.Flow
             return this.evaluators[id];
         }
 
+        internal async Task<bool> Evaluate(string equationId, CancellationToken token)
+        {
+            IRule toEval = this.LoadLogic(equationId);
+
+            bool result = await toEval.EvaluateAsync(false, token);
+
+            return result;
+
+
+        }
+
+
         private Activity LoadActivity(string activityId)
         {
 
@@ -225,7 +276,7 @@ namespace Mchnry.Flow
 
         }
 
-        private void LoadLogic()
+        private IRule LoadLogic(string equationId)
         {
             StepTracer<string> trace = new StepTracer<string>();
             StepTraceNode<string> root = trace.TraceFirst("Load");
@@ -255,8 +306,8 @@ namespace Mchnry.Flow
             {
                 StepTraceNode<string> step = trace.TraceNext(parentStep, rule.Id);
                 IRule toReturn = null;
-            //if id is an equation, we are creating an expression
-            LogicDefine.Equation eq = this.workFlow.Equations.FirstOrDefault(g => g.Id.Equals(rule.Id));
+                //if id is an equation, we are creating an expression
+                LogicDefine.Equation eq = this.workFlow.Equations.FirstOrDefault(g => g.Id.Equals(rule.Id));
                 if (!string.IsNullOrEmpty(eq.Id))
                 {
                     IRule first = null, second = null;
@@ -298,11 +349,15 @@ namespace Mchnry.Flow
 
                 return toReturn;
             };
-            roots.ForEach(r =>
-            {
-                LogicDefine.Rule eqRule = new LogicDefine.Rule() { Id = r, TrueCondition = true };
-                IRule loaded = LoadRule(eqRule, root);
-            });
+
+
+
+         
+            LogicDefine.Rule eqRule = new LogicDefine.Rule() { Id = equationId, TrueCondition = true };
+            IRule loaded = LoadRule(eqRule, root);
+
+            return loaded;
+            
         }
 
 

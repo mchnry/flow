@@ -10,7 +10,7 @@ namespace Mchnry.Flow
     public interface IEngineLoader
     {
         IEngineLoader SetModel<T>(string key, T model);
-        IEngineLoader OverrideValidations(ValidationContainer overrides);
+        IEngineLoader OverrideValidation(ValidationOverride oride);
 
         IEngineLoader SetEvaluatorFactory(IRuleEvaluatorFactory factory);
         IEngineLoader SetActionFactory(IActionFactory factory);

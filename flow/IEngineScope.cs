@@ -10,9 +10,9 @@ namespace Mchnry.Flow
     {
 
         T GetModel<T>(string key);
-        T SetModel<T>(string key, T value);
+        void SetModel<T>(string key, T value);
         T GetActivityModel<T>(string key);
-        T SetActivityModel<T>(string key, T value);
+        void SetActivityModel<T>(string key, T value);
 
         Logic.Define.Rule? CurrentRuleDefinition { get; }
         Work.Define.Activity CurrentActivity { get; }

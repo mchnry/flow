@@ -51,14 +51,16 @@ namespace Mchnry.Flow.Work
             }
 
             this.Executed = true;
-            if (result)
+            foreach (Reaction r in this.Reactions)
             {
-                //reactions.  
-                throw new NotImplementedException();
-            } else
-            {
-                //trace that each raction is not run b/c i failed.
-                throw new NotImplementedException();
+                this.engineRef.Tracer.CurrentStep = mark;
+                if (result)
+                {
+
+                } else
+                {
+
+                }
             }
 
         }
