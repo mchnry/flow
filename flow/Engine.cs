@@ -234,9 +234,17 @@ namespace Mchnry.Flow
             IAction toReturn = default(IAction);
             if (!this.actions.ContainsKey(actionId))
             {
-                WorkDefine.ActionDefinition def = this.workFlow.Actions.FirstOrDefault(g => g.Id.Equals(actionId));
-                toReturn = this.actionFactory.GetAction(def);
-                this.actions.Add(actionId, toReturn);
+                if ("*placeHolder" == actionId)
+                {
+                    toReturn = new NoAction();
+                }
+                else
+                {
+
+                    WorkDefine.ActionDefinition def = this.workFlow.Actions.FirstOrDefault(g => g.Id.Equals(actionId));
+                    toReturn = this.actionFactory.GetAction(def);
+                    this.actions.Add(actionId, toReturn);
+                }
             } else
             {
                 toReturn = this.actions[actionId];
@@ -276,12 +284,15 @@ namespace Mchnry.Flow
         {
 
             WorkDefine.Activity definition = this.workFlow.Activities.FirstOrDefault(a => a.Id == activityId);
+            
+   
 
             Activity toReturn = new Activity(this, definition);
 
             Action<Activity, WorkDefine.Activity> LoadReactions = null;
             LoadReactions = (a, d) =>
             {
+                if (d.Action == null) d.Action = "*placeHolder";
                 if (d.Reactions != null && d.Reactions.Count > 0)
                 {
                     d.Reactions.ForEach(r =>

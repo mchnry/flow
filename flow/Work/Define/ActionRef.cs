@@ -11,13 +11,15 @@ namespace Mchnry.Flow.Work.Define
         {
             ActionRef toReturn = new ActionRef();
 
+    
+
             if (action.Contains('|'))
             {
                 string[] parts = action.Split('|');
                 toReturn.ActionId = parts[0];
-                toReturn.ActionId = parts[1];
+                toReturn.Context = parts[1];
             }
-            else toReturn = action;
+            else toReturn = new ActionRef() { ActionId = action };
 
             return toReturn;
         }

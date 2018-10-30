@@ -1,9 +1,8 @@
 ﻿using Mchnry.Flow.Diagnostics;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using System;
-using System.Diagnostics;
 
 namespace Mchnry.Flow.Work
 {
@@ -27,9 +26,11 @@ namespace Mchnry.Flow.Work
             this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Action_Running;
             bool result = false;
             //execute action
-            IAction toExecute = this.engineRef.GetAction(this.activityDefinition.Action.ActionId);
+            IAction toExecute = this.engineRef.GetAction(this.activityDefinition.Action.Value.ActionId);
+      
 
-            StepTraceNode<ActivityProcess> mark  = this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(
+
+            StepTraceNode<ActivityProcess> mark = this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(
                 new ActivityProcess(this.activityDefinition.Id, ActivityStatusOptions.Action_Running, null));
 
 
@@ -42,16 +43,17 @@ namespace Mchnry.Flow.Work
                 t.Stop();
 
                 this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Action_Completed;
-                this.engineRef.Tracer.TraceStep(new ActivityProcess(this.activityDefinition.Action.ActionId, ActivityStatusOptions.Action_Completed, null, t.Elapsed));
+                this.engineRef.Tracer.TraceStep(new ActivityProcess(this.activityDefinition.Action.Value.ActionId, ActivityStatusOptions.Action_Completed, null, t.Elapsed));
 
-            } catch (System.Exception ex)
+            }
+            catch (System.Exception ex)
             {
                 this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Action_Failed;
-                this.engineRef.Tracer.TraceStep(new ActivityProcess(this.activityDefinition.Action.ActionId, ActivityStatusOptions.Action_Failed, ex.Message));
+                this.engineRef.Tracer.TraceStep(new ActivityProcess(this.activityDefinition.Action.Value.ActionId, ActivityStatusOptions.Action_Failed, ex.Message));
             }
 
             this.Executed = true;
-            
+
             //if i have reactions, loop through each and run
             if (this.Reactions.Count > 0)
             {

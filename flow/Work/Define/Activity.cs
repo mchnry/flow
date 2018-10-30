@@ -6,9 +6,9 @@ namespace Mchnry.Flow.Work.Define
     public struct Activity
     {
 
-        public string Id { get; }
+        public string Id { get; set; }
         [JsonProperty("X")]
-        public ActionRef Action { get; }
+        public ActionRef? Action { get; set; }
         [JsonProperty("RXV")]
         public List<Reaction> Reactions { get; set; }
     }
