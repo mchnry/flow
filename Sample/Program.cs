@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Mchnry.Flow;
 using Mchnry.Flow.Diagnostics;
@@ -11,21 +12,44 @@ namespace Sample
 {
     class EvalProfanity : IRuleEvaluator
     {
-        public Task<bool> EvaluateAsync(IEngineScope scope, LogicEngineTrace trace, CancellationToken token)
+        public async Task<bool> EvaluateAsync(IEngineScope scope, LogicEngineTrace trace, CancellationToken token)
         {
-            
-            throw new System.NotImplementedException();
+
+            return true;
         }
     }
-    class WritePost: IAction
+    class WritePost : IAction
     {
+        public async Task<bool> CompleteAsync(IEngineScope scope, WorkflowEngineTrace trace, CancellationToken token)
+        {
+            Console.WriteLine("Write Post");
+            return true;
+        }
+    }
 
+    class ActionFactory : IActionFactory
+    {
+        public IAction GetAction(WorkDefine.ActionDefinition definition)
+        {
+            return new WritePost();
+        }
+    }
+
+    class RuleEvaluatorFactory : IRuleEvaluatorFactory
+    {
+        public IRuleEvaluator GetRuleEvaluator(LogicDefine.Evaluator definition)
+        {
+            return new EvalProfanity();
+        }
     }
 
     class Program
     {
-        static void Main(string[] args)
+
+
+        public static async Task Main(string[] args)
         {
+
             WorkDefine.Workflow sampleWorkflow = new WorkDefine.Workflow()
             {
                 Evaluators = new System.Collections.Generic.List<LogicDefine.Evaluator>()
@@ -54,6 +78,12 @@ namespace Sample
                 }
             };
 
+            var engine = Engine.CreateEngine(sampleWorkflow).SetActionFactory(new ActionFactory())
+                .SetEvaluatorFactory(new RuleEvaluatorFactory())
+                .Start();
+            await engine.ExecuteAsync("PostMessage", new CancellationToken());
+
+           
 
         }
     }
