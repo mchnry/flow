@@ -5,6 +5,7 @@ using Mchnry.Flow;
 using Mchnry.Flow.Diagnostics;
 using Mchnry.Flow.Logic;
 using Mchnry.Flow.Work;
+using Newtonsoft.Json;
 using LogicDefine = Mchnry.Flow.Logic.Define;
 using WorkDefine = Mchnry.Flow.Work.Define;
 
@@ -54,7 +55,7 @@ namespace Sample
             {
                 Evaluators = new System.Collections.Generic.List<LogicDefine.Evaluator>()
                 {
-                    new LogicDefine.Evaluator() { Id = "evalProfanity"}
+                    new LogicDefine.Evaluator() { Id = "evalProfanity" }
                 },
                 Equations = new System.Collections.Generic.List<LogicDefine.Equation>()
                 {
@@ -66,13 +67,13 @@ namespace Sample
                 },
                 Activities = new System.Collections.Generic.List<WorkDefine.Activity>()
                 {
-                    new WorkDefine.Activity() { Id = "CompletePost", Action = "WritePost" },
+                    //new WorkDefine.Activity() { Id = "CompletePost", Action = "WritePost" },
                     new WorkDefine.Activity() {
                         Id = "PostMessage",
                         //notice that there is no action referenced... engine will inject a placeholder
                         Reactions = new System.Collections.Generic.List<WorkDefine.Reaction>()
                         {
-                            new WorkDefine.Reaction() { EquationId = "evalProfanity", ActivityId = "CompletePost" }
+                            new WorkDefine.Reaction() { EquationId = "evalProfanity", ActivityId = "WritePost" }
                         }
                     }
                 }
@@ -81,9 +82,15 @@ namespace Sample
             var engine = Engine.CreateEngine(sampleWorkflow).SetActionFactory(new ActionFactory())
                 .SetEvaluatorFactory(new RuleEvaluatorFactory())
                 .Start();
-            await engine.ExecuteAsync("PostMessage", new CancellationToken());
+            var f = await engine.ExecuteAsync("PostMessage", new CancellationToken());
 
-           
+            var c = await f.FinalizeAsync(new CancellationToken());
+
+            string s = JsonConvert.SerializeObject(c.Process, Formatting.Indented, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore } );
+
+            Console.WriteLine(s);
+
+            Console.ReadLine();
 
         }
     }

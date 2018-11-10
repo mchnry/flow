@@ -3,14 +3,14 @@ using System;
 
 namespace Mchnry.Flow.Logic.Define
 {
-    public struct Rule
+    public class Rule
     {
 
         public static implicit operator Rule(string shortHand)
         {
             string toParts = shortHand ?? throw new ArgumentNullException("shortHand");
 
-            bool trueCondition = toParts.StartsWith('!');
+            bool trueCondition = !toParts.StartsWith('!');
             toParts.Replace("|", string.Empty);
 
             string[] parts = toParts.Split('|');

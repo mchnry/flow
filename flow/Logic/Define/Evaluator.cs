@@ -2,7 +2,7 @@
 
 namespace Mchnry.Flow.Logic.Define
 {
-    public struct Evaluator
+    public class Evaluator
     {
         public string Id { get; set; }
 

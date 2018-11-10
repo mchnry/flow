@@ -3,17 +3,17 @@ using System.Collections.Generic;
 
 namespace Mchnry.Flow.Work.Define
 {
-    public struct Activity
+    public class Activity
     {
 
         public string Id { get; set; }
         [JsonProperty("X")]
-        public ActionRef? Action { get; set; }
+        public ActionRef Action { get; set; }
         [JsonProperty("RXV")]
         public List<Reaction> Reactions { get; set; }
     }
 
-    public struct Reaction
+    public class Reaction
     {
 
 

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Mchnry.Flow.Work.Define
 {
-    public struct ActionRef
+    public class ActionRef
     {
 
         public static implicit operator ActionRef(string action)

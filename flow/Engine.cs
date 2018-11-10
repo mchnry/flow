@@ -51,15 +51,15 @@ namespace Mchnry.Flow
         internal EngineStepTracer Tracer { get; set; }
         internal ActivityStatusOptions CurrentActivityStatus { get; set; } = ActivityStatusOptions.Engine_Loading;
 
-        internal LogicDefine.Rule? CurrentRuleDefinition { get; set; } = null;
-        LogicDefine.Rule? IEngineScope.CurrentRuleDefinition => this.CurrentRuleDefinition;
+        internal LogicDefine.Rule CurrentRuleDefinition { get; set; } = null;
+        LogicDefine.Rule IEngineScope.CurrentRuleDefinition => this.CurrentRuleDefinition;
 
-        internal WorkDefine.Activity? CurrentActivity { get; set; }
-        WorkDefine.Activity IEngineScope.CurrentActivity => this.CurrentActivity.Value;
+        internal WorkDefine.Activity CurrentActivity { get; set; }
+        WorkDefine.Activity IEngineScope.CurrentActivity => this.CurrentActivity;
 
-        StepTraceNode<ActivityProcess> IEngineScope.Process => throw new NotImplementedException();
+        StepTraceNode<ActivityProcess> IEngineScope.Process => this.Tracer.Root;
 
-        StepTraceNode<ActivityProcess> IEngineComplete.Process => throw new NotImplementedException();
+        StepTraceNode<ActivityProcess> IEngineComplete.Process => this.Tracer.Root;
 
         EngineStatusOptions IEngineComplete.Status => this.engineStatus;
 
@@ -71,17 +71,17 @@ namespace Mchnry.Flow
             //can only occure when rule is evaluating or activity is executing
             if (this.CurrentActivityStatus == ActivityStatusOptions.Action_Running)
             {
-                string scope = this.CurrentActivity.Value.Id;
+                string scope = this.CurrentActivity.Id;
                 this.container.Scope(scope).AddValidation(toAdd);
 
 
             }
             else if (this.CurrentActivityStatus == ActivityStatusOptions.Rule_Evaluating)
             {
-                string scope = this.CurrentRuleDefinition.Value.Id;
-                if (!string.IsNullOrEmpty(this.CurrentRuleDefinition.Value.Context))
+                string scope = this.CurrentRuleDefinition.Id;
+                if (!string.IsNullOrEmpty(this.CurrentRuleDefinition.Context))
                 {
-                    scope = string.Format("{0}.{1}", scope, this.CurrentRuleDefinition.Value.Context.GetHashCode().ToString());
+                    scope = string.Format("{0}.{1}", scope, this.CurrentRuleDefinition.Context.GetHashCode().ToString());
                 }
                 this.container.Scope(scope).AddValidation(toAdd);
 
@@ -153,7 +153,7 @@ namespace Mchnry.Flow
 
         T IEngineScope.GetActivityModel<T>(string key)
         {
-            string activityId = this.CurrentActivity.Value.Id;
+            string activityId = this.CurrentActivity.Id;
             return this.state.Spawn(activityId).Read<T>(key);
         }
 
@@ -183,7 +183,7 @@ namespace Mchnry.Flow
 
         void IEngineScope.SetActivityModel<T>(string key, T value)
         {
-            string activityId = this.CurrentActivity.Value.Id;
+            string activityId = this.CurrentActivity.Id;
             this.state.Spawn(activityId).Insert<T>(key, value);
         }
 
@@ -216,7 +216,12 @@ namespace Mchnry.Flow
         internal bool? GetResult(LogicDefine.Rule rule)
         {
             EvaluatorKey key = new EvaluatorKey() { Id = rule.Id, Context = rule.Context };
-            return this.results[key.ToString()].Value;
+            if (results.ContainsKey(key.ToString())) {
+                return results[key.ToString()];
+            } else
+            {
+                return null;
+            }
         }
 
         internal void SetResult(LogicDefine.Rule rule, bool result)
@@ -300,6 +305,23 @@ namespace Mchnry.Flow
                     d.Reactions.ForEach(r =>
                     {
                         WorkDefine.Activity toCreatedef = this.workFlow.Activities.FirstOrDefault(z => z.Id == r.ActivityId);
+
+                        if (null == toCreatedef)
+                        {
+                            //if we can't find activity... look for a matching action.  if found, create an activity from it.
+                            WorkDefine.ActionRef asActionRef = r.ActivityId;
+                            WorkDefine.ActionDefinition toCreateAction = this.workFlow.Actions.FirstOrDefault(z => z.Id == asActionRef.ActionId);
+                            if (null != toCreateAction)
+                            {
+                                toCreatedef = new WorkDefine.Activity()
+                                {
+                                    Action = asActionRef,
+                                    Id = Guid.NewGuid().ToString(),
+                                    Reactions = new List<WorkDefine.Reaction>()
+                                };
+                            }
+                        }
+
                         a.Reactions = new List<Reaction>();
                         Activity toCreate = new Activity(this, toCreatedef);
                         LoadReactions(toCreate, toCreatedef);
@@ -327,12 +349,12 @@ namespace Mchnry.Flow
             this.workFlow.Evaluators.Add(trueDef);
 
             List<string> lefts = (from e in this.workFlow.Equations
-                                  where !string.IsNullOrEmpty(e.First.Id)
+                                  where e.First != null
                                   select e.First.Id).ToList();
 
             List<string> rights = (from e in this.workFlow.Equations
                                    where null != e.Second
-                                   select e.Second.Value.Id).ToList();
+                                   select e.Second.Id).ToList();
 
             List<string> roots = (from e in this.workFlow.Equations
                                   where !lefts.Contains(e.Id) && !rights.Contains(e.Id)
@@ -347,10 +369,10 @@ namespace Mchnry.Flow
                 IRule toReturn = null;
                 //if id is an equation, we are creating an expression
                 LogicDefine.Equation eq = this.workFlow.Equations.FirstOrDefault(g => g.Id.Equals(rule.Id));
-                if (!string.IsNullOrEmpty(eq.Id))
+                if (null != eq)
                 {
                     IRule first = null, second = null;
-                    if (!string.IsNullOrEmpty(eq.First.Id))
+                    if (null != eq.First)
                     {
                         first = LoadRule(eq.First, step);
                     }
@@ -364,12 +386,12 @@ namespace Mchnry.Flow
 
                     if (null != eq.Second)
                     {
-                        second = LoadRule(eq.Second.Value.Id, step);
+                        second = LoadRule(eq.Second.Id, step);
                     }
                     else
                     {
 
-                        first = new Rule(
+                        second = new Rule(
                             new LogicDefine.Rule() { Id = "true", Context = string.Empty, TrueCondition = true },
                             this);
                     }
@@ -379,7 +401,7 @@ namespace Mchnry.Flow
                 else
                 {
                     LogicDefine.Evaluator ev = this.workFlow.Evaluators.FirstOrDefault(g => g.Id.Equals(rule.Id));
-                    if (!string.IsNullOrEmpty(ev.Id))
+                    if (null != ev)
                     {
                         toReturn = new Rule(rule, this);
                     }
@@ -391,8 +413,8 @@ namespace Mchnry.Flow
 
 
 
-         
-            LogicDefine.Rule eqRule = new LogicDefine.Rule() { Id = equationId, TrueCondition = true };
+
+            LogicDefine.Rule eqRule = equationId;
             IRule loaded = LoadRule(eqRule, root);
 
             return loaded;

@@ -1,6 +1,6 @@
 ﻿namespace Mchnry.Flow.Work.Define
 {
-    public struct ActionDefinition
+    public class ActionDefinition
     {
 
         public string Id { get; set; }
