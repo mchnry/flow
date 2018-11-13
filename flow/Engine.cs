@@ -344,7 +344,7 @@ namespace Mchnry.Flow
 
             //load conventions
             IRuleEvaluator trueEvaluator = new AlwaysTrueEvaluator();
-            this.evaluators.Add("true", trueEvaluator);
+//            this.evaluators.Add("true", trueEvaluator);
             LogicDefine.Evaluator trueDef = new LogicDefine.Evaluator() { Id = "true", Description = "Always True" };
             this.workFlow.Evaluators.Add(trueDef);
 
