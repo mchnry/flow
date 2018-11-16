@@ -101,20 +101,20 @@ namespace Sample
 
             WorkDefine.Workflow sampleWorkflow = new WorkDefine.Workflow()
             {
-                Evaluators = new System.Collections.Generic.List<LogicDefine.Evaluator>()
-                {
-                    new LogicDefine.Evaluator() { Id = "evalProfanity" },
-                    new LogicDefine.Evaluator() { Id = "evalMultiOffender" }
-                },
-                //Equations = new System.Collections.Generic.List<LogicDefine.Equation>()
+                //Evaluators = new System.Collections.Generic.List<LogicDefine.Evaluator>()
                 //{
-                //    new LogicDefine.Equation() { Condition = Mchnry.Flow.Logic.Operand.And, First = "evalProfanity", Id = "toCompletePost" }
+                //    new LogicDefine.Evaluator() { Id = "evalProfanity" },
+                //    new LogicDefine.Evaluator() { Id = "evalMultiOffender" }
                 //},
-                Actions = new System.Collections.Generic.List<WorkDefine.ActionDefinition>()
-                {
-                    new WorkDefine.ActionDefinition() { Id = "WritePost"},
-                    new WorkDefine.ActionDefinition() { Id = "SuspendUser"}
-                },
+                ////Equations = new System.Collections.Generic.List<LogicDefine.Equation>()
+                ////{
+                ////    new LogicDefine.Equation() { Condition = Mchnry.Flow.Logic.Operand.And, First = "evalProfanity", Id = "toCompletePost" }
+                ////},
+                //Actions = new System.Collections.Generic.List<WorkDefine.ActionDefinition>()
+                //{
+                //    new WorkDefine.ActionDefinition() { Id = "WritePost"},
+                //    new WorkDefine.ActionDefinition() { Id = "SuspendUser"}
+                //},
                 Activities = new System.Collections.Generic.List<WorkDefine.Activity>()
                 {
                     new WorkDefine.Activity() {

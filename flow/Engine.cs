@@ -1,5 +1,6 @@
 ﻿using Mchnry.Core.Cache;
 using Mchnry.Flow.Diagnostics;
+using Mchnry.Flow.Exception;
 using Mchnry.Flow.Logic;
 using Mchnry.Flow.Test;
 using Mchnry.Flow.Work;
@@ -17,21 +18,42 @@ namespace Mchnry.Flow
         IEngineLoader, IEngineRunner, IEngineScope, IEngineFinalize, IEngineComplete
     {
 
-        private Dictionary<string, IRuleEvaluator> evaluators = new Dictionary<string, IRuleEvaluator>();
-        private Dictionary<string, bool?> results = new Dictionary<string, bool?>();
-        private Dictionary<string, IRule> expressions = new Dictionary<string, IRule>();
+        //store reference to all factory created actions
         private Dictionary<string, IAction> actions = new Dictionary<string, IAction>();
+        //store references to all factory created evaluators
+        private Dictionary<string, IRuleEvaluator> evaluators = new Dictionary<string, IRuleEvaluator>();
+
+        //store known evaluator results to avoid rerunning already run evaluators
+        private Dictionary<string, bool?> results = new Dictionary<string, bool?>();
+        //store all built expressions
+        private Dictionary<string, IRule> expressions = new Dictionary<string, IRule>();
+
+        //workflow definition provided by caller
         internal WorkDefine.Workflow workFlow;
+
+        //current status of running engine
         private EngineStatusOptions engineStatus = EngineStatusOptions.NotStarted;
+
+        //store all validations created by validators/evaluators
         private ValidationContainer container = new ValidationContainer();
 
+        //store reference to all actions to run during finalize (if all validations succeed)
         private List<IDeferredAction> finalize = new List<IDeferredAction>();
+        //store reference to all actions to run during finalize always
         private List<IDeferredAction> finalizeAlways = new List<IDeferredAction>(); //actions to complete at end regardless of validation state
+
+        //container for all state objects
         private ICacheManager state;
+
+        //action factory provided by caller
         private IActionFactory actionFactory;
+        //evaluator factory provided by caller
         private IRuleEvaluatorFactory ruleEvaluatorFactory;
 
-
+        /// <summary>
+        /// engine construcor
+        /// </summary>
+        /// <param name="workFlow">workflow definition</param>
         internal Engine(WorkDefine.Workflow workFlow)
         {
             this.workFlow = workFlow;
@@ -125,10 +147,10 @@ namespace Mchnry.Flow
 
         async Task<IEngineComplete> IEngineFinalize.FinalizeAsync(CancellationToken token)
         {
-            StepTraceNode<ActivityProcess> mark =  this.Tracer.CurrentStep = this.Tracer.TraceStep(this.Tracer.Root, new ActivityProcess("Finalize", ActivityStatusOptions.Engine_Finalizing, null));
+            StepTraceNode<ActivityProcess> mark = this.Tracer.CurrentStep = this.Tracer.TraceStep(this.Tracer.Root, new ActivityProcess("Finalize", ActivityStatusOptions.Engine_Finalizing, null));
             if (this.container.ResolveValidations())
             {
-                
+
 
                 foreach (IDeferredAction toFinalize in this.finalize)
                 {
@@ -216,9 +238,11 @@ namespace Mchnry.Flow
         internal bool? GetResult(LogicDefine.Rule rule)
         {
             EvaluatorKey key = new EvaluatorKey() { Id = rule.Id, Context = rule.Context };
-            if (results.ContainsKey(key.ToString())) {
+            if (results.ContainsKey(key.ToString()))
+            {
                 return results[key.ToString()];
-            } else
+            }
+            else
             {
                 return null;
             }
@@ -249,10 +273,24 @@ namespace Mchnry.Flow
                 {
 
                     WorkDefine.ActionDefinition def = this.workFlow.Actions.FirstOrDefault(g => g.Id.Equals(actionId));
-                    toReturn = this.actionFactory.GetAction(def);
+
+                    try
+                    {
+                        toReturn = this.actionFactory.GetAction(def);
+                    } catch (System.Exception ex)
+                    {
+                        throw new LoadActionException(actionId, ex);
+                    }
+
+                    if (null == toReturn)
+                    {
+                        throw new LoadActionException(actionId);
+                    }
+
                     this.actions.Add(actionId, toReturn);
                 }
-            } else
+            }
+            else
             {
                 toReturn = this.actions[actionId];
             }
@@ -265,7 +303,19 @@ namespace Mchnry.Flow
             if (!this.evaluators.ContainsKey(id))
             {
                 LogicDefine.Evaluator def = this.workFlow.Evaluators.FirstOrDefault(g => g.Id.Equals(id));
-                toReturn = this.ruleEvaluatorFactory.GetRuleEvaluator(def);
+                try
+                {
+                    toReturn = this.ruleEvaluatorFactory.GetRuleEvaluator(def);
+                } catch (System.Exception ex)
+                {
+                    throw new LoadEvaluatorException(id, ex);
+                }
+
+                if (null == toReturn)
+                {
+                    throw new LoadEvaluatorException(id);
+                }
+
                 this.evaluators.Add(def.Id, toReturn);
             }
             else
@@ -291,8 +341,8 @@ namespace Mchnry.Flow
         {
 
             WorkDefine.Activity definition = this.workFlow.Activities.FirstOrDefault(a => a.Id == activityId);
-            
-   
+
+
 
             Activity toReturn = new Activity(this, definition);
 
@@ -300,6 +350,17 @@ namespace Mchnry.Flow
             LoadReactions = (a, d) =>
             {
                 if (d.Action == null) d.Action = "*placeHolder";
+
+                WorkDefine.ActionDefinition match = this.workFlow.Actions.FirstOrDefault(z => z.Id == d.Action.ActionId);
+                if (null == match)
+                {
+                    this.workFlow.Actions.Add(new WorkDefine.ActionDefinition()
+                    {
+                        Id = d.Action.ActionId,
+                        Description = ""
+                    });
+                }
+
                 if (d.Reactions != null && d.Reactions.Count > 0)
                 {
                     d.Reactions.ForEach(r =>
@@ -311,15 +372,25 @@ namespace Mchnry.Flow
                             //if we can't find activity... look for a matching action.  if found, create an activity from it.
                             WorkDefine.ActionRef asActionRef = r.ActivityId;
                             WorkDefine.ActionDefinition toCreateAction = this.workFlow.Actions.FirstOrDefault(z => z.Id == asActionRef.ActionId);
-                            if (null != toCreateAction)
+
+                            //didn't bother to add the action definition, we will create it for them
+                            if (null == toCreateAction)
                             {
-                                toCreatedef = new WorkDefine.Activity()
+                                this.workFlow.Actions.Add(new WorkDefine.ActionDefinition()
                                 {
-                                    Action = asActionRef,
-                                    Id = Guid.NewGuid().ToString(),
-                                    Reactions = new List<WorkDefine.Reaction>()
-                                };
+                                    Id = asActionRef.ActionId,
+                                    Description = ""
+                                });
                             }
+
+
+                            toCreatedef = new WorkDefine.Activity()
+                            {
+                                Action = asActionRef,
+                                Id = Guid.NewGuid().ToString(),
+                                Reactions = new List<WorkDefine.Reaction>()
+                            };
+
                         }
 
                         a.Reactions = new List<Reaction>();
@@ -344,7 +415,7 @@ namespace Mchnry.Flow
 
             //load conventions
             IRuleEvaluator trueEvaluator = new AlwaysTrueEvaluator();
-//            this.evaluators.Add("true", trueEvaluator);
+            //            this.evaluators.Add("true", trueEvaluator);
             LogicDefine.Evaluator trueDef = new LogicDefine.Evaluator() { Id = "true", Description = "Always True" };
             this.workFlow.Evaluators.Add(trueDef);
 
@@ -401,10 +472,19 @@ namespace Mchnry.Flow
                 else
                 {
                     LogicDefine.Evaluator ev = this.workFlow.Evaluators.FirstOrDefault(g => g.Id.Equals(rule.Id));
-                    if (null != ev)
+
+                    if (null == ev)
                     {
-                        toReturn = new Rule(rule, this);
+                        this.workFlow.Evaluators.Add(new LogicDefine.Evaluator()
+                        {
+                            Id = rule.Id,
+                            Description = string.Empty
+                        });
                     }
+
+
+                    toReturn = new Rule(rule, this);
+
                 }
 
 
@@ -418,12 +498,15 @@ namespace Mchnry.Flow
             IRule loaded = LoadRule(eqRule, root);
 
             return loaded;
-            
+
         }
 
 
         public List<LogicTest> Lint(Action<Linter> addIntents)
         {
+
+       
+
             Linter linter = new Linter(this.workFlow.Evaluators, this.workFlow.Equations);
             addIntents(linter);
 

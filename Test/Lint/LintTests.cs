@@ -32,7 +32,7 @@ namespace Test.Lint
                 new Define.Equation() { Id = "eq1", Condition = Operand.And, First = "ev1", Second = "eq1.1" }
             };
 
-            IEngineLoader e = Engine.CreateEngine(new Mchnry.Flow.Work.Define.Workflow() { Equations = eqs, Evaluators = evals });
+            IEngineLoader e = Mchnry.Flow.Engine.CreateEngine(new Mchnry.Flow.Work.Define.Workflow() { Equations = eqs, Evaluators = evals });
 
             e.Lint((l) => { });
 
@@ -58,7 +58,7 @@ namespace Test.Lint
                 new Define.Equation() { Id = "eq1", Condition = Operand.And, First = "ev1", Second = "eq1.1" }
             };
 
-            IEngineLoader engine = Engine.CreateEngine(new Mchnry.Flow.Work.Define.Workflow() { Equations = eqs, Evaluators = evals })
+            IEngineLoader engine = Mchnry.Flow.Engine.CreateEngine(new Mchnry.Flow.Work.Define.Workflow() { Equations = eqs, Evaluators = evals })
                 .SetEvaluatorFactory(mkFactory.Object);
 
             var tests = engine.Lint((l) => { l.Intent("ev2").HasContext<int>().OneOfInclusive(); });

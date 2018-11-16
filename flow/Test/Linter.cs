@@ -36,6 +36,8 @@ namespace Mchnry.Flow.Test
                                   where !lefts.Contains(e.Id) && !rights.Contains(e.Id)
                                   select e.Id).ToList();
 
+            
+
             this.InferIntent();
         }
 
