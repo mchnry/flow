@@ -393,6 +393,14 @@ namespace Mchnry.Flow
 
                         }
 
+                        if (string.IsNullOrEmpty(r.EquationId))
+                        {
+                            r.EquationId = "true";
+                        }
+
+                        LoadLogic(r.EquationId);
+
+
                         a.Reactions = new List<Reaction>();
                         Activity toCreate = new Activity(this, toCreatedef);
                         LoadReactions(toCreate, toCreatedef);
@@ -416,8 +424,13 @@ namespace Mchnry.Flow
             //load conventions
             IRuleEvaluator trueEvaluator = new AlwaysTrueEvaluator();
             //            this.evaluators.Add("true", trueEvaluator);
-            LogicDefine.Evaluator trueDef = new LogicDefine.Evaluator() { Id = "true", Description = "Always True" };
-            this.workFlow.Evaluators.Add(trueDef);
+            LogicDefine.Evaluator trueDef = this.workFlow.Evaluators.FirstOrDefault(z => z.Id == "true");
+            if (null == trueDef)
+            {
+                trueDef = new LogicDefine.Evaluator() { Id = "true", Description = "Always True" };
+                this.workFlow.Evaluators.Add(trueDef);
+            }
+
 
             List<string> lefts = (from e in this.workFlow.Equations
                                   where e.First != null
