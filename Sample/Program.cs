@@ -65,6 +65,16 @@ namespace Sample
         }
     }
 
+    class DoSomethingAnyway : IAction
+    {
+
+
+        public async Task<bool> CompleteAsync(IEngineScope scope, WorkflowEngineTrace trace, CancellationToken token)
+        {
+            Console.WriteLine("do it anyway");
+            return true;
+        }
+    }
 
     class ActionFactory : IActionFactory
     {
@@ -74,6 +84,7 @@ namespace Sample
             {
                 case "WritePost": return new WritePost();
                 case "SuspendUser": return new SuspendUser();
+                case "DoSomethingAnyway": return new DoSomethingAnyway();
                 default: return null;
             }
         }
@@ -121,7 +132,8 @@ namespace Sample
                         Id = "CompletePost",
                         Action = "WritePost",
                         Reactions = new System.Collections.Generic.List<WorkDefine.Reaction>() {
-                            new WorkDefine.Reaction() { EquationId = "evalMultiOffender", ActivityId = "SuspendUser" }
+                            new WorkDefine.Reaction() { EquationId = "evalMultiOffender", ActivityId = "SuspendUser" },
+                            new WorkDefine.Reaction() { ActivityId = "DoSomethingAnyway" }
                         }
                     },
                     new WorkDefine.Activity() {

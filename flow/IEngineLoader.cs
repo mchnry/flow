@@ -16,6 +16,6 @@ namespace Mchnry.Flow
         IEngineLoader SetActionFactory(IActionFactory factory);
 
         IEngineRunner Start();
-        List<LogicTest> Lint(Action<Linter> addIntents);
+        List<LogicTest> Lint(Action<LogicLinter> addIntents);
     }
 }

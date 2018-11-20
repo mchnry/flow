@@ -53,6 +53,14 @@ namespace Mchnry.Flow
         /// <summary>
         /// engine construcor
         /// </summary>
+        /// <remarks>
+        /// <list type="bullet">
+        /// <item>
+        /// internal so that caller follows fluent construction 
+        /// starting with <see cref="CreateEngine(WorkDefine.Workflow)"/>
+        /// </item>
+        /// </list>
+        /// </remarks>
         /// <param name="workFlow">workflow definition</param>
         internal Engine(WorkDefine.Workflow workFlow)
         {
@@ -300,6 +308,12 @@ namespace Mchnry.Flow
         internal IRuleEvaluator GetEvaluator(string id)
         {
             IRuleEvaluator toReturn = default(IRuleEvaluator);
+
+            if (id == "true")
+            {
+                return new AlwaysTrueEvaluator();
+            } 
+
             if (!this.evaluators.ContainsKey(id))
             {
                 LogicDefine.Evaluator def = this.workFlow.Evaluators.FirstOrDefault(g => g.Id.Equals(id));
@@ -400,8 +414,10 @@ namespace Mchnry.Flow
 
                         LoadLogic(r.EquationId);
 
-
-                        a.Reactions = new List<Reaction>();
+                        if (null == a.Reactions)
+                        {
+                            a.Reactions = new List<Reaction>();
+                        }
                         Activity toCreate = new Activity(this, toCreatedef);
                         LoadReactions(toCreate, toCreatedef);
                         a.Reactions.Add(new Reaction(r.EquationId, toCreate));
@@ -515,12 +531,12 @@ namespace Mchnry.Flow
         }
 
 
-        public List<LogicTest> Lint(Action<Linter> addIntents)
+        public List<LogicTest> Lint(Action<LogicLinter> addIntents)
         {
 
        
 
-            Linter linter = new Linter(this.workFlow.Evaluators, this.workFlow.Equations);
+            LogicLinter linter = new LogicLinter(this.workFlow.Evaluators, this.workFlow.Equations);
             addIntents(linter);
 
 

@@ -7,14 +7,14 @@ namespace Mchnry.Flow.Test
 {
 
 
-    public class Intent
+    public class LogicIntent
     {
 
         internal readonly string evaluatorId;
 
         public IContext Context { get; set; } = default(IContext);
 
-        public Intent(string evaluatorId)
+        public LogicIntent(string evaluatorId)
         {
             this.evaluatorId = evaluatorId;
         }

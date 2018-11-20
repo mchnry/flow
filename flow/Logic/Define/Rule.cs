@@ -3,7 +3,7 @@ using System;
 
 namespace Mchnry.Flow.Logic.Define
 {
-    public class Rule
+    public class Rule: ICloneable
     {
 
         public static implicit operator Rule(string shortHand)
@@ -32,5 +32,10 @@ namespace Mchnry.Flow.Logic.Define
         public string Context { get; set; }
         [JsonProperty(PropertyName = "t")]
         public bool TrueCondition { get; set; }
+
+        public object Clone()
+        {
+            return new Rule() { Context = this.Context, Id = this.Id, TrueCondition = this.TrueCondition };
+        }
     }
 }

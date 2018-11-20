@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Mchnry.Flow.Test
 {
-    public class Linter
+    public class LogicLinter
     {
         private readonly List<Evaluator> evaluatorDefinitions;
         private readonly List<Equation> equationDefinitions;
@@ -18,7 +18,7 @@ namespace Mchnry.Flow.Test
 
         internal Dictionary<string, List<Case>> EquationTests { get; set; } = new Dictionary<string, List<Case>>();
 
-        internal Linter(List<Evaluator> evaluatorDefinitions,
+        internal LogicLinter(List<Evaluator> evaluatorDefinitions,
             List<Equation> equationDefinitions)
         {
             this.evaluatorDefinitions = evaluatorDefinitions;
@@ -42,7 +42,7 @@ namespace Mchnry.Flow.Test
         }
 
 
-        private void InferIntent()
+        internal void InferIntent()
         {
             List<string> evalIds = (from e in this.evaluatorDefinitions select e.Id).ToList();
             List<Rule> evalRules = (from l in this.equationDefinitions
@@ -56,26 +56,26 @@ namespace Mchnry.Flow.Test
             hasContext.ForEach(x =>
             {
                 List<string> options = (from r in evalRules where r.Id == x select r.Context).Distinct().ToList();
-                Intent toAdd = new Intent(x);
+                LogicIntent toAdd = new LogicIntent(x);
                 toAdd.HasContext<string>().HasValues(options).OneOfExcusive();
                 this.Intents.Add(toAdd);
             });
         }
 
 
-        internal List<Intent> Intents { get; set; } = new List<Intent>();
+        internal List<LogicIntent> Intents { get; set; } = new List<LogicIntent>();
 
-        public Intent Intent(string evaluatorId)
+        public LogicIntent Intent(string evaluatorId)
         {
-            Intent match = this.Intents.FirstOrDefault(g => g.evaluatorId == evaluatorId);
-            Intent toAdd = default(Intent);
+            LogicIntent match = this.Intents.FirstOrDefault(g => g.evaluatorId == evaluatorId);
+            LogicIntent toAdd = default(LogicIntent);
             if (match != null)
             {
                 toAdd = match;
             }
             else
             {
-                toAdd = new Intent(evaluatorId);
+                toAdd = new LogicIntent(evaluatorId);
                 this.Intents.Add(toAdd);
             }
             
@@ -96,7 +96,7 @@ namespace Mchnry.Flow.Test
                 List<Case> resolved = new List<Case>();
                 new bool[] { true, false }.ToList().ForEach(t =>
                   {
-                      Rule conditional = rules[ordinal];
+                      Rule conditional = (Rule)rules[ordinal].Clone();
                       conditional.TrueCondition = t;
                       
                       if (childCases != null)
@@ -178,7 +178,7 @@ namespace Mchnry.Flow.Test
                 if (this.Intents.Count > 0)
                 {
                     List<string> myEvals = (from i in equationRules select i.Id).Distinct().ToList();
-                    List<Intent> myIntents = (from i in this.Intents where myEvals.Contains(i.evaluatorId) select i).ToList();
+                    List<LogicIntent> myIntents = (from i in this.Intents where myEvals.Contains(i.evaluatorId) select i).ToList();
 
                     myIntents.ForEach(i =>
                     {
@@ -243,6 +243,15 @@ namespace Mchnry.Flow.Test
 
         }
        
+
+    }
+
+    internal class ActivityLinter
+    {
+        //what logic cases result in reaction
+        //any activities where no reaction is executed
+
+
 
     }
 }
