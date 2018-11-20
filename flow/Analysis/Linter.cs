@@ -4,7 +4,7 @@ using System.Text;
 using Mchnry.Flow.Logic.Define;
 using System.Linq;
 
-namespace Mchnry.Flow.Test
+namespace Mchnry.Flow.Analysis
 {
     public class LogicLinter
     {
@@ -250,6 +250,8 @@ namespace Mchnry.Flow.Test
     {
         //what logic cases result in reaction
         //any activities where no reaction is executed
+
+        //for each activity ... 
 
 
 

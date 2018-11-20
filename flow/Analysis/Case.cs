@@ -4,7 +4,7 @@ using System.Text;
 using Mchnry.Flow.Logic.Define;
 using System.Linq;
 
-namespace Mchnry.Flow.Test
+namespace Mchnry.Flow.Analysis
 {
     public class Case: ICloneable
     {

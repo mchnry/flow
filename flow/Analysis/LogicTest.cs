@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Mchnry.Flow.Test
+namespace Mchnry.Flow.Analysis
 {
     public class LogicTest
     {
