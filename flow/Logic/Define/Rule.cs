@@ -11,7 +11,7 @@ namespace Mchnry.Flow.Logic.Define
             string toParts = shortHand ?? throw new ArgumentNullException("shortHand");
 
             bool trueCondition = !toParts.StartsWith('!');
-            toParts.Replace("|", string.Empty);
+            toParts = toParts.Replace("!", string.Empty);
 
             string[] parts = toParts.Split('|');
             string id = parts[0];

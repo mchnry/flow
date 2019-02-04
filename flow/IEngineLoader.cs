@@ -1,9 +1,9 @@
-﻿using Mchnry.Flow.Logic;
-using Mchnry.Flow.Analysis;
+﻿using Mchnry.Flow.Analysis;
+using Mchnry.Flow.Logic;
 using Mchnry.Flow.Work;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using WorkDefine = Mchnry.Flow.Work.Define;
 
 namespace Mchnry.Flow
 {
@@ -17,5 +17,6 @@ namespace Mchnry.Flow
 
         IEngineRunner Start();
         List<LogicTest> Lint(Action<LogicLinter> addIntents);
+        WorkDefine.Workflow Workflow { get; }
     }
 }

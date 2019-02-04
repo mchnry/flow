@@ -10,15 +10,10 @@ namespace Mchnry.Flow.Work.Define
 
         public Workflow()
         {
-            this.Evaluators = new List<Evaluator>();
-            this.Equations = new List<Equation>();
-            this.Actions = new List<ActionDefinition>();
-            this.Activities = new List<Activity>();
-
         }
-        public List<Evaluator> Evaluators { get; set; }
-        public List<Equation> Equations { get; set; }
-        public List<ActionDefinition> Actions { get; set; }
-        public List<Activity> Activities { get; set; }
-    }
+        public List<Evaluator> Evaluators { get; set; } = new List<Evaluator>();
+        public List<Equation> Equations { get; set; } = new List<Equation>();
+        public List<ActionDefinition> Actions { get; set; } = new List<ActionDefinition>();
+        public List<Activity> Activities { get; set; } = new List<Activity>();
+    } 
 }

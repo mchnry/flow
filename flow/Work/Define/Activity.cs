@@ -17,9 +17,9 @@ namespace Mchnry.Flow.Work.Define
     {
 
 
-        [JsonProperty("EQId")]
-        public string EquationId { get; set; }
-        [JsonProperty("XVId")]
-        public string ActivityId { get; set; }
+        [JsonProperty("L")]
+        public string Logic { get; set; }
+        [JsonProperty("W")]
+        public string Work { get; set; }
     }
 }

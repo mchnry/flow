@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Mchnry.Flow;
+using Mchnry.Flow.Analysis;
 using Mchnry.Flow.Diagnostics;
 using Mchnry.Flow.Logic;
 using Mchnry.Flow.Work;
@@ -110,7 +112,63 @@ namespace Sample
         public static async Task Main(string[] args)
         {
 
-            WorkDefine.Workflow sampleWorkflow = new WorkDefine.Workflow()
+            Sanitize();
+
+            Console.ReadLine();
+
+        }
+
+        private static void Sanitize()
+        {
+            WorkDefine.Workflow sample = new WorkDefine.Workflow()
+            {
+                Equations = new List<LogicDefine.Equation>()
+                {
+                    new LogicDefine.Equation() { First = "evaluator.test1", Id = "equation.test1" }
+                },
+                Activities = new List<WorkDefine.Activity>()
+                {
+                    new WorkDefine.Activity() {
+                        Action = "action.main",
+                        Id = "activity.main",
+                        Reactions = new List<WorkDefine.Reaction>()
+                        {
+                            new WorkDefine.Reaction()
+                            {
+                                Logic = "!evaluator.shouldidosomething|123",
+                                Work = "action.dosomething|abc"
+                            },
+                            new WorkDefine.Reaction()
+                            {
+                                Logic = "!equation.test1", Work = "action.dosomethingelse"
+                            }
+                        }
+                    }
+                }
+            };
+
+            var engineRef = Engine.CreateEngine(sample, (c) =>
+            {
+               
+            });
+
+            engineRef.Lint((l) => { });
+
+
+            string s = JsonConvert.SerializeObject(engineRef.Workflow, Formatting.Indented, new JsonSerializerSettings()
+            {
+                Formatting = Formatting.Indented,
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            });
+            Console.WriteLine(s);
+
+
+            
+        }
+
+
+        /*
+                    WorkDefine.Workflow sampleWorkflow = new WorkDefine.Workflow()
             {
                 //Evaluators = new System.Collections.Generic.List<LogicDefine.Evaluator>()
                 //{
@@ -132,8 +190,8 @@ namespace Sample
                         Id = "CompletePost",
                         Action = "WritePost",
                         Reactions = new System.Collections.Generic.List<WorkDefine.Reaction>() {
-                            new WorkDefine.Reaction() { EquationId = "evalMultiOffender", ActivityId = "SuspendUser" },
-                            new WorkDefine.Reaction() { ActivityId = "DoSomethingAnyway" }
+                            new WorkDefine.Reaction() { Logic = "evalMultiOffender", Work = "SuspendUser" },
+                            new WorkDefine.Reaction() { Work = "DoSomethingAnyway" }
                         }
                     },
                     new WorkDefine.Activity() {
@@ -141,7 +199,7 @@ namespace Sample
                         //notice that there is no action referenced... engine will inject a placeholder
                         Reactions = new System.Collections.Generic.List<WorkDefine.Reaction>()
                         {
-                            new WorkDefine.Reaction() { EquationId = "evalProfanity", ActivityId = "CompletePost" }
+                            new WorkDefine.Reaction() { Logic = "evalProfanity", Work = "CompletePost" }
                         }
                     }
                 }
@@ -168,7 +226,6 @@ namespace Sample
             Console.WriteLine(s);
 
             Console.ReadLine();
-
-        }
+        */
     }
 }

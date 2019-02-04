@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
     <AssemblyName>Mchnry.Flow</AssemblyName>
     <RootNamespace>Mchnry.Flow</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="mchnry.core" Version="1.0.0" />
-    <PackageReference Include="newtonsoft.json" Version="11.0.2" />
+    <PackageReference Include="newtonsoft.json" Version="12.0.1" />
   </ItemGroup>
 
 </Project>
