@@ -1,6 +1,6 @@
 ﻿using Mchnry.Core.Cache;
 using Mchnry.Flow.Diagnostics;
-using Mchnry.Flow.Exception;
+using Mchnry.Flow;
 using Mchnry.Flow.Logic;
 using Mchnry.Flow.Analysis;
 using Mchnry.Flow.Work;
@@ -558,6 +558,11 @@ namespace Mchnry.Flow
         {
             StepTracer<string> lintTrace = new StepTracer<string>();
             lintTrace.TraceFirst("Linting");
+
+
+            //follows convention
+
+
             Sanitizer sanitizer = new Sanitizer(lintTrace, this.Configuration);
             WorkDefine.Workflow sanitized = sanitizer.Sanitize(this.workFlow);
 

@@ -1,5 +1,5 @@
 ﻿using Mchnry.Flow.Diagnostics;
-using Mchnry.Flow.Exception;
+using Mchnry.Flow;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

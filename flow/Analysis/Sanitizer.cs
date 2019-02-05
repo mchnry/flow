@@ -1,11 +1,10 @@
-﻿using Mchnry.Flow.Diagnostics;
+﻿using Mchnry.Flow.Configuration;
+using Mchnry.Flow.Diagnostics;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using WorkDefine = Mchnry.Flow.Work.Define;
-using LogicDefine = Mchnry.Flow.Logic.Define;
 using System.Linq;
-using Mchnry.Flow.Configuration;
+using LogicDefine = Mchnry.Flow.Logic.Define;
+using WorkDefine = Mchnry.Flow.Work.Define;
 
 namespace Mchnry.Flow.Analysis
 {
@@ -24,7 +23,7 @@ namespace Mchnry.Flow.Analysis
         public WorkDefine.Workflow Sanitize(WorkDefine.Workflow toSanitize)
         {
             List<string> activityIds = (from a in toSanitize.Activities select a.Id).ToList();
-            foreach(string a in activityIds)
+            foreach (string a in activityIds)
             {
                 LoadActivity(toSanitize, a);
             }
@@ -36,7 +35,7 @@ namespace Mchnry.Flow.Analysis
 
             WorkDefine.Activity definition = workFlow.Activities.FirstOrDefault(a => a.Id == activityId);
 
-            
+
             Action<WorkDefine.Activity, bool> LoadReactions = null;
             LoadReactions = (d, isroot) =>
             {
@@ -76,14 +75,17 @@ namespace Mchnry.Flow.Analysis
                                 if (isroot)
                                 {
                                     string newId = ConventionHelper.ChangePrefix(NamePrefixOptions.Action, NamePrefixOptions.Activity, asActionRef.ActionId, this.config.Convention);
-                                    WorkDefine.Activity toAdd = new WorkDefine.Activity()
+                                    if (workFlow.Activities.Count(g => g.Id == newId) == 0)
                                     {
-                                        Action = asActionRef,
-                                       
-                                        Id = newId,
-                                        Reactions = null
-                                    };
-                                    workFlow.Activities.Add(toAdd);
+                                        WorkDefine.Activity toAdd = new WorkDefine.Activity()
+                                        {
+                                            Action = asActionRef,
+
+                                            Id = newId,
+                                            Reactions = null
+                                        };
+                                        workFlow.Activities.Add(toAdd);
+                                    }
                                     r.Work = newId;
                                 }
                             }
@@ -107,7 +109,7 @@ namespace Mchnry.Flow.Analysis
 
 
                         LoadReactions(toCreatedef, false);
-                 
+
                     });
                 }
 
@@ -115,7 +117,7 @@ namespace Mchnry.Flow.Analysis
 
             LoadReactions(definition, true);
 
- 
+
 
         }
 
@@ -158,12 +160,12 @@ namespace Mchnry.Flow.Analysis
             LoadRule = (rule, parentStep, isRoot) =>
             {
                 StepTraceNode<string> step = this.tracer.TraceNext(parentStep, rule.Id);
-               
+
                 //if id is an equation, we are creating an expression
                 LogicDefine.Equation eq = workFlow.Equations.FirstOrDefault(g => g.Id.Equals(rule.Id));
                 if (null != eq)
                 {
-                   
+
                     if (null != eq.First)
                     {
                         LoadRule(eq.First, step, false);
@@ -182,7 +184,7 @@ namespace Mchnry.Flow.Analysis
 
                         eq.Second = new LogicDefine.Rule() { Id = "true", Context = string.Empty, TrueCondition = true };
                     }
-                    
+
                     if (!rule.TrueCondition)
                     {
                         //create a negation equation.
@@ -190,14 +192,17 @@ namespace Mchnry.Flow.Analysis
                         LogicDefine.Rule negated = (LogicDefine.Rule)rule.Clone();
                         negated.TrueCondition = false;
 
-                        LogicDefine.Equation toAdd = new LogicDefine.Equation()
+                        if (workFlow.Equations.Count(g => g.Id == negationId) == 0)
                         {
-                            First = negated,
-                            Id = negationId,
-                            Condition = Logic.Operand.And,
-                            Second = "true"
-                        };
-                        workFlow.Equations.Add(toAdd);
+                            LogicDefine.Equation toAdd = new LogicDefine.Equation()
+                            {
+                                First = negated,
+                                Id = negationId,
+                                Condition = Logic.Operand.And,
+                                Second = "true"
+                            };
+                            workFlow.Equations.Add(toAdd);
+                        }
                         rule.Id = negationId;
                     }
 
@@ -211,18 +216,27 @@ namespace Mchnry.Flow.Analysis
 
                     if (null == ev)
                     {
-                        workFlow.Evaluators.Add(new LogicDefine.Evaluator()
+                        ev = new LogicDefine.Evaluator()
                         {
                             Id = rule.Id,
                             Description = string.Empty
-                        });
+                        };
 
-                        //if this is the rule referenced by the reaction, then create an equation also,
-                        //and  update the equation.  This isn't necessary, but consistent.
-                        if (isRoot)
+                        workFlow.Evaluators.Add(ev);
+                    }
+
+                    //if this is the rule referenced by the reaction, then create an equation also,
+                    //and  update the equation.  This isn't necessary, but consistent.
+                    if (isRoot)
+                    {
+                        LogicDefine.Rule cloned = (LogicDefine.Rule)rule.Clone();
+                        string newId = ConventionHelper.ChangePrefix(NamePrefixOptions.Evaluator, NamePrefixOptions.Equation, rule.Id, this.config.Convention);
+                        if (!rule.TrueCondition)
                         {
-                            LogicDefine.Rule cloned = (LogicDefine.Rule) rule.Clone();
-                            string newId = ConventionHelper.ChangePrefix(NamePrefixOptions.Evaluator, NamePrefixOptions.Equation, rule.Id, this.config.Convention);
+                            newId = ConventionHelper.NegateEquationName(newId, this.config.Convention);
+                        }
+                        if (workFlow.Equations.Count(g => g.Id == newId) == 0)
+                        {
                             workFlow.Equations.Add(new LogicDefine.Equation()
                             {
                                 Condition = Logic.Operand.And,
@@ -230,11 +244,12 @@ namespace Mchnry.Flow.Analysis
                                 Second = "true",
                                 Id = newId
                             });
-                            rule.Id = newId;
-
                         }
+                        rule.Id = newId;
 
                     }
+
+
 
 
 

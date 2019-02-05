@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Mchnry.Flow.Exception
+namespace Mchnry.Flow
 {
     public class LoadEvaluatorException : System.Exception
     {
