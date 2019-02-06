@@ -559,9 +559,16 @@ namespace Mchnry.Flow
             StepTracer<LintTrace> lintTrace = new StepTracer<LintTrace>();
             lintTrace.TraceFirst(new LintTrace(LintStatusOptions.Linting, "Starting Lint"));
 
-
+            //before sanitize
             //follows convention
 
+            //after sanitize
+            //any unused evaluators or actions
+
+            //identify main activities
+
+            //get test cases
+            //look for irrelevant evaluators (i.e., doesnt matter in any case if true or false)
 
             Sanitizer sanitizer = new Sanitizer(lintTrace, this.Configuration);
             WorkDefine.Workflow sanitized = sanitizer.Sanitize(this.workFlow);
