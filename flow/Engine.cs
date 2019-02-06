@@ -452,8 +452,8 @@ namespace Mchnry.Flow
 
         private IRule LoadLogic(string equationId)
         {
-            StepTracer<string> trace = new StepTracer<string>();
-            StepTraceNode<string> root = trace.TraceFirst("Load");
+            StepTracer<LintTrace> trace = new StepTracer<LintTrace>();
+            StepTraceNode<LintTrace> root = trace.TraceFirst(new LintTrace(LintStatusOptions.Loading, "Loading Logic", equationId));
 
             //load conventions
             IRuleEvaluator trueEvaluator = new AlwaysTrueEvaluator();
@@ -480,10 +480,10 @@ namespace Mchnry.Flow
 
 
             //Lint.... make sure we have everything we need first.
-            Func<LogicDefine.Rule, StepTraceNode<string>, IRule> LoadRule = null;
+            Func<LogicDefine.Rule, StepTraceNode<LintTrace>, IRule> LoadRule = null;
             LoadRule = (rule, parentStep) =>
             {
-                StepTraceNode<string> step = trace.TraceNext(parentStep, rule.Id);
+                StepTraceNode<LintTrace> step = trace.TraceNext(parentStep, new LintTrace(LintStatusOptions.Inspecting, "Inspecting Rule", rule.Id));
                 IRule toReturn = null;
                 //if id is an equation, we are creating an expression
                 LogicDefine.Equation eq = this.workFlow.Equations.FirstOrDefault(g => g.Id.Equals(rule.Id));
@@ -556,8 +556,8 @@ namespace Mchnry.Flow
 
         public List<LogicTest> Lint(Action<LogicLinter> addIntents)
         {
-            StepTracer<string> lintTrace = new StepTracer<string>();
-            lintTrace.TraceFirst("Linting");
+            StepTracer<LintTrace> lintTrace = new StepTracer<LintTrace>();
+            lintTrace.TraceFirst(new LintTrace(LintStatusOptions.Linting, "Starting Lint"));
 
 
             //follows convention

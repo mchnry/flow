@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Mchnry.Flow.Diagnostics
 {
@@ -69,15 +70,20 @@ namespace Mchnry.Flow.Diagnostics
 
         public StepTraceNode<T> Root { get; private set; }
 
+        internal List<StepTraceNode<T>> AllNodes { get; set; }
+
         public StepTracer() { }
 
         internal StepTraceNode<T> TraceFirst(T value)
         {
+
             if (this.Root != null)
             {
                 throw new InvalidOperationException("StepTracer already initialized");
             }
+            AllNodes = new List<StepTraceNode<T>>();
             this.Root = new StepTraceNode<T>(null, value);
+            AllNodes.Add(this.Root);
             return this.Root;
         }
 
@@ -86,6 +92,7 @@ namespace Mchnry.Flow.Diagnostics
         {
             StepTraceNode<T> toAdd = new StepTraceNode<T>(parent, value);
             parent.Children.Add(toAdd);
+            AllNodes.Add(toAdd);
             return toAdd;
         }
     }

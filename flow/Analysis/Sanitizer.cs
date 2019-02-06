@@ -11,10 +11,10 @@ namespace Mchnry.Flow.Analysis
     public sealed class Sanitizer
     {
 
-        StepTracer<string> tracer;
+        StepTracer<LintTrace> tracer;
         Configuration.Config config;
 
-        public Sanitizer(StepTracer<string> tracer, Configuration.Config config)
+        public Sanitizer(StepTracer<LintTrace> tracer, Configuration.Config config)
         {
             this.tracer = tracer;
             this.config = config;
@@ -129,7 +129,7 @@ namespace Mchnry.Flow.Analysis
         private string LoadLogic(WorkDefine.Workflow workFlow, string equationId)
         {
 
-            StepTraceNode<string> root = this.tracer.Root;
+            StepTraceNode<LintTrace> root = this.tracer.Root;
 
 
             //load conventions
@@ -156,10 +156,10 @@ namespace Mchnry.Flow.Analysis
 
 
             //Lint.... make sure we have everything we need first.
-            Action<LogicDefine.Rule, StepTraceNode<string>, bool> LoadRule = null;
+            Action<LogicDefine.Rule, StepTraceNode<LintTrace>, bool> LoadRule = null;
             LoadRule = (rule, parentStep, isRoot) =>
             {
-                StepTraceNode<string> step = this.tracer.TraceNext(parentStep, rule.Id);
+                StepTraceNode<LintTrace> step = this.tracer.TraceNext(parentStep, new LintTrace(LintStatusOptions.Inspecting, "Inspecting Rule", rule.Id));
 
                 //if id is an equation, we are creating an expression
                 LogicDefine.Equation eq = workFlow.Equations.FirstOrDefault(g => g.Id.Equals(rule.Id));
@@ -194,6 +194,7 @@ namespace Mchnry.Flow.Analysis
 
                         if (workFlow.Equations.Count(g => g.Id == negationId) == 0)
                         {
+                            this.tracer.TraceNext(parentStep, new LintTrace(LintStatusOptions.InferringEquation, string.Format("Inferring negation equation from {0}", rule.Id), negationId));
                             LogicDefine.Equation toAdd = new LogicDefine.Equation()
                             {
                                 First = negated,
@@ -216,6 +217,7 @@ namespace Mchnry.Flow.Analysis
 
                     if (null == ev)
                     {
+                        this.tracer.TraceNext(parentStep, new LintTrace(LintStatusOptions.LazyDefinition, "No definition found for evaluator", rule.Id));
                         ev = new LogicDefine.Evaluator()
                         {
                             Id = rule.Id,
@@ -237,6 +239,7 @@ namespace Mchnry.Flow.Analysis
                         }
                         if (workFlow.Equations.Count(g => g.Id == newId) == 0)
                         {
+                            this.tracer.TraceNext(parentStep, new LintTrace(LintStatusOptions.InferringEquation, string.Format("Inferring equation from {0}", rule.Id), newId));
                             workFlow.Equations.Add(new LogicDefine.Equation()
                             {
                                 Condition = Logic.Operand.And,
