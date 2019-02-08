@@ -64,14 +64,14 @@ namespace Test.Lint
             var tests = engine.Lint((l) => { l.Intent("ev2").HasContext<int>().OneOfInclusive(); });
 
             //there is only one root equation, so only one test case
-            Assert.True(tests.Count == 1);
+            Assert.True(tests.LogicTests.Count == 1);
             //ev1 can be true or false.... ev2 is only one / inclusive, so there is a true for each context, and a case where niether are true.... so 6 casees
             //ev1   ev2|1   ev2|2
             //true  true    false
             //true  false   true
             //true  false   false
             //... same for ev1 = false
-            Assert.True(tests[0].TestCases.Count == 6);
+            Assert.True(tests.LogicTests[0].TestCases.Count == 6);
 
         }
 

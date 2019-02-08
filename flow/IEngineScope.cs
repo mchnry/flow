@@ -9,6 +9,8 @@ namespace Mchnry.Flow
     public interface IEngineScope
     {
 
+
+
         T GetModel<T>(string key);
         void SetModel<T>(string key, T value);
         T GetActivityModel<T>(string key);

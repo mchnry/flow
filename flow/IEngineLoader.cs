@@ -16,7 +16,7 @@ namespace Mchnry.Flow
         IEngineLoader SetActionFactory(IActionFactory factory);
 
         IEngineRunner Start();
-        List<LogicTest> Lint(Action<LogicLinter> addIntents);
+        LintResult Lint(Action<LogicLinter> addIntents);
         WorkDefine.Workflow Workflow { get; }
     }
 }

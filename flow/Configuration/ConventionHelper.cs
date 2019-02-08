@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Mchnry.Flow.Configuration
 {
@@ -26,16 +24,21 @@ namespace Mchnry.Flow.Configuration
             {
                 throw new ConventionMisMatchException(currentName, "Cannot change evaluator to action/activity");
             }
-            if ((from == NamePrefixOptions.Action || from == NamePrefixOptions.Activity) && (to == NamePrefixOptions.Equation || to == NamePrefixOptions.Evaluator)) {
+            if ((from == NamePrefixOptions.Action || from == NamePrefixOptions.Activity) && (to == NamePrefixOptions.Equation || to == NamePrefixOptions.Evaluator))
+            {
                 throw new ConventionMisMatchException(currentName, "Cannot change action to evaluator/equation");
             }
             if (currentName.IndexOf(fromPrefix) == -1)
             {
                 throw new ConventionMisMatchException(currentName, string.Format("{0} not found in {1}", fromPrefix, currentName));
-            } else
-            
+            }
+            else
+            {
 
-            toReturn = currentName.Replace(fromPrefix, toPrefix, StringComparison.OrdinalIgnoreCase);
+         
+               
+                toReturn = currentName.Replace(fromPrefix, toPrefix);
+            }
             return toReturn;
         }
 
@@ -45,7 +48,7 @@ namespace Mchnry.Flow.Configuration
 
 
             string toReplace = convention.GetPrefix(NamePrefixOptions.Equation) + convention.Delimeter;
-            string toReturn = currentName.Replace(toReplace, "", StringComparison.OrdinalIgnoreCase);
+            string toReturn = currentName.Replace(toReplace, "");
 
             if (currentName.IndexOf(toReplace) == -1)
             {
@@ -57,5 +60,12 @@ namespace Mchnry.Flow.Configuration
             return toReturn;
         }
 
+
+        public static bool MatchesConvention(NamePrefixOptions conventionToCheck, string Id, Convention convention)
+        {
+            string toCheck = convention.GetPrefix(conventionToCheck) + convention.Delimeter;
+            return Id.StartsWith(toCheck);
+
+        }
     }
 }

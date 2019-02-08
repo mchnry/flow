@@ -11,6 +11,9 @@ namespace Mchnry.Flow.Work.Define
         public Workflow()
         {
         }
+
+        public string LintHash { get; set; }
+
         public List<Evaluator> Evaluators { get; set; } = new List<Evaluator>();
         public List<Equation> Equations { get; set; } = new List<Equation>();
         public List<ActionDefinition> Actions { get; set; } = new List<ActionDefinition>();

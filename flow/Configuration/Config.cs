@@ -8,5 +8,7 @@ namespace Mchnry.Flow.Configuration
     {
         public Convention Convention { get; set; } = new Convention();
 
+        public bool ValidateLintHash { get; set; } = true;
+
     }
 }

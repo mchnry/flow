@@ -20,6 +20,8 @@ namespace Mchnry.Flow
     {
 
         internal Config Configuration;
+        internal bool Sanitized = false;
+        private StepTracer<LintTrace> lintTracer = default(StepTracer<LintTrace>);
 
         //store reference to all factory created actions
         private Dictionary<string, IAction> actions = new Dictionary<string, IAction>();
@@ -74,7 +76,7 @@ namespace Mchnry.Flow
             this.Tracer = new EngineStepTracer(new ActivityProcess("CreateEngine", ActivityStatusOptions.Engine_Loading, null));
 
             this.state = new MemoryCacheManager();
-
+            this.Sanitized = false;
         }
         public static IEngineLoader CreateEngine(WorkDefine.Workflow workFlow)
         {
@@ -155,6 +157,11 @@ namespace Mchnry.Flow
 
         async Task<IEngineFinalize> IEngineRunner.ExecuteAsync(string activityId, CancellationToken token)
         {
+
+            if (!this.Sanitized)
+            {
+                this.Sanitize();
+            }
             Activity toLoad = this.LoadActivity(activityId);
 
             this.Tracer.CurrentStep = this.Tracer.TraceStep(this.Tracer.Root, new ActivityProcess("Execute", ActivityStatusOptions.Engine_Begin, null));
@@ -257,6 +264,7 @@ namespace Mchnry.Flow
 
         IEngineRunner IEngineLoader.Start()
         {
+            
             return this;
         }
 
@@ -456,8 +464,13 @@ namespace Mchnry.Flow
             StepTraceNode<LintTrace> root = trace.TraceFirst(new LintTrace(LintStatusOptions.Loading, "Loading Logic", equationId));
 
             //load conventions
-            IRuleEvaluator trueEvaluator = new AlwaysTrueEvaluator();
-            //            this.evaluators.Add("true", trueEvaluator);
+            
+            if (this.evaluators.Count(g => g.Key == "true") == 0)
+            {
+                IRuleEvaluator trueEvaluator = new AlwaysTrueEvaluator();
+                this.evaluators.Add("true", trueEvaluator);
+            }
+             
             //LogicDefine.Evaluator trueDef = this.workFlow.Evaluators.FirstOrDefault(z => z.Id == "true");
             //if (null == trueDef)
             //{
@@ -486,58 +499,23 @@ namespace Mchnry.Flow
                 StepTraceNode<LintTrace> step = trace.TraceNext(parentStep, new LintTrace(LintStatusOptions.Inspecting, "Inspecting Rule", rule.Id));
                 IRule toReturn = null;
                 //if id is an equation, we are creating an expression
-                LogicDefine.Equation eq = this.workFlow.Equations.FirstOrDefault(g => g.Id.Equals(rule.Id));
 
-                IRule first = LoadRule(eq.First, step);
-                IRule second = LoadRule(eq.Second, step);
-                toReturn = new Expression(rule, eq.Condition, first, second, this);
+                //since we've formalized convention, we can just check that
+                if (ConventionHelper.MatchesConvention(NamePrefixOptions.Equation, rule.Id, this.Configuration.Convention))
+                {
+                    LogicDefine.Equation eq = this.workFlow.Equations.FirstOrDefault(g => g.Id.Equals(rule.Id));
 
-                //if (null != eq)
-                //{
-                //    IRule first = null, second = null;
-                //    if (null != eq.First)
-                //    {
-                //        first = LoadRule(eq.First, step);
-                //    }
-                //    else
-                //    {
-                //        //should never hit this... sanitizer should have ensured the def exists
-                //        first = new Rule(
-                //            new LogicDefine.Rule() { Id = "true", Context = string.Empty, TrueCondition = true },
-                //            this);
-                //    }
-
-                //    if (null != eq.Second)
-                //    {
-                //        second = LoadRule(eq.Second.Id, step);
-                //    }
-                //    else
-                //    {
-
-                //        second = new Rule(
-                //            new LogicDefine.Rule() { Id = "true", Context = string.Empty, TrueCondition = true },
-                //            this);
-                //    }
-                //    toReturn = new Expression(rule, eq.Condition, first, second, this);
-
-                //}
-                //else
-                //{
-                //    LogicDefine.Evaluator ev = this.workFlow.Evaluators.FirstOrDefault(g => g.Id.Equals(rule.Id));
-
-                //    if (null == ev)
-                //    {
-                //        this.workFlow.Evaluators.Add(new LogicDefine.Evaluator()
-                //        {
-                //            Id = rule.Id,
-                //            Description = string.Empty
-                //        });
-                //    }
+                    IRule first = LoadRule(eq.First, step);
+                    IRule second = LoadRule(eq.Second, step);
+                    toReturn = new Expression(rule, eq.Condition, first, second, this);
+                } else
+                {
+                    LogicDefine.Evaluator ev = this.workFlow.Evaluators.FirstOrDefault(g => g.Id.Equals(rule.Id));
+                    toReturn = new Rule(rule, this);
+                }
 
 
-                //    toReturn = new Rule(rule, this);
 
-                //}
 
 
                 return toReturn;
@@ -554,7 +532,26 @@ namespace Mchnry.Flow
         }
 
 
-        public List<LogicTest> Lint(Action<LogicLinter> addIntents)
+        public LintResult Lint(Action<LogicLinter> addIntents)
+        {
+            if (!this.Sanitized)
+            {
+                this.Sanitize();
+            }
+
+            LogicLinter linter = new LogicLinter(this.workFlow.Evaluators, this.workFlow.Equations);
+            addIntents(linter);
+
+
+            List<LogicTest> logicTests = linter.Lint();
+
+            int lintHash = this.workFlow.GetHashCode();
+            return new LintResult(this.lintTracer, logicTests, lintHash.ToString());
+        }
+
+        public WorkDefine.Workflow Workflow { get => this.workFlow; }
+
+        internal void Sanitize()
         {
             StepTracer<LintTrace> lintTrace = new StepTracer<LintTrace>();
             lintTrace.TraceFirst(new LintTrace(LintStatusOptions.Linting, "Starting Lint"));
@@ -572,18 +569,12 @@ namespace Mchnry.Flow
 
             Sanitizer sanitizer = new Sanitizer(lintTrace, this.Configuration);
             WorkDefine.Workflow sanitized = sanitizer.Sanitize(this.workFlow);
-
-
-            //LogicLinter linter = new LogicLinter(this.workFlow.Evaluators, this.workFlow.Equations);
-            //addIntents(linter);
-
-
-            //List<LogicTest> toReturn = linter.Lint();
-
-
-            return null;
+            this.workFlow = sanitized;
+            this.lintTracer = lintTrace;
+            this.Sanitized = true;
         }
-
-        public WorkDefine.Workflow Workflow { get => this.workFlow; }
     }
+
+
+
 }

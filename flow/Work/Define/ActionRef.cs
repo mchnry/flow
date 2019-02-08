@@ -13,7 +13,7 @@ namespace Mchnry.Flow.Work.Define
 
     
 
-            if (action.Contains('|'))
+            if (action.Contains("|"))
             {
                 string[] parts = action.Split('|');
                 toReturn.ActionId = parts[0];

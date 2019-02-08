@@ -15,7 +15,7 @@ namespace Mchnry.Flow.Diagnostics
 
         public void TraceStep(string toTrace)
         {
-            string currentStep = tracer.CurrentStep.Node.Value.ActivityId;
+            string currentStep = tracer.CurrentStep.Node.Value.ProcessId;
             tracer.TraceStep(new ActivityProcess(currentStep, ActivityStatusOptions.Action_Running, toTrace));
         }
     }
@@ -31,7 +31,7 @@ namespace Mchnry.Flow.Diagnostics
 
         public void TraceStep(string toTrace)
         {
-            string currentStep = tracer.CurrentStep.Node.Value.ActivityId;
+            string currentStep = tracer.CurrentStep.Node.Value.ProcessId;
             tracer.TraceStep(new ActivityProcess(currentStep, ActivityStatusOptions.Rule_Evaluating, toTrace));
         }
     }
@@ -70,6 +70,7 @@ namespace Mchnry.Flow.Diagnostics
 
         public StepTraceNode<T> Root { get; private set; }
 
+        [Newtonsoft.Json.JsonIgnore]
         internal List<StepTraceNode<T>> AllNodes { get; set; }
 
         public StepTracer() { }
