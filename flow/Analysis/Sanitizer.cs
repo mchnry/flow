@@ -72,22 +72,22 @@ namespace Mchnry.Flow.Analysis
                                     Description = ""
                                 });
 
-                                if (isroot)
-                                {
-                                    string newId = ConventionHelper.ChangePrefix(NamePrefixOptions.Action, NamePrefixOptions.Activity, asActionRef.Id, this.config.Convention);
-                                    if (workFlow.Activities.Count(g => g.Id == newId) == 0)
-                                    {
-                                        WorkDefine.Activity toAdd = new WorkDefine.Activity()
-                                        {
-                                            Action = asActionRef,
+                                //if (isroot)
+                                //{
+                                //    string newId = ConventionHelper.ChangePrefix(NamePrefixOptions.Action, NamePrefixOptions.Activity, asActionRef.Id, this.config.Convention);
+                                //    if (workFlow.Activities.Count(g => g.Id == newId) == 0)
+                                //    {
+                                //        WorkDefine.Activity toAdd = new WorkDefine.Activity()
+                                //        {
+                                //            Action = asActionRef,
 
-                                            Id = newId,
-                                            Reactions = null
-                                        };
-                                        workFlow.Activities.Add(toAdd);
-                                    }
-                                    r.Work = newId;
-                                }
+                                //            Id = newId,
+                                //            Reactions = null
+                                //        };
+                                //        workFlow.Activities.Add(toAdd);
+                                //    }
+                                //    r.Work = newId;
+                                //}
                             }
 
 
