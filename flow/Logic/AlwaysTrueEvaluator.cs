@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Mchnry.Flow.Logic
 {
-    internal class AlwaysTrueEvaluator : IRuleEvaluator
+    internal class AlwaysTrueEvaluator<TModel> : IRuleEvaluator<TModel>
     {
-        public async Task<bool> EvaluateAsync(IEngineScope scope, LogicEngineTrace trace, CancellationToken token)
+        public async Task<bool> EvaluateAsync(IEngineScope<TModel> scope, LogicEngineTrace trace, CancellationToken token)
         {
             trace.TraceStep("Always True");
             return true;

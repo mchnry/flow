@@ -7,9 +7,9 @@ using Mchnry.Flow.Diagnostics;
 
 namespace Mchnry.Flow.Work
 {
-    internal class NoAction : IAction
+    internal class NoAction<TModel> : IAction<TModel>
     {
-        public async Task<bool> CompleteAsync(IEngineScope scope, WorkflowEngineTrace trace, CancellationToken token)
+        public async Task<bool> CompleteAsync(IEngineScope<TModel> scope, WorkflowEngineTrace trace, CancellationToken token)
         {
             return await Task.FromResult<bool>(true);
         }

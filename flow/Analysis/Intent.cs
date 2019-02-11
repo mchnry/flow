@@ -86,22 +86,50 @@ namespace Mchnry.Flow.Analysis
             return this;
         }
         
-
+        /// <summary>
+        /// Expects that the test value can only be one of the items in the set of context, and that the 
+        /// set of context is finite.
+        /// </summary>
+        /// <example>when an equation tests for multiple cases - a,b,c - this means that only one
+        /// of those cases can be true, so we only need to test three cases.  Additionally, because
+        /// its exclusive, one of these must be true</example>
         public void OneOfExcusive()
         {
             this.Exclusive = true;
             this.ListType = ValidateOptions.OneOf;
         }
+        /// <summary>
+        /// Expects that the test value can only be one of the items in the set of context, and that the 
+        /// set of context is not finite, but the caller is only providing the test cases.
+        /// </summary>
+        /// <example>when an equation tests for multiple cases - a,b,c - this means that only one
+        /// of those cases can be true, so we only need to test three cases.  Additionally, because
+        /// its inclusive, there may be a case where all are false</example>
         public void OneOfInclusive()
         {
             this.Exclusive = false;
             this.ListType = ValidateOptions.OneOf;
         }
+        /// <summary>
+        /// Expects that the test value can be any of the items in the set of context, and that the 
+        /// set of context is finite.
+        /// </summary>
+        /// <example>when an equation tests for multiple cases - a,b,c - this means that any
+        /// of those cases can be true, so we need to test all combinations (n^n).  Additionally, because
+        /// its exclusive, one of these must be true</example>
         public void AnyOfExclusive()
         {
             this.Exclusive = true;
             this.ListType = ValidateOptions.AnyOf;
         }
+
+        /// <summary>
+        /// Expects that the test value can be any of the items in the set of context, and that the 
+        /// set of context is not finite, but the caller is only providing the test cases.
+        /// </summary>
+        /// <example>when an equation tests for multiple cases - a,b,c - this means that any
+        /// of those cases can be true, so we need to test all combinations (n^n).  Additionally, because
+        /// its inclusive, there may be a case where all are false</example>
         public void AnyOfInclusive()
         {
             this.Exclusive = false;
@@ -115,59 +143,5 @@ namespace Mchnry.Flow.Analysis
         AnyOf
     }
 
-    //public class ContextItem<T>
-    //{
-    //    private ContextItemOptions ItemType { get; set; }
-    //    public T Value { get; set; }
 
-    //    internal ContextItem(ContextItemOptions itemType) {
-    //        Value = default(T);
-    //        this.ItemType = itemType;
-    //    }
-    //    internal ContextItem(T value)
-    //    {
-    //        this.Value = value;
-    //        this.ItemType = ContextItemOptions.Value;
-    //    }
-
-    //    public static ContextItem<T> Any {
-    //        get {
-    //            return new ContextItem<T>(ContextItemOptions.Any);
-    //        }
-    //    }
-    //    public static ContextItem<T> Null {
-    //        get {
-    //            return new ContextItem<T>(ContextItemOptions.Null);
-    //        }
-    //    }
-    //    public static ContextItem<T> Is(T value)
-    //    {
-    //        return new ContextItem<T>(value);
-    //    }
-    //    public static ContextItem<T> Is(Func<T> getValue)
-    //    {
-    //        T value = getValue();
-    //        return new ContextItem<T>(value);
-    //    }
-
-    //    public override string ToString()
-    //    {
-    //        string toReturn = string.Empty;
-    //        switch (this.ItemType)
-    //        {
-    //            case ContextItemOptions.Any:
-    //                toReturn = "any"; break;
-    //            case ContextItemOptions.Null:
-    //                toReturn = "null"; break;
-    //            default:
-    //                toReturn = this.Value.ToString();
-    //                break;
-    //        }
-    //        return toReturn;
-    //    }
-
-
-
-
-    //}
 }

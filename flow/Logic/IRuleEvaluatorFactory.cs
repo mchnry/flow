@@ -2,6 +2,6 @@
 {
     public interface IRuleEvaluatorFactory
     {
-        IRuleEvaluator GetRuleEvaluator(Define.Evaluator definition);
+        IRuleEvaluator<TModel> GetRuleEvaluator<TModel>(Define.Evaluator definition);
     }
 }

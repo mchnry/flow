@@ -3,20 +3,20 @@ using System.Threading.Tasks;
 
 namespace Mchnry.Flow.Logic
 {
-    public class Expression : IRule
+    public class Expression<TModel> : IRule<TModel>
     {
         private readonly Define.Rule definition;
         private readonly bool trueCondition;
         private readonly Operand condition;
-        private readonly IRule first;
-        private readonly IRule second;
-        private readonly Engine engineRef;
+        private readonly IRule<TModel> first;
+        private readonly IRule<TModel> second;
+        private readonly Engine<TModel> engineRef;
 
         internal Expression(Define.Rule definition,
             Operand condition,
-            IRule first,
-            IRule second,
-            Engine engineRef)
+            IRule<TModel> first,
+            IRule<TModel> second,
+            Engine<TModel> engineRef)
         {
             this.definition = definition;
             this.condition = condition;

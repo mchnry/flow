@@ -6,19 +6,19 @@ using System.Threading.Tasks;
 
 namespace Mchnry.Flow.Work
 {
-    internal class Activity
+    internal class Activity<TModel>
     {
-        private readonly Engine engineRef;
+        private readonly Engine<TModel> engineRef;
         private readonly Define.Activity activityDefinition;
 
-        public Activity(Engine engineRef, Define.Activity activityDefinition)
+        public Activity(Engine<TModel> engineRef, Define.Activity activityDefinition)
         {
             this.engineRef = engineRef;
             this.activityDefinition = activityDefinition;
         }
 
         public bool Executed { get; set; } = false;
-        public List<Reaction> Reactions { get; set; } = new List<Reaction>();
+        public List<Reaction<TModel>> Reactions { get; set; } = new List<Reaction<TModel>>();
 
         public async Task Execute(EngineStepTracer tracer, CancellationToken token)
         {
@@ -26,7 +26,7 @@ namespace Mchnry.Flow.Work
             this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Action_Running;
             bool result = false;
             //execute action
-            IAction toExecute = this.engineRef.GetAction(this.activityDefinition.Action.ActionId);
+            IAction<TModel> toExecute = this.engineRef.GetAction(this.activityDefinition.Action.Id);
       
 
 
@@ -43,13 +43,13 @@ namespace Mchnry.Flow.Work
                 t.Stop();
 
                 this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Action_Completed;
-                this.engineRef.Tracer.TraceStep(new ActivityProcess(this.activityDefinition.Action.ActionId, ActivityStatusOptions.Action_Completed, null, t.Elapsed));
+                this.engineRef.Tracer.TraceStep(new ActivityProcess(this.activityDefinition.Action.Id, ActivityStatusOptions.Action_Completed, null, t.Elapsed));
 
             }
             catch (System.Exception ex)
             {
                 this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Action_Failed;
-                this.engineRef.Tracer.TraceStep(new ActivityProcess(this.activityDefinition.Action.ActionId, ActivityStatusOptions.Action_Failed, ex.Message));
+                this.engineRef.Tracer.TraceStep(new ActivityProcess(this.activityDefinition.Action.Id, ActivityStatusOptions.Action_Failed, ex.Message));
             }
 
             this.Executed = true;
@@ -59,7 +59,7 @@ namespace Mchnry.Flow.Work
             {
                 StepTraceNode<ActivityProcess> reactionMark = this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(
                 new ActivityProcess(this.activityDefinition.Id, ActivityStatusOptions.Action_Running, "React"));
-                foreach (Reaction react in this.Reactions)
+                foreach (Reaction<TModel> react in this.Reactions)
                 {
                     this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(reactionMark,
                         new ActivityProcess(react.Activity.activityDefinition.Id, ActivityStatusOptions.Action_Running, "Evaluating"));

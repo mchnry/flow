@@ -4,7 +4,6 @@ using Mchnry.Flow.Logic;
 using Mchnry.Flow.Work;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using LogicDefine = Mchnry.Flow.Logic.Define;
@@ -58,24 +57,24 @@ namespace Sample
     #endregion
 
     #region Actions
-    public class CompletePurchaseAction : IAction
+    public class CompletePurchaseAction : IAction<ShoppingCart>
     {
-        public async Task<bool> CompleteAsync(IEngineScope scope, WorkflowEngineTrace trace, CancellationToken token)
+        public async Task<bool> CompleteAsync(IEngineScope<ShoppingCart> scope, WorkflowEngineTrace trace, CancellationToken token)
         {
             //the key name for getmodel is a user defined convention.  You can call it what you want, just be consistent.
-            ShoppingCart model = scope.GetModel<ShoppingCart>("model");
-            string sku = model.ItemSKU;
+            ShoppingCart z = scope.GetModel();
+            string sku = z.ItemSKU;
             InventoryService svc = ServiceFactory.InventoryService;
             int remaining = await svc.DecrementInventory(sku);
             trace.TraceStep(string.Format("Completing Purchase of {0}.  {1} left in inventory", sku, remaining));
             return true;
         }
     }
-    public class NotifyPurchasingAction : IAction
+    public class NotifyPurchasingAction : IAction<ShoppingCart>
     {
-        public async Task<bool> CompleteAsync(IEngineScope scope, WorkflowEngineTrace trace, CancellationToken token)
+        public async Task<bool> CompleteAsync(IEngineScope<ShoppingCart> scope, WorkflowEngineTrace trace, CancellationToken token)
         {
-            ShoppingCart model = scope.GetModel<ShoppingCart>("model");
+            ShoppingCart model = scope.GetModel();
             string sku = model.ItemSKU;
             trace.TraceStep(string.Format("Notifying Purchasing that we're out of stock of {0}", sku));
             return true;
@@ -84,11 +83,11 @@ namespace Sample
     #endregion
 
     #region Evaluators
-    public class IsInInventoryEvaluator : IRuleEvaluator
+    public class IsInInventoryEvaluator : IRuleEvaluator<ShoppingCart>
     {
-        public async Task<bool> EvaluateAsync(IEngineScope scope, LogicEngineTrace trace, CancellationToken token)
+        public async Task<bool> EvaluateAsync(IEngineScope<ShoppingCart> scope, LogicEngineTrace trace, CancellationToken token)
         {
-            ShoppingCart model = scope.GetModel<ShoppingCart>("model");
+            ShoppingCart model = scope.GetModel();
             //check inventory to see if item is still in stock
             string sku = model.ItemSKU;
             InventoryService svc = ServiceFactory.InventoryService;
@@ -100,11 +99,13 @@ namespace Sample
 
         }
     }
-    public class IsPaymentAuthorizedEvaluator : IRuleEvaluator
+    public class IsPaymentAuthorizedEvaluator : IRuleEvaluator<ShoppingCart>
     {
-        public async Task<bool> EvaluateAsync(IEngineScope scope, LogicEngineTrace trace, CancellationToken token)
+        public async Task<bool> EvaluateAsync(IEngineScope<ShoppingCart> scope, LogicEngineTrace trace, CancellationToken token)
         {
-            ShoppingCart model = scope.GetModel<ShoppingCart>("model");
+
+
+            ShoppingCart model = scope.GetModel();
             //check if payment method is good
             PaymentService svc = ServiceFactory.PaymentService;
 
@@ -120,28 +121,28 @@ namespace Sample
 
     public class ActionFactory : Mchnry.Flow.Work.IActionFactory
     {
-        public IAction GetAction(WorkDefine.ActionDefinition definition)
+        public IAction<ShoppingCart> GetAction<ShoppingCart>(WorkDefine.ActionDefinition definition)
         {
             //note.. one would hopefully use di for this... but for this example, we'll brute force it
 
-            switch(definition.Id)
+            switch (definition.Id)
             {
                 case "action.completePurchase":
-                    return new CompletePurchaseAction();
+                    return (IAction<ShoppingCart>)new CompletePurchaseAction();
 
                 case "action.notifyPurchasing":
-                    return new NotifyPurchasingAction();
+                    return (IAction<ShoppingCart>)new NotifyPurchasingAction();
                 default:
                     return null;
             }
 
-            
+
         }
     }
 
     public class EvaluatorFactory : Mchnry.Flow.Logic.IRuleEvaluatorFactory
     {
-        public IRuleEvaluator GetRuleEvaluator(LogicDefine.Evaluator definition)
+        public IRuleEvaluator<ShoppingCart> GetRuleEvaluator<ShoppingCart>(LogicDefine.Evaluator definition)
         {
 
             //note.. one would hopefully use di for this... but for this example, we'll brute force it
@@ -149,10 +150,10 @@ namespace Sample
             switch (definition.Id)
             {
                 case "evaluator.isInInventory":
-                    return new IsInInventoryEvaluator();
+                    return (IRuleEvaluator<ShoppingCart>)new IsInInventoryEvaluator();
 
                 case "evaluator.isPaymentAuthorized":
-                    return new IsPaymentAuthorizedEvaluator();
+                    return (IRuleEvaluator<ShoppingCart>)new IsPaymentAuthorizedEvaluator();
                 default:
                     return null;
             }
@@ -170,60 +171,49 @@ namespace Sample
 
     class Program
     {
-        /*
-        Phase I
-            User is looking at Item on vendor's website, and there appears to be one left in inventory.  But by the time that user clicks purchase, 
-            that item has already been purchased. Need to decline the purchase, and let the user know that he/she missed the boat. 
-            Logic "plain english"
-            If item in inventory and payment authorizied/accepted
-                decrement inventory
-                record purchase
-                send to shipping
-                    send confirmation email
-            if item not in inventory
-                return validation to calling website
-                    send notification to purchasing about missed opportunity
-        */
+
 
         public static async Task Main(string[] args)
         {
 
-            WorkDefine.Workflow ShoppingCartPurchase = new WorkDefine.Workflow()
-            {
-                Equations = new List<LogicDefine.Equation>()
-                {
-                    new LogicDefine.Equation() { Id = "equation.canBePurchased", Condition = Operand.And, First = "evaluator.isInInventory", Second = "evaluator.isPaymentAuthorized" }
-                },
-                Activities = new List<WorkDefine.Activity>()
-                {
-                    new WorkDefine.Activity() { Id = "activity.main", Reactions = new List<WorkDefine.Reaction>()
-                        {
-                            new WorkDefine.Reaction() { Logic = "equation.canBePurchased", Work="action.completePurchase" },
-                            new WorkDefine.Reaction() { Logic = "!evaluator.isInInventory", Work="action.notifyPurchasing" }
 
-                        }
+            Builder b = new Builder();
+            WorkDefine.Workflow created = b.Activity("main")
+                .Then(
+                    (vb) =>
+                    {
+                        vb.Activity("completePurchase")
+                        .Then("decrementInventory")
+                        .Then("recordSale")
+                        .Then("sendToShipping");
+                    },
+                    (If) =>
+                    {
+                        If.And(
+                            (IfFirst) => { IfFirst.True("isInInventory"); },
+                            (IfSecond) => { IfSecond.True("isPaymentValid"); });
                     }
-                }
-            };
+                ).Then("notifyPurchasing", (If) =>
+                    {
+                        If.True("!isInInventory");
+                    }
+                ).Then("doSomethingElse|123", (If) =>
+                {
+                    If.True("isInInventory");
+                }).End();
 
-            //lint
-            IEngineLoader workflowEngine = Engine.CreateEngine(ShoppingCartPurchase);
-            var result = workflowEngine.Lint((a) => { });
-            var sanitizedWorkflow = workflowEngine.Workflow;
-            string s = JsonConvert.SerializeObject(sanitizedWorkflow, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });
+            string s = JsonConvert.SerializeObject(created, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });
             Console.WriteLine(s);
 
-            //IEngineLoader wfeLoader = Engine.CreateEngine(ShoppingCartPurchase);
-            //IEngineRunner wfeRunner = wfeLoader
-            //    .SetActionFactory(new ActionFactory())
-            //    .SetEvaluatorFactory(new EvaluatorFactory())
-            //    .SetModel<ShoppingCart>("model", new ShoppingCart() { ItemSKU = "1234", Payment = "goodpayment" })
-            //    .Start();
-            //IEngineFinalize f = await wfeRunner.ExecuteAsync("activity.main", new CancellationToken());
-            //IEngineComplete c = await f.FinalizeAsync(new CancellationToken());
 
-            //string process = JsonConvert.SerializeObject(c.Process, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });
-            //Console.WriteLine(process);
+            //lint
+            IEngineLoader<ShoppingCart> workflowEngine = Engine<ShoppingCart>.CreateEngine(created);
+            
+            var result = workflowEngine.Lint((a) => { });
+            var sanitizedWorkflow = workflowEngine.Workflow;
+            s = JsonConvert.SerializeObject(sanitizedWorkflow, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });
+            Console.WriteLine(s);
+
 
 
             Console.ReadLine();

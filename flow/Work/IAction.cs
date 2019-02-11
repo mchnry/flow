@@ -4,12 +4,12 @@ using System.Threading.Tasks;
 
 namespace Mchnry.Flow.Work
 {
-    public interface IAction
+    public interface IAction<TModel>
     {
-        Task<bool> CompleteAsync(IEngineScope scope, WorkflowEngineTrace trace, CancellationToken token);
+        Task<bool> CompleteAsync(IEngineScope<TModel> scope, WorkflowEngineTrace trace, CancellationToken token);
 
     }
-    public interface IDeferredAction: IAction
+    public interface IDeferredAction<TModel> : IAction<TModel>
     {
         string Id { get; }
     }

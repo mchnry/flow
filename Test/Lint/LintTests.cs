@@ -16,9 +16,9 @@ namespace Test.Lint
         public void TestSimpleLint()
         {
             Mock<IRuleEvaluatorFactory> mkFactory = new Mock<IRuleEvaluatorFactory>();
-            Mock<IRuleEvaluator> mkEval = new Mock<IRuleEvaluator>();
+            Mock<IRuleEvaluator<string>> mkEval = new Mock<IRuleEvaluator<string>>();
 
-            mkFactory.Setup(g => g.GetRuleEvaluator(It.IsAny<Define.Evaluator>())).Returns(mkEval.Object);
+            mkFactory.Setup(g => g.GetRuleEvaluator<string>(It.IsAny<Define.Evaluator>())).Returns(mkEval.Object);
 
             List<Define.Evaluator> evals = new List<Define.Evaluator>()
             {
@@ -32,7 +32,7 @@ namespace Test.Lint
                 new Define.Equation() { Id = "eq1", Condition = Operand.And, First = "ev1", Second = "eq1.1" }
             };
 
-            IEngineLoader e = Mchnry.Flow.Engine.CreateEngine(new Mchnry.Flow.Work.Define.Workflow() { Equations = eqs, Evaluators = evals });
+            IEngineLoader<string> e = Mchnry.Flow.Engine<string>.CreateEngine(new Mchnry.Flow.Work.Define.Workflow() { Equations = eqs, Evaluators = evals });
 
             e.Lint((l) => { });
 
@@ -42,9 +42,9 @@ namespace Test.Lint
         public void TestSimpleLintWithIntent()
         {
             Mock<IRuleEvaluatorFactory> mkFactory = new Mock<IRuleEvaluatorFactory>();
-            Mock<IRuleEvaluator> mkEval = new Mock<IRuleEvaluator>();
+            Mock<IRuleEvaluator<string>> mkEval = new Mock<IRuleEvaluator<string>>();
 
-            mkFactory.Setup(g => g.GetRuleEvaluator(It.IsAny<Define.Evaluator>())).Returns(mkEval.Object);
+            mkFactory.Setup(g => g.GetRuleEvaluator<string>(It.IsAny<Define.Evaluator>())).Returns(mkEval.Object);
 
             List<Define.Evaluator> evals = new List<Define.Evaluator>()
             {
@@ -58,7 +58,7 @@ namespace Test.Lint
                 new Define.Equation() { Id = "eq1", Condition = Operand.And, First = "ev1", Second = "eq1.1" }
             };
 
-            IEngineLoader engine = Mchnry.Flow.Engine.CreateEngine(new Mchnry.Flow.Work.Define.Workflow() { Equations = eqs, Evaluators = evals })
+            IEngineLoader<string> engine = Mchnry.Flow.Engine<string>.CreateEngine(new Mchnry.Flow.Work.Define.Workflow() { Equations = eqs, Evaluators = evals })
                 .SetEvaluatorFactory(mkFactory.Object);
 
             var tests = engine.Lint((l) => { l.Intent("ev2").HasContext<int>().OneOfInclusive(); });

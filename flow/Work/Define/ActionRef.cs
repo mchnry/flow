@@ -16,16 +16,25 @@ namespace Mchnry.Flow.Work.Define
             if (action.Contains("|"))
             {
                 string[] parts = action.Split('|');
-                toReturn.ActionId = parts[0];
+                toReturn.Id = parts[0];
                 toReturn.Context = parts[1];
             }
-            else toReturn = new ActionRef() { ActionId = action };
+            else toReturn = new ActionRef() { Id = action };
 
             return toReturn;
         }
 
-        public string ActionId { get; set; }
+        public string Id { get; set; }
         public string Context { get; set; }
+
+        public override string ToString()
+        {
+            if (!string.IsNullOrEmpty(this.Context)) {
+                return string.Format("{0}|{1}", this.Id, this.Context);
+            } else {
+                return this.Id;
+            }
+        }
 
     }
 }

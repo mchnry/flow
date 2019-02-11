@@ -15,8 +15,8 @@ using Mchnry.Flow.Configuration;
 
 namespace Mchnry.Flow
 {
-    public class Engine :
-        IEngineLoader, IEngineRunner, IEngineScope, IEngineFinalize, IEngineComplete
+    public class Engine<TModel> :
+        IEngineLoader<TModel>, IEngineRunner, IEngineScope<TModel>, IEngineFinalize, IEngineComplete
     {
 
         internal Config Configuration;
@@ -24,28 +24,22 @@ namespace Mchnry.Flow
         private StepTracer<LintTrace> lintTracer = default(StepTracer<LintTrace>);
 
         //store reference to all factory created actions
-        private Dictionary<string, IAction> actions = new Dictionary<string, IAction>();
+        private Dictionary<string, IAction<TModel>> actions = new Dictionary<string, IAction<TModel>>();
         //store references to all factory created evaluators
-        private Dictionary<string, IRuleEvaluator> evaluators = new Dictionary<string, IRuleEvaluator>();
+        private Dictionary<string, IRuleEvaluator<TModel>> evaluators = new Dictionary<string, IRuleEvaluator<TModel>>();
 
         //store known evaluator results to avoid rerunning already run evaluators
         private Dictionary<string, bool?> results = new Dictionary<string, bool?>();
         //store all built expressions
-        private Dictionary<string, IRule> expressions = new Dictionary<string, IRule>();
+        private Dictionary<string, IRule<TModel>> expressions = new Dictionary<string, IRule<TModel>>();
 
         //workflow definition provided by caller
         internal WorkDefine.Workflow workFlow;
 
-        //current status of running engine
-        private EngineStatusOptions engineStatus = EngineStatusOptions.NotStarted;
-
-        //store all validations created by validators/evaluators
-        private ValidationContainer container = new ValidationContainer();
-
         //store reference to all actions to run during finalize (if all validations succeed)
-        private List<IDeferredAction> finalize = new List<IDeferredAction>();
+        private List<IDeferredAction<TModel>> finalize = new List<IDeferredAction<TModel>>();
         //store reference to all actions to run during finalize always
-        private List<IDeferredAction> finalizeAlways = new List<IDeferredAction>(); //actions to complete at end regardless of validation state
+        private List<IDeferredAction<TModel>> finalizeAlways = new List<IDeferredAction<TModel>>(); //actions to complete at end regardless of validation state
 
         //container for all state objects
         private ICacheManager state;
@@ -78,17 +72,18 @@ namespace Mchnry.Flow
             this.state = new MemoryCacheManager();
             this.Sanitized = false;
         }
-        public static IEngineLoader CreateEngine(WorkDefine.Workflow workFlow)
+
+        public static IEngineLoader<TModel> CreateEngine(WorkDefine.Workflow workFlow)
         {
 
 
-            return new Engine(workFlow);
+            return new Engine<TModel>(workFlow);
 
 
         }
-        public static IEngineLoader CreateEngine(WorkDefine.Workflow workFlow, Action<Config> Configure)
+        public static IEngineLoader<TModel> CreateEngine(WorkDefine.Workflow workFlow, Action<Config> Configure)
         {
-            Engine toReturn = new Engine(workFlow);
+            Engine<TModel> toReturn = new Engine<TModel>(workFlow);
 
 
             Configure(toReturn.Configuration);
@@ -102,27 +97,33 @@ namespace Mchnry.Flow
         internal ActivityStatusOptions CurrentActivityStatus { get; set; } = ActivityStatusOptions.Engine_Loading;
 
         internal LogicDefine.Rule CurrentRuleDefinition { get; set; } = null;
-        LogicDefine.Rule IEngineScope.CurrentRuleDefinition => this.CurrentRuleDefinition;
+        LogicDefine.Rule IEngineScope<TModel>.CurrentRuleDefinition => this.CurrentRuleDefinition;
 
         internal WorkDefine.Activity CurrentActivity { get; set; }
-        WorkDefine.Activity IEngineScope.CurrentActivity => this.CurrentActivity;
+        WorkDefine.Activity IEngineScope<TModel>.CurrentActivity => this.CurrentActivity;
 
-        StepTraceNode<ActivityProcess> IEngineScope.Process => this.Tracer.Root;
+
+        StepTraceNode<ActivityProcess> IEngineScope<TModel>.Process => this.Tracer.Root;
 
         StepTraceNode<ActivityProcess> IEngineComplete.Process => this.Tracer.Root;
 
-        EngineStatusOptions IEngineComplete.Status => this.engineStatus;
+        //current status of running engine
+        internal EngineStatusOptions EngineStatus { get; set; } = EngineStatusOptions.NotStarted;
+        EngineStatusOptions IEngineComplete.Status => this.EngineStatus;
 
-        IValidationContainer IEngineComplete.Validations => this.container;
+
+        //store all validations created by validators/evaluators
+        internal ValidationContainer ValidationContainer { get; set; } = new ValidationContainer();
+        IValidationContainer IEngineComplete.Validations => this.ValidationContainer;
 
 
-        void IEngineScope.AddValidation(Validation toAdd)
+        void IEngineScope<TModel>.AddValidation(Validation toAdd)
         {
             //can only occure when rule is evaluating or activity is executing
             if (this.CurrentActivityStatus == ActivityStatusOptions.Action_Running)
             {
                 string scope = this.CurrentActivity.Id;
-                this.container.Scope(scope).AddValidation(toAdd);
+                this.ValidationContainer.Scope(scope).AddValidation(toAdd);
 
 
             }
@@ -133,17 +134,17 @@ namespace Mchnry.Flow
                 {
                     scope = string.Format("{0}.{1}", scope, this.CurrentRuleDefinition.Context.GetHashCode().ToString());
                 }
-                this.container.Scope(scope).AddValidation(toAdd);
+                this.ValidationContainer.Scope(scope).AddValidation(toAdd);
 
             }
             else
             {
-                ((IValidationContainer)this.container).AddValidation(toAdd);
+                ((IValidationContainer)this.ValidationContainer).AddValidation(toAdd);
             }
 
         }
 
-        void IEngineScope.Defer(IDeferredAction action, bool onlyIfValidationsResolved)
+        void IEngineScope<TModel>.Defer(IDeferredAction<TModel> action, bool onlyIfValidationsResolved)
         {
             if (onlyIfValidationsResolved)
             {
@@ -162,7 +163,7 @@ namespace Mchnry.Flow
             {
                 this.Sanitize();
             }
-            Activity toLoad = this.LoadActivity(activityId);
+            Activity<TModel> toLoad = this.LoadActivity(activityId);
 
             this.Tracer.CurrentStep = this.Tracer.TraceStep(this.Tracer.Root, new ActivityProcess("Execute", ActivityStatusOptions.Engine_Begin, null));
             await (toLoad.Execute(this.Tracer, token));
@@ -181,11 +182,11 @@ namespace Mchnry.Flow
         async Task<IEngineComplete> IEngineFinalize.FinalizeAsync(CancellationToken token)
         {
             StepTraceNode<ActivityProcess> mark = this.Tracer.CurrentStep = this.Tracer.TraceStep(this.Tracer.Root, new ActivityProcess("Finalize", ActivityStatusOptions.Engine_Finalizing, null));
-            if (this.container.ResolveValidations())
+            if (this.ValidationContainer.ResolveValidations())
             {
 
 
-                foreach (IDeferredAction toFinalize in this.finalize)
+                foreach (IDeferredAction<TModel> toFinalize in this.finalize)
                 {
                     this.Tracer.CurrentStep = this.Tracer.TraceStep(mark, new ActivityProcess(toFinalize.Id, ActivityStatusOptions.Action_Running, null));
 
@@ -196,7 +197,7 @@ namespace Mchnry.Flow
 
             }
 
-            foreach (IDeferredAction toFinalize in this.finalizeAlways)
+            foreach (IDeferredAction<TModel> toFinalize in this.finalizeAlways)
             {
                 this.Tracer.CurrentStep = this.Tracer.TraceStep(mark, new ActivityProcess(toFinalize.Id, ActivityStatusOptions.Action_Running, null));
 
@@ -206,15 +207,15 @@ namespace Mchnry.Flow
             return this;
         }
 
-        T IEngineScope.GetActivityModel<T>(string key)
+        T IEngineScope<TModel>.GetActivityModel<T>(string key)
         {
             string activityId = this.CurrentActivity.Id;
             return this.state.Spawn(activityId).Read<T>(key);
         }
 
-        T IEngineScope.GetModel<T>(string key)
+        TModel IEngineScope<TModel>.GetModel()
         {
-            return this.state.Read<T>(key);
+            return this.state.Read<TModel>("workflowmodel");
         }
 
         T IEngineComplete.GetModel<T>(string key)
@@ -222,47 +223,47 @@ namespace Mchnry.Flow
             return this.state.Read<T>(key);
         }
 
-        IEngineLoader IEngineLoader.OverrideValidation(ValidationOverride oride)
+        IEngineLoader<TModel> IEngineLoader<TModel>.OverrideValidation(ValidationOverride oride)
         {
 
-            ((IValidationContainer)this.container).AddOverride(oride.Key, oride.Comment, oride.AuditCode);
+            ((IValidationContainer)this.ValidationContainer).AddOverride(oride.Key, oride.Comment, oride.AuditCode);
 
             return this;
         }
 
-        IEngineLoader IEngineLoader.SetActionFactory(IActionFactory factory)
+        IEngineLoader<TModel> IEngineLoader<TModel>.SetActionFactory(IActionFactory factory)
         {
             this.actionFactory = factory;
             return this;
         }
 
-        void IEngineScope.SetActivityModel<T>(string key, T value)
+        void IEngineScope<TModel>.SetActivityModel<T>(string key, T value)
         {
             string activityId = this.CurrentActivity.Id;
             this.state.Spawn(activityId).Insert<T>(key, value);
         }
 
-        IEngineLoader IEngineLoader.SetEvaluatorFactory(IRuleEvaluatorFactory factory)
+        IEngineLoader<TModel> IEngineLoader<TModel>.SetEvaluatorFactory(IRuleEvaluatorFactory factory)
         {
             this.ruleEvaluatorFactory = factory;
             return this;
         }
 
-        IEngineLoader IEngineLoader.SetModel<T>(string key, T model)
+        IEngineLoader<TModel> IEngineLoader<TModel>.SetModel(TModel model)
         {
-            this.state.Insert<T>(key, model);
+            this.state.Insert<TModel>("workflowmodel", model);
             return this;
         }
 
-        void IEngineScope.SetModel<T>(string key, T value)
+        void IEngineScope<TModel>.SetModel(TModel value)
         {
-            this.state.Insert<T>(key, value);
+            this.state.Insert<TModel>("workflowmodel", value);
 
 
 
         }
 
-        IEngineRunner IEngineLoader.Start()
+        IEngineRunner IEngineLoader<TModel>.Start()
         {
             
             return this;
@@ -294,14 +295,14 @@ namespace Mchnry.Flow
 
         }
 
-        internal IAction GetAction(string actionId)
+        internal IAction<TModel> GetAction(string actionId)
         {
-            IAction toReturn = default(IAction);
+            IAction<TModel> toReturn = default(IAction<TModel>);
             if (!this.actions.ContainsKey(actionId))
             {
                 if ("*placeHolder" == actionId)
                 {
-                    toReturn = new NoAction();
+                    toReturn = new NoAction<TModel>();
                 }
                 else
                 {
@@ -310,7 +311,7 @@ namespace Mchnry.Flow
 
                     try
                     {
-                        toReturn = this.actionFactory.GetAction(def);
+                        toReturn = this.actionFactory.GetAction<TModel>(def);
                     } catch (System.Exception ex)
                     {
                         throw new LoadActionException(actionId, ex);
@@ -331,13 +332,13 @@ namespace Mchnry.Flow
             return toReturn;
         }
 
-        internal IRuleEvaluator GetEvaluator(string id)
+        internal IRuleEvaluator<TModel> GetEvaluator(string id)
         {
-            IRuleEvaluator toReturn = default(IRuleEvaluator);
+            IRuleEvaluator<TModel> toReturn = default(IRuleEvaluator<TModel>);
 
             if (id == "true")
             {
-                return new AlwaysTrueEvaluator();
+                return new AlwaysTrueEvaluator<TModel>();
             } 
 
             if (!this.evaluators.ContainsKey(id))
@@ -345,7 +346,7 @@ namespace Mchnry.Flow
                 LogicDefine.Evaluator def = this.workFlow.Evaluators.FirstOrDefault(g => g.Id.Equals(id));
                 try
                 {
-                    toReturn = this.ruleEvaluatorFactory.GetRuleEvaluator(def);
+                    toReturn = this.ruleEvaluatorFactory.GetRuleEvaluator<TModel>(def);
                 } catch (System.Exception ex)
                 {
                     throw new LoadEvaluatorException(id, ex);
@@ -367,7 +368,7 @@ namespace Mchnry.Flow
 
         internal async Task<bool> Evaluate(string equationId, CancellationToken token)
         {
-            IRule toEval = this.LoadLogic(equationId);
+            IRule<TModel> toEval = this.LoadLogic(equationId);
 
             bool result = await toEval.EvaluateAsync(false, token);
 
@@ -376,22 +377,36 @@ namespace Mchnry.Flow
 
         }
 
+        IEngineLoader<TModel> IEngineLoader<TModel>.AddEvaluator(string id, Func<IEngineScope<TModel>, LogicEngineTrace, CancellationToken, Task<bool>> evaluator)
+        {
+            this.evaluators.Add(id, new DynamicEvaluator<TModel>(evaluator));
+            return this;
+        }
+        IEngineLoader<TModel> IEngineLoader<TModel>.AddAction(string id, Func<IEngineScope<TModel>, WorkflowEngineTrace, CancellationToken, Task<bool>> action)
+        {
 
-        private Activity LoadActivity(string activityId)
+            this.actions.Add(id, new DynamicAction<TModel>(action));
+            return this;
+        }
+
+
+
+
+        private Activity<TModel> LoadActivity(string activityId)
         {
 
             WorkDefine.Activity definition = this.workFlow.Activities.FirstOrDefault(a => a.Id == activityId);
 
 
 
-            Activity toReturn = new Activity(this, definition);
+            Activity<TModel> toReturn = new Activity<TModel>(this, definition);
 
-            Action<Activity, WorkDefine.Activity> LoadReactions = null;
+            Action<Activity<TModel>, WorkDefine.Activity> LoadReactions = null;
             LoadReactions = (a, d) =>
             {
                 //if (d.Action == null) d.Action = "*placeHolder";
 
-                WorkDefine.ActionDefinition match = this.workFlow.Actions.FirstOrDefault(z => z.Id == d.Action.ActionId);
+                WorkDefine.ActionDefinition match = this.workFlow.Actions.FirstOrDefault(z => z.Id == d.Action.Id);
                 //if (null == match)
                 //{
                 //    this.workFlow.Actions.Add(new WorkDefine.ActionDefinition()
@@ -442,11 +457,11 @@ namespace Mchnry.Flow
 
                         if (null == a.Reactions)
                         {
-                            a.Reactions = new List<Reaction>();
+                            a.Reactions = new List<Reaction<TModel>>();
                         }
-                        Activity toCreate = new Activity(this, toCreatedef);
+                        Activity<TModel> toCreate = new Activity<TModel>(this, toCreatedef);
                         LoadReactions(toCreate, toCreatedef);
-                        a.Reactions.Add(new Reaction(r.Logic, toCreate));
+                        a.Reactions.Add(new Reaction<TModel>(r.Logic, toCreate));
                     });
                 }
 
@@ -458,7 +473,7 @@ namespace Mchnry.Flow
 
         }
 
-        private IRule LoadLogic(string equationId)
+        private IRule<TModel> LoadLogic(string equationId)
         {
             StepTracer<LintTrace> trace = new StepTracer<LintTrace>();
             StepTraceNode<LintTrace> root = trace.TraceFirst(new LintTrace(LintStatusOptions.Loading, "Loading Logic", equationId));
@@ -467,7 +482,7 @@ namespace Mchnry.Flow
             
             if (this.evaluators.Count(g => g.Key == "true") == 0)
             {
-                IRuleEvaluator trueEvaluator = new AlwaysTrueEvaluator();
+                IRuleEvaluator<TModel> trueEvaluator = new AlwaysTrueEvaluator<TModel>();
                 this.evaluators.Add("true", trueEvaluator);
             }
              
@@ -493,11 +508,11 @@ namespace Mchnry.Flow
 
 
             //Lint.... make sure we have everything we need first.
-            Func<LogicDefine.Rule, StepTraceNode<LintTrace>, IRule> LoadRule = null;
+            Func<LogicDefine.Rule, StepTraceNode<LintTrace>, IRule<TModel>> LoadRule = null;
             LoadRule = (rule, parentStep) =>
             {
                 StepTraceNode<LintTrace> step = trace.TraceNext(parentStep, new LintTrace(LintStatusOptions.Inspecting, "Inspecting Rule", rule.Id));
-                IRule toReturn = null;
+                IRule<TModel> toReturn = null;
                 //if id is an equation, we are creating an expression
 
                 //since we've formalized convention, we can just check that
@@ -505,13 +520,13 @@ namespace Mchnry.Flow
                 {
                     LogicDefine.Equation eq = this.workFlow.Equations.FirstOrDefault(g => g.Id.Equals(rule.Id));
 
-                    IRule first = LoadRule(eq.First, step);
-                    IRule second = LoadRule(eq.Second, step);
-                    toReturn = new Expression(rule, eq.Condition, first, second, this);
+                    IRule<TModel> first = LoadRule(eq.First, step);
+                    IRule<TModel> second = LoadRule(eq.Second, step);
+                    toReturn = new Expression<TModel>(rule, eq.Condition, first, second, this);
                 } else
                 {
                     LogicDefine.Evaluator ev = this.workFlow.Evaluators.FirstOrDefault(g => g.Id.Equals(rule.Id));
-                    toReturn = new Rule(rule, this);
+                    toReturn = new Rule<TModel>(rule, this);
                 }
 
 
@@ -525,7 +540,7 @@ namespace Mchnry.Flow
 
 
             LogicDefine.Rule eqRule = equationId;
-            IRule loaded = LoadRule(eqRule, root);
+            IRule<TModel> loaded = LoadRule(eqRule, root);
 
             return loaded;
 

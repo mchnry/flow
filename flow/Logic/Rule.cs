@@ -9,16 +9,16 @@ using System.Threading.Tasks;
 
 namespace Mchnry.Flow.Logic
 {
-    public class Rule : IRule
+    public class Rule<TModel> : IRule<TModel>
     {
 
         private readonly Define.Rule definition;
-        private Engine engineRef;
+        private Engine<TModel> engineRef;
 
         internal Rule(
             
             Define.Rule definition,
-            Engine EngineRef
+            Engine<TModel> EngineRef
             )
         {
 
@@ -32,7 +32,7 @@ namespace Mchnry.Flow.Logic
             bool thisResult = !this.definition.TrueCondition;
 
             bool? knownResult = this.engineRef.GetResult(this.definition);
-            IRuleEvaluator evaluator = this.engineRef.GetEvaluator(this.definition.Id);
+            IRuleEvaluator<TModel> evaluator = this.engineRef.GetEvaluator(this.definition.Id);
 
             bool doEval = reEvaluate || !knownResult.HasValue;
 

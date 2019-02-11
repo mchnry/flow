@@ -3,7 +3,7 @@ using System;
 
 namespace Mchnry.Flow.Logic.Define
 {
-    public class Rule: ICloneable
+    public class Rule: ICloneable, IExpression
     {
 
         public static implicit operator Rule(string shortHand)

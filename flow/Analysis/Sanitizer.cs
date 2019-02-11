@@ -41,12 +41,12 @@ namespace Mchnry.Flow.Analysis
             {
                 if (d.Action == null) d.Action = "*placeHolder";
 
-                WorkDefine.ActionDefinition match = workFlow.Actions.FirstOrDefault(z => z.Id == d.Action.ActionId);
+                WorkDefine.ActionDefinition match = workFlow.Actions.FirstOrDefault(z => z.Id == d.Action.Id);
                 if (null == match)
                 {
                     workFlow.Actions.Add(new WorkDefine.ActionDefinition()
                     {
-                        Id = d.Action.ActionId,
+                        Id = d.Action.Id,
                         Description = ""
                     });
                 }
@@ -61,20 +61,20 @@ namespace Mchnry.Flow.Analysis
                         {
                             //if we can't find activity... look for a matching action.  if found, create an activity from it.
                             WorkDefine.ActionRef asActionRef = r.Work;
-                            WorkDefine.ActionDefinition toCreateAction = workFlow.Actions.FirstOrDefault(z => z.Id == asActionRef.ActionId);
+                            WorkDefine.ActionDefinition toCreateAction = workFlow.Actions.FirstOrDefault(z => z.Id == asActionRef.Id);
 
                             //didn't bother to add the action definition, we will create it for them
                             if (null == toCreateAction)
                             {
                                 workFlow.Actions.Add(new WorkDefine.ActionDefinition()
                                 {
-                                    Id = asActionRef.ActionId,
+                                    Id = asActionRef.Id,
                                     Description = ""
                                 });
 
                                 if (isroot)
                                 {
-                                    string newId = ConventionHelper.ChangePrefix(NamePrefixOptions.Action, NamePrefixOptions.Activity, asActionRef.ActionId, this.config.Convention);
+                                    string newId = ConventionHelper.ChangePrefix(NamePrefixOptions.Action, NamePrefixOptions.Activity, asActionRef.Id, this.config.Convention);
                                     if (workFlow.Activities.Count(g => g.Id == newId) == 0)
                                     {
                                         WorkDefine.Activity toAdd = new WorkDefine.Activity()
@@ -232,7 +232,17 @@ namespace Mchnry.Flow.Analysis
                     if (isRoot)
                     {
                         LogicDefine.Rule cloned = (LogicDefine.Rule)rule.Clone();
-                        string newId = ConventionHelper.ChangePrefix(NamePrefixOptions.Evaluator, NamePrefixOptions.Equation, rule.Id, this.config.Convention);
+                        string newId = string.Empty;
+                        Logic.Operand condition = Logic.Operand.And;
+                        if (rule.Id == "true")
+                        {
+                            newId = this.config.Convention.GetPrefix(NamePrefixOptions.Equation) + this.config.Convention.Delimeter + "true";
+                            condition = Logic.Operand.Or;
+                        } else
+                        {
+                            newId = ConventionHelper.ChangePrefix(NamePrefixOptions.Evaluator, NamePrefixOptions.Equation, rule.Id, this.config.Convention);
+                        }
+                        
                         if (!rule.TrueCondition)
                         {
                             newId = ConventionHelper.NegateEquationName(newId, this.config.Convention);
@@ -242,7 +252,7 @@ namespace Mchnry.Flow.Analysis
                             this.tracer.TraceNext(parentStep, new LintTrace(LintStatusOptions.InferringEquation, string.Format("Inferring equation from {0}", rule.Id), newId));
                             workFlow.Equations.Add(new LogicDefine.Equation()
                             {
-                                Condition = Logic.Operand.And,
+                                Condition = condition,
                                 First = cloned,
                                 Second = "true",
                                 Id = newId

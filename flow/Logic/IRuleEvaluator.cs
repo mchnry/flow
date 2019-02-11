@@ -9,10 +9,10 @@ using System.Threading.Tasks;
 
 namespace Mchnry.Flow.Logic
 {
-    public interface IRuleEvaluator
+    public interface IRuleEvaluator<TModel>
     {
 
-        Task<bool> EvaluateAsync(IEngineScope scope, LogicEngineTrace trace, CancellationToken token);
+        Task<bool> EvaluateAsync(IEngineScope<TModel> scope, LogicEngineTrace trace, CancellationToken token);
 
     }
 }

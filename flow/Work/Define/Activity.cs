@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 
 namespace Mchnry.Flow.Work.Define
@@ -15,6 +16,7 @@ namespace Mchnry.Flow.Work.Define
 
     public class Reaction
     {
+
 
 
         [JsonProperty("L")]

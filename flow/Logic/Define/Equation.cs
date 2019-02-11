@@ -2,7 +2,7 @@
 
 namespace Mchnry.Flow.Logic.Define
 {
-    public class Equation
+    public class Equation: IExpression
     {
 
         public string Id { get; set; }

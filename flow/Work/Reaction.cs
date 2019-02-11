@@ -4,16 +4,16 @@ using System.Text;
 
 namespace Mchnry.Flow.Work
 {
-    internal class Reaction
+    internal class Reaction<TModel>
     {
-        public Reaction(string logicEquationId, Activity activity)
+        public Reaction(string logicEquationId, Activity<TModel> activity)
         {
             this.LogicEquationId = logicEquationId;
             this.Activity = activity;
         }
 
         public string LogicEquationId { get; }
-        public Activity Activity { get; }
+        public Activity<TModel> Activity { get; }
 
         public bool Processed { get; set; } = false;
     }

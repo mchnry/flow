@@ -2,10 +2,10 @@
 
 namespace Mchnry.Flow.Configuration
 {
-    public class ConventionHelper
+    internal class ConventionHelper
     {
 
-        public static string ChangePrefix(NamePrefixOptions from, NamePrefixOptions to, string currentName, Convention convention)
+        internal static string ChangePrefix(NamePrefixOptions from, NamePrefixOptions to, string currentName, Convention convention)
         {
 
             string toReturn = currentName;
@@ -24,7 +24,7 @@ namespace Mchnry.Flow.Configuration
             {
                 throw new ConventionMisMatchException(currentName, "Cannot change evaluator to action/activity");
             }
-            if ((from == NamePrefixOptions.Action || from == NamePrefixOptions.Activity) && (to == NamePrefixOptions.Equation || to == NamePrefixOptions.Evaluator))
+            if ((from == NamePrefixOptions.Action) && (to == NamePrefixOptions.Equation || to == NamePrefixOptions.Evaluator))
             {
                 throw new ConventionMisMatchException(currentName, "Cannot change action to evaluator/equation");
             }
@@ -42,7 +42,17 @@ namespace Mchnry.Flow.Configuration
             return toReturn;
         }
 
-        public static string NegateEquationName(string currentName, Convention convention)
+        internal static string ApplyConvention(NamePrefixOptions to, string currentName, Convention convention )
+        {
+            string toReturn = null;
+
+            string prefix = convention.GetPrefix(to) + convention.Delimeter;
+            toReturn = prefix + currentName;
+
+            return toReturn;
+        }
+
+        internal static string NegateEquationName(string currentName, Convention convention)
         {
 
 
@@ -61,7 +71,7 @@ namespace Mchnry.Flow.Configuration
         }
 
 
-        public static bool MatchesConvention(NamePrefixOptions conventionToCheck, string Id, Convention convention)
+        internal static bool MatchesConvention(NamePrefixOptions conventionToCheck, string Id, Convention convention)
         {
             string toCheck = convention.GetPrefix(conventionToCheck) + convention.Delimeter;
             return Id.StartsWith(toCheck);

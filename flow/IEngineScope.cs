@@ -6,13 +6,13 @@ using System.Text;
 
 namespace Mchnry.Flow
 {
-    public interface IEngineScope
+    public interface IEngineScope<TModel>
     {
 
 
 
-        T GetModel<T>(string key);
-        void SetModel<T>(string key, T value);
+        TModel GetModel();
+        void SetModel(TModel value);
         T GetActivityModel<T>(string key);
         void SetActivityModel<T>(string key, T value);
 
@@ -21,7 +21,7 @@ namespace Mchnry.Flow
 
         void AddValidation(Validation toAdd);
 
-        void Defer(IDeferredAction action, bool onlyIfValidationsResolved);
+        void Defer(IDeferredAction<TModel> action, bool onlyIfValidationsResolved);
 
         StepTraceNode<ActivityProcess> Process { get; }
     }
