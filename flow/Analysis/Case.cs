@@ -1,12 +1,11 @@
-﻿using System;
+﻿using Mchnry.Flow.Logic.Define;
+using System;
 using System.Collections.Generic;
-using System.Text;
-using Mchnry.Flow.Logic.Define;
 using System.Linq;
 
 namespace Mchnry.Flow.Analysis
 {
-    public class Case: ICloneable
+    public class Case : ICloneable
     {
         internal Case(List<Rule> rules)
         {

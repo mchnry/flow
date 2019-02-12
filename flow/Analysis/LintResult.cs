@@ -1,7 +1,5 @@
 ﻿using Mchnry.Flow.Diagnostics;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Mchnry.Flow.Analysis
 {
@@ -14,7 +12,7 @@ namespace Mchnry.Flow.Analysis
             this.LintHash = LintHash;
         }
 
-        public string LintHash { get;  }
+        public string LintHash { get; }
         public StepTracer<LintTrace> Trace { get; }
         public List<LogicTest> LogicTests { get; }
 

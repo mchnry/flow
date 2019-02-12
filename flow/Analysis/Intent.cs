@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
 
 namespace Mchnry.Flow.Analysis
@@ -42,7 +41,7 @@ namespace Mchnry.Flow.Analysis
 
             this.Context = newContext;
             return newContext;
-            
+
 
 
         }
@@ -55,7 +54,7 @@ namespace Mchnry.Flow.Analysis
         bool Exclusive { get; }
     }
 
-    public class Context<T>: IContext
+    public class Context<T> : IContext
     {
 
 
@@ -80,12 +79,12 @@ namespace Mchnry.Flow.Analysis
             {
                 //box/unbox
                 T toAdd = (T)Convert.ChangeType(s, typeof(T));
-                
+
                 this.Values.Add(toAdd);
             });
             return this;
         }
-        
+
         /// <summary>
         /// Expects that the test value can only be one of the items in the set of context, and that the 
         /// set of context is finite.

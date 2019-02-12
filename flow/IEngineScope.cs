@@ -16,6 +16,9 @@ namespace Mchnry.Flow
         T GetActivityModel<T>(string key);
         void SetActivityModel<T>(string key, T value);
 
+        T GetScopeModel<T>(string key);
+        void SetScopeModel<T>(string key, T value);
+
         Logic.Define.Rule CurrentRuleDefinition { get; }
         Work.Define.Activity CurrentActivity { get; }
 

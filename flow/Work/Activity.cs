@@ -26,7 +26,7 @@ namespace Mchnry.Flow.Work
             this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Action_Running;
             bool result = false;
             //execute action
-            IAction<TModel> toExecute = this.engineRef.GetAction(this.activityDefinition.Action.Id);
+            IAction<TModel> toExecute = this.engineRef.ImplementationManager.GetAction(this.activityDefinition.Action.Id);
       
 
 

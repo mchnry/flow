@@ -238,11 +238,12 @@ namespace Mchnry.Flow.Analysis
                         {
                             newId = this.config.Convention.GetPrefix(NamePrefixOptions.Equation) + this.config.Convention.Delimeter + "true";
                             condition = Logic.Operand.Or;
-                        } else
+                        }
+                        else
                         {
                             newId = ConventionHelper.ChangePrefix(NamePrefixOptions.Evaluator, NamePrefixOptions.Equation, rule.Id, this.config.Convention);
                         }
-                        
+
                         if (!rule.TrueCondition)
                         {
                             newId = ConventionHelper.NegateEquationName(newId, this.config.Convention);

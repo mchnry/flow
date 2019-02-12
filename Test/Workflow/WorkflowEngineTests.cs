@@ -9,11 +9,13 @@ namespace Test.Workflow
     public class WorkflowEngineTests
     {
 
-        public void Basic()
-        {
-            //var engine = WorkflowEngine.CreateWorkflowEngine(null, null, null);
-            //engine.ExecuteAutoFinalizeAsync()
-        }
+        //caching
+        //engine status updated
+        //validations?
+        //defer
+        //loading... does not create dupes
+        //does not reevaluate rules
+
 
     }
 }

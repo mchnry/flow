@@ -143,31 +143,31 @@ namespace Test.Analysis
             Assert.Equal(1, sanitized.Equations.Count(g => g.Id == "equation.test"));
         }
         //inferred activity added only once
-        [Fact]
-        public void InferredActivityAddedOnlyOnce()
-        {
-            WorkDefine.Workflow testWF = new WorkDefine.Workflow()
-            {
-                Activities = new List<WorkDefine.Activity>()
-                {
-                    new WorkDefine.Activity()
-                    {
-                        Action = "action.test",
-                        Id = "activity.test",
-                        Reactions = new List<WorkDefine.Reaction>()
-                        {
-                            new WorkDefine.Reaction() { Logic = "evaluator.test", Work ="action.reaction" },
-                            new WorkDefine.Reaction() { Logic = "evaluator.test", Work ="action.reaction" }
-                        }
-                    }
-                }
-            };
-            StepTracer<LintTrace> tracer = new StepTracer<LintTrace>();
-            tracer.TraceFirst(new LintTrace(LintStatusOptions.Sanitizing, "Testing Sanitizer"));
-            Sanitizer toTest = new Sanitizer(tracer, this.defaultConfig);
-            WorkDefine.Workflow sanitized = toTest.Sanitize(testWF);
-            Assert.Equal(1, sanitized.Activities.Count(g => g.Id == "activity.reaction"));
-        }
+        //[Fact]
+        //public void InferredActivityAddedOnlyOnce()
+        //{
+        //    WorkDefine.Workflow testWF = new WorkDefine.Workflow()
+        //    {
+        //        Activities = new List<WorkDefine.Activity>()
+        //        {
+        //            new WorkDefine.Activity()
+        //            {
+        //                Action = "action.test",
+        //                Id = "activity.test",
+        //                Reactions = new List<WorkDefine.Reaction>()
+        //                {
+        //                    new WorkDefine.Reaction() { Logic = "evaluator.test", Work ="action.reaction" },
+        //                    new WorkDefine.Reaction() { Logic = "evaluator.test", Work ="action.reaction" }
+        //                }
+        //            }
+        //        }
+        //    };
+        //    StepTracer<LintTrace> tracer = new StepTracer<LintTrace>();
+        //    tracer.TraceFirst(new LintTrace(LintStatusOptions.Sanitizing, "Testing Sanitizer"));
+        //    Sanitizer toTest = new Sanitizer(tracer, this.defaultConfig);
+        //    WorkDefine.Workflow sanitized = toTest.Sanitize(testWF);
+        //    Assert.Equal(1, sanitized.Activities.Count(g => g.Id == "activity.reaction"));
+        //}
         //negation equation added if negate evaluator
         [Fact]
         public void InferredNegatedEvaluatorEquationAdded()

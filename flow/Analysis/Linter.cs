@@ -1,16 +1,14 @@
-﻿using System;
+﻿using Mchnry.Flow.Logic.Define;
+using System;
 using System.Collections.Generic;
-using System.Text;
-using Mchnry.Flow.Logic.Define;
 using System.Linq;
 
 namespace Mchnry.Flow.Analysis
 {
     public class LogicLinter
     {
-        private readonly List<Evaluator> evaluatorDefinitions;
-        private readonly List<Equation> equationDefinitions;
 
+        private readonly WorkflowManager workflowManager;
         private List<string> lefts = null;
         private List<string> rights = null;
         private List<string> roots = null;
@@ -18,37 +16,37 @@ namespace Mchnry.Flow.Analysis
 
         internal Dictionary<string, List<Case>> EquationTests { get; set; } = new Dictionary<string, List<Case>>();
 
-        internal LogicLinter(List<Evaluator> evaluatorDefinitions,
-            List<Equation> equationDefinitions)
+        internal LogicLinter(WorkflowManager workflowManager)
         {
-            this.evaluatorDefinitions = evaluatorDefinitions;
-            this.equationDefinitions = equationDefinitions;
+            this.workflowManager = workflowManager;
+
             //infer intents
-            this.lefts = (from e in this.equationDefinitions
-                                  where e.First != null
-                                  select e.First.Id).ToList();
+            this.lefts = (from e in this.workflowManager.WorkFlow.Equations
+                          where e.First != null
+                          select e.First.Id).ToList();
 
-            this.rights = (from e in this.equationDefinitions
-                                   where null != e.Second
-                                   select e.Second.Id).ToList();
+            this.rights = (from e in this.workflowManager.WorkFlow.Equations
+                           where null != e.Second
+                           select e.Second.Id).ToList();
 
-            this.roots = (from e in this.equationDefinitions
-                                  where !lefts.Contains(e.Id) && !rights.Contains(e.Id)
-                                  select e.Id).ToList();
+            this.roots = (from e in this.workflowManager.WorkFlow.Equations
+                          where !lefts.Contains(e.Id) && !rights.Contains(e.Id)
+                          select e.Id).ToList();
 
-            
+
 
             this.InferIntent();
+            this.workflowManager = workflowManager;
         }
 
 
         internal void InferIntent()
         {
-            List<string> evalIds = (from e in this.evaluatorDefinitions select e.Id).ToList();
-            List<Rule> evalRules = (from l in this.equationDefinitions
+            List<string> evalIds = (from e in this.workflowManager.WorkFlow.Evaluators select e.Id).ToList();
+            List<Rule> evalRules = (from l in this.workflowManager.WorkFlow.Equations
                                     where evalIds.Contains(l.First.Id)
                                     select l.First)
-                                    .Union(from r in this.equationDefinitions
+                                    .Union(from r in this.workflowManager.WorkFlow.Equations
                                            where null != r.Second
                                            && evalIds.Contains(r.Second.Id)
                                            select r.Second).ToList();
@@ -78,7 +76,7 @@ namespace Mchnry.Flow.Analysis
                 toAdd = new LogicIntent(evaluatorId);
                 this.Intents.Add(toAdd);
             }
-            
+
             return toAdd;
         }
 
@@ -98,7 +96,7 @@ namespace Mchnry.Flow.Analysis
                   {
                       Rule conditional = (Rule)rules[ordinal].Clone();
                       conditional.TrueCondition = t;
-                      
+
                       if (childCases != null)
                       {
                           childCases.ForEach(c =>
@@ -108,7 +106,8 @@ namespace Mchnry.Flow.Analysis
                               toAdd.Rules.Add(conditional);
                               resolved.Add(toAdd);
                           });
-                      } else
+                      }
+                      else
                       {
                           resolved.Add(new Case(new List<Rule>() { conditional }));
                       }
@@ -131,7 +130,7 @@ namespace Mchnry.Flow.Analysis
                 List<Rule> extracted = new List<Rule>();
                 if (null != s.First)
                 {
-                    Equation qMatch = this.equationDefinitions.FirstOrDefault(g => g.Id.Equals(s.First.Id));
+                    Equation qMatch = this.workflowManager.WorkFlow.Equations.FirstOrDefault(g => g.Id.Equals(s.First.Id));
                     //if first is another euqation, extract it's rules
                     if (null != qMatch)
                     {
@@ -142,11 +141,11 @@ namespace Mchnry.Flow.Analysis
                     {
                         extracted.Add(s.First);
                     }
-                    
+
                 }
                 if (null != s.Second)
                 {
-                    Equation qMatch = this.equationDefinitions.FirstOrDefault(g => g.Id.Equals(s.Second.Id));
+                    Equation qMatch = this.workflowManager.WorkFlow.Equations.FirstOrDefault(g => g.Id.Equals(s.Second.Id));
                     //if first is another euqation, extract it's rules
                     if (null != qMatch)
                     {
@@ -167,7 +166,7 @@ namespace Mchnry.Flow.Analysis
             this.roots.ForEach(r =>
             {
                 List<List<Case>> SubCases = new List<List<Case>>();
-                Equation toTest = this.equationDefinitions.FirstOrDefault(g => g.Id.Equals(r));
+                Equation toTest = this.workflowManager.WorkFlow.Equations.FirstOrDefault(g => g.Id.Equals(r));
                 List<Rule> equationRules = ExtractRules(toTest);
 
                 //build cases for no-intent
@@ -197,7 +196,7 @@ namespace Mchnry.Flow.Analysis
                         }
                         SubCases.Add(intentCases);
                     });
-                    
+
 
 
                 }
@@ -209,15 +208,15 @@ namespace Mchnry.Flow.Analysis
 
 
                     //merge subcases
-                    for (int i = 1; i < SubCases.Count; i ++)
+                    for (int i = 1; i < SubCases.Count; i++)
                     {
-                        
+
                         List<Case> toMerge = SubCases[i];
                         List<Case> thisMerge = new List<Case>();
 
                         for (int j = 0; j < merged.Count; j++)
                         {
-                            for (int q = 0; q < toMerge.Count; q ++)
+                            for (int q = 0; q < toMerge.Count; q++)
                             {
                                 Case cloneMerged = (Case)merged[j].Clone();
                                 Case cloneThis = (Case)toMerge[q].Clone();
@@ -231,7 +230,8 @@ namespace Mchnry.Flow.Analysis
                     }
 
                     equationTest.TestCases = merged;
-                } else
+                }
+                else
                 {
                     equationTest.TestCases = SubCases[0];
                 }
@@ -242,7 +242,7 @@ namespace Mchnry.Flow.Analysis
             return toReturn;
 
         }
-       
+
 
     }
 

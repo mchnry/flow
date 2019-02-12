@@ -72,26 +72,7 @@ namespace Test.Analysis
                 ConventionHelper.ChangePrefix(NamePrefixOptions.Action, NamePrefixOptions.Evaluator, action, this.DefaultConfig.Convention);
             });
         }
-        [Fact]
-        public void RenameActivityToEquationEx()
-        {
 
-            var exception = Assert.Throws<ConventionMisMatchException>(() =>
-            {
-                string action = "activity.test";
-                ConventionHelper.ChangePrefix(NamePrefixOptions.Activity, NamePrefixOptions.Equation, action, this.DefaultConfig.Convention);
-            });
-        }
-        [Fact]
-        public void RenameActivityToEvaluatorEx()
-        {
-
-            var exception = Assert.Throws<ConventionMisMatchException>(() =>
-            {
-                string action = "activity.test";
-                ConventionHelper.ChangePrefix(NamePrefixOptions.Activity, NamePrefixOptions.Evaluator, action, this.DefaultConfig.Convention);
-            });
-        }
         [Fact]
         public void RenameEquationToEvaluator()
         {

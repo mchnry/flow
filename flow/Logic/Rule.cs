@@ -31,8 +31,8 @@ namespace Mchnry.Flow.Logic
 
             bool thisResult = !this.definition.TrueCondition;
 
-            bool? knownResult = this.engineRef.GetResult(this.definition);
-            IRuleEvaluator<TModel> evaluator = this.engineRef.GetEvaluator(this.definition.Id);
+            bool? knownResult = this.engineRef.RunManager.GetResult(this.definition);
+            IRuleEvaluator<TModel> evaluator = this.engineRef.ImplementationManager.GetEvaluator(this.definition.Id);
 
             bool doEval = reEvaluate || !knownResult.HasValue;
 
@@ -66,7 +66,7 @@ namespace Mchnry.Flow.Logic
                     throw new EvaluateException(this.definition.Id, this.definition.Context, ex);
                 }
                 // Cache stores the evaluator results only
-                this.engineRef.SetResult(this.definition, thisResult);
+                this.engineRef.RunManager.SetResult(this.definition, thisResult);
                 knownResult = thisResult;
 
 
