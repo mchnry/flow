@@ -145,6 +145,9 @@ namespace Mchnry.Flow
             {
                 this.Sanitize();
             }
+
+            activityId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.Configuration.Convention);
+
             Activity<TModel> toLoad = this.LoadActivity(activityId);
 
             this.Tracer.CurrentStep = this.Tracer.TraceStep(this.Tracer.Root, new ActivityProcess("Execute", ActivityStatusOptions.Engine_Begin, null));
@@ -156,6 +159,7 @@ namespace Mchnry.Flow
 
         async Task<IEngineComplete> IEngineRunner.ExecuteAutoFinalizeAsync(string activityId, CancellationToken token)
         {
+
             IEngineFinalize finalizer = await ((IEngineRunner)this).ExecuteAsync(activityId, token);
             return await finalizer.FinalizeAsync(token);
 
@@ -283,12 +287,13 @@ namespace Mchnry.Flow
 
         IEngineLoader<TModel> IEngineLoader<TModel>.AddEvaluator(string id, Func<IEngineScope<TModel>, LogicEngineTrace, CancellationToken, Task<bool>> evaluator)
         {
+            id = ConventionHelper.ApplyConvention(NamePrefixOptions.Evaluator, id, this.Configuration.Convention);
             this.ImplementationManager.AddEvaluator(id, evaluator);
             return this;
         }
         IEngineLoader<TModel> IEngineLoader<TModel>.AddAction(string id, Func<IEngineScope<TModel>, WorkflowEngineTrace, CancellationToken, Task<bool>> action)
         {
-
+            id = ConventionHelper.ApplyConvention(NamePrefixOptions.Action, id, this.Configuration.Convention);
             this.ImplementationManager.AddAction(id, action);
             return this;
         }
@@ -316,18 +321,29 @@ namespace Mchnry.Flow
                     {
                         WorkDefine.ActionRef work = r.Work;
                         WorkDefine.Activity toCreatedef = this.WorkflowManager.GetActivity(work.Id);
-
-
-
                         LoadLogic(r.Logic);
 
                         if (null == a.Reactions)
                         {
                             a.Reactions = new List<Reaction<TModel>>();
                         }
-                        Activity<TModel> toCreate = new Activity<TModel>(this, toCreatedef);
-                        LoadReactions(toCreate, toCreatedef);
-                        a.Reactions.Add(new Reaction<TModel>(r.Logic, toCreate));
+
+                        if (toCreatedef != null) { 
+                            Activity<TModel> toCreate = new Activity<TModel>(this, toCreatedef);
+                            LoadReactions(toCreate, toCreatedef);
+                            a.Reactions.Add(new Reaction<TModel>(r.Logic, toCreate));                
+
+                        } else
+                        {
+                            
+                            a.Reactions.Add(new Reaction<TModel>(r.Logic, r.Work));
+                        }
+                        
+
+
+
+
+
                     });
                 }
 

@@ -61,15 +61,32 @@ namespace Mchnry.Flow.Work
                 new ActivityProcess(this.activityDefinition.Id, ActivityStatusOptions.Action_Running, "React"));
                 foreach (Reaction<TModel> react in this.Reactions)
                 {
-                    this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(reactionMark,
-                        new ActivityProcess(react.Activity.activityDefinition.Id, ActivityStatusOptions.Action_Running, "Evaluating"));
-                    bool doReact = await this.engineRef.Evaluate(react.LogicEquationId, token);
-
-                    if (doReact)
+                    if (react.Activity != null)
                     {
                         this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(reactionMark,
-                            new ActivityProcess(react.Activity.activityDefinition.Id, ActivityStatusOptions.Action_Running, "Reacting"));
-                        await react.Activity.Execute(this.engineRef.Tracer, token);
+                            new ActivityProcess(react.Activity.activityDefinition.Id, ActivityStatusOptions.Action_Running, "Evaluating"));
+                        bool doReact = await this.engineRef.Evaluate(react.LogicEquationId, token);
+
+                        if (doReact)
+                        {
+                            this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(reactionMark,
+                                new ActivityProcess(react.Activity.activityDefinition.Id, ActivityStatusOptions.Action_Running, "Reacting"));
+                            await react.Activity.Execute(this.engineRef.Tracer, token);
+                        }
+                    } else
+                    {
+                        this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(reactionMark,
+                            new ActivityProcess(react.Action.Id, ActivityStatusOptions.Action_Running, "Evaluating"));
+                        bool doReact = await this.engineRef.Evaluate(react.LogicEquationId, token);
+
+                        if (doReact)
+                        {
+                            IAction<TModel> reactionToExecute = this.engineRef.ImplementationManager.GetAction(react.Action.Id);
+                            this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(reactionMark,
+                                new ActivityProcess(react.Action.Id, ActivityStatusOptions.Action_Running, "Reacting"));
+                            bool reactionResult = await reactionToExecute.CompleteAsync(this.engineRef, new WorkflowEngineTrace(this.engineRef.Tracer), token);
+                        }
+
                     }
                 }
             }

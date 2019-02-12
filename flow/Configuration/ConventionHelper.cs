@@ -77,5 +77,30 @@ namespace Mchnry.Flow.Configuration
             return Id.StartsWith(toCheck);
 
         }
+
+        internal static string EnsureConvention(NamePrefixOptions to, string id, Convention convention)
+        {
+            NamePrefixOptions? match;
+            if (MatchesConvention(to, id, convention))
+            {
+                return id;
+            } else if ((match = MatchesAnyConvention(id, convention)) != null)
+            {
+                throw new ConventionMisMatchException("id", "Already conventionalized");
+            } else
+            {
+                string toCheck = convention.GetPrefix(to) + convention.Delimeter;
+                return string.Format("{0}{1}", toCheck, id);
+            }
+        }
+
+        internal static NamePrefixOptions? MatchesAnyConvention(string id, Convention convention)
+        {
+            if (MatchesConvention(NamePrefixOptions.Action, id, convention)) return NamePrefixOptions.Action;
+            if (MatchesConvention(NamePrefixOptions.Activity, id, convention)) return NamePrefixOptions.Activity;
+            if (MatchesConvention(NamePrefixOptions.Equation, id, convention)) return NamePrefixOptions.Equation;
+            if (MatchesConvention(NamePrefixOptions.Evaluator, id, convention)) return NamePrefixOptions.Evaluator;
+            return null;
+        }
     }
 }
