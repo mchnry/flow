@@ -1,17 +1,14 @@
-﻿using Mchnry.Core.Cache;
+﻿using Mchnry.Flow.Analysis;
+using Mchnry.Flow.Configuration;
 using Mchnry.Flow.Diagnostics;
-using Mchnry.Flow;
 using Mchnry.Flow.Logic;
-using Mchnry.Flow.Analysis;
 using Mchnry.Flow.Work;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using LogicDefine = Mchnry.Flow.Logic.Define;
 using WorkDefine = Mchnry.Flow.Work.Define;
-using Mchnry.Flow.Configuration;
 
 namespace Mchnry.Flow
 {
@@ -21,11 +18,12 @@ namespace Mchnry.Flow
 
         internal Config Configuration;
         internal bool Sanitized = false;
+
         private StepTracer<LintTrace> lintTracer = default(StepTracer<LintTrace>);
+        internal virtual EngineStepTracer Tracer { get; set; }
 
         internal virtual ImplementationManager<TModel> ImplementationManager { get; set; }
         internal virtual WorkflowManager WorkflowManager { get; set; }
-
         internal virtual RunManager RunManager { get; set; }
 
         //store reference to all actions to run during finalize (if all validations succeed)
@@ -79,27 +77,25 @@ namespace Mchnry.Flow
         }
 
 
-        internal virtual EngineStepTracer Tracer { get; set; }
+
         internal virtual ActivityStatusOptions CurrentActivityStatus { get; set; } = ActivityStatusOptions.Engine_Loading;
 
-        internal virtual LogicDefine.Rule CurrentRuleDefinition { get; set; } = null;
-        LogicDefine.Rule IEngineScope<TModel>.CurrentRuleDefinition => this.CurrentRuleDefinition;
 
-        internal virtual WorkDefine.Activity CurrentActivity { get; set; }
-        WorkDefine.Activity IEngineScope<TModel>.CurrentActivity => this.CurrentActivity;
+        LogicDefine.Rule IEngineScope<TModel>.CurrentRuleDefinition => this.RunManager.CurrentRuleDefinition;
+        
+        WorkDefine.Activity IEngineScope<TModel>.CurrentActivity => this.RunManager.CurrentActivity;
 
 
         StepTraceNode<ActivityProcess> IEngineScope<TModel>.Process => this.Tracer.Root;
 
         StepTraceNode<ActivityProcess> IEngineComplete.Process => this.Tracer.Root;
 
-        //current status of running engine
-        internal EngineStatusOptions EngineStatus { get; set; } = EngineStatusOptions.NotStarted;
-        EngineStatusOptions IEngineComplete.Status => this.EngineStatus;
+
+        EngineStatusOptions IEngineComplete.Status => this.RunManager.EngineStatus;
 
 
         //store all validations created by validators/evaluators
-        internal ValidationContainer ValidationContainer { get; set; } = new ValidationContainer();
+        internal virtual ValidationContainer ValidationContainer { get; set; } = new ValidationContainer();
         IValidationContainer IEngineComplete.Validations => this.ValidationContainer;
 
 
@@ -108,17 +104,17 @@ namespace Mchnry.Flow
             //can only occure when rule is evaluating or activity is executing
             if (this.CurrentActivityStatus == ActivityStatusOptions.Action_Running)
             {
-                string scope = this.CurrentActivity.Id;
+                string scope = this.RunManager.CurrentActivity.Id;
                 this.ValidationContainer.Scope(scope).AddValidation(toAdd);
 
 
             }
             else if (this.CurrentActivityStatus == ActivityStatusOptions.Rule_Evaluating)
             {
-                string scope = this.CurrentRuleDefinition.Id;
-                if (!string.IsNullOrEmpty(this.CurrentRuleDefinition.Context))
+                string scope = this.RunManager.CurrentRuleDefinition.Id;
+                if (!string.IsNullOrEmpty(this.RunManager.CurrentRuleDefinition.Context))
                 {
-                    scope = string.Format("{0}.{1}", scope, this.CurrentRuleDefinition.Context.GetHashCode().ToString());
+                    scope = string.Format("{0}.{1}", scope, this.RunManager.CurrentRuleDefinition.Context.GetHashCode().ToString());
                 }
                 this.ValidationContainer.Scope(scope).AddValidation(toAdd);
 
@@ -195,13 +191,13 @@ namespace Mchnry.Flow
 
         T IEngineScope<TModel>.GetActivityModel<T>(string key)
         {
-            string activityId = this.CurrentActivity.Id;
+            string activityId = this.RunManager.CurrentActivity.Id;
             return this.Configuration.Cache.Spawn(activityId).Read<T>(key);
         }
 
         T IEngineScope<TModel>.GetScopeModel<T>(string key)
         {
-            string activityId = this.CurrentActivity.Id;
+            string activityId = this.RunManager.CurrentActivity.Id;
             return this.Configuration.Cache.Read<T>(key);
         }
 
@@ -231,13 +227,13 @@ namespace Mchnry.Flow
 
         void IEngineScope<TModel>.SetActivityModel<T>(string key, T value)
         {
-            string activityId = this.CurrentActivity.Id;
+            string activityId = this.RunManager.CurrentActivity.Id;
             this.Configuration.Cache.Spawn(activityId).Insert<T>(key, value);
         }
 
         void IEngineScope<TModel>.SetScopeModel<T>(string key, T value)
         {
-       
+
             this.Configuration.Cache.Insert<T>(key, value);
         }
 
@@ -263,7 +259,7 @@ namespace Mchnry.Flow
 
         IEngineRunner IEngineLoader<TModel>.Start()
         {
-            
+
             return this;
         }
 
@@ -321,7 +317,7 @@ namespace Mchnry.Flow
                         WorkDefine.ActionRef work = r.Work;
                         WorkDefine.Activity toCreatedef = this.WorkflowManager.GetActivity(work.Id);
 
-                        
+
 
                         LoadLogic(r.Logic);
 
@@ -348,8 +344,8 @@ namespace Mchnry.Flow
             StepTracer<LintTrace> trace = new StepTracer<LintTrace>();
             StepTraceNode<LintTrace> root = trace.TraceFirst(new LintTrace(LintStatusOptions.Loading, "Loading Logic", equationId));
 
-       
-             
+
+
             //LogicDefine.Evaluator trueDef = this.workFlow.Evaluators.FirstOrDefault(z => z.Id == "true");
             //if (null == trueDef)
             //{
@@ -387,7 +383,8 @@ namespace Mchnry.Flow
                     IRule<TModel> first = LoadRule(eq.First, step);
                     IRule<TModel> second = LoadRule(eq.Second, step);
                     toReturn = new Expression<TModel>(rule, eq.Condition, first, second, this);
-                } else
+                }
+                else
                 {
                     LogicDefine.Evaluator ev = this.WorkflowManager.GetEvaluator(rule.Id);
                     toReturn = new Rule<TModel>(rule, this);

@@ -87,10 +87,6 @@ namespace Mchnry.Flow
         {
             IRuleEvaluator<TModel> toReturn = default(IRuleEvaluator<TModel>);
 
-            if (id == "true")
-            {
-                return new AlwaysTrueEvaluator<TModel>();
-            }
 
             if (!this.evaluators.ContainsKey(id))
             {

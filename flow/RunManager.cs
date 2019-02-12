@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using LogicDefine = Mchnry.Flow.Logic.Define;
+using WorkDefine = Mchnry.Flow.Work.Define;
 
 namespace Mchnry.Flow
 {
@@ -10,6 +11,12 @@ namespace Mchnry.Flow
     {
         //store known evaluator results to avoid rerunning already run evaluators
         private Dictionary<string, bool?> results = new Dictionary<string, bool?>();
+        internal virtual LogicDefine.Rule CurrentRuleDefinition { get; set; } = null;
+
+        internal virtual WorkDefine.Activity CurrentActivity { get; set; }
+        //current status of running engine
+        internal virtual EngineStatusOptions EngineStatus { get; set; } = EngineStatusOptions.NotStarted;
+
         internal virtual bool? GetResult(LogicDefine.Rule rule)
         {
             EvaluatorKey key = new EvaluatorKey() { Id = rule.Id, Context = rule.Context };

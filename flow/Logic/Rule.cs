@@ -36,7 +36,7 @@ namespace Mchnry.Flow.Logic
 
             bool doEval = reEvaluate || !knownResult.HasValue;
 
-            this.engineRef.CurrentRuleDefinition = this.definition;
+            this.engineRef.RunManager.CurrentRuleDefinition = this.definition;
             this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Rule_Evaluating;
 
             StepTraceNode<ActivityProcess> mark =  this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(

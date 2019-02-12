@@ -22,7 +22,7 @@ namespace Mchnry.Flow.Work
 
         public async Task Execute(EngineStepTracer tracer, CancellationToken token)
         {
-            this.engineRef.CurrentActivity = this.activityDefinition;
+            this.engineRef.RunManager.CurrentActivity = this.activityDefinition;
             this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Action_Running;
             bool result = false;
             //execute action
