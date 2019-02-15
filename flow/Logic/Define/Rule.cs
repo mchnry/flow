@@ -37,5 +37,22 @@ namespace Mchnry.Flow.Logic.Define
         {
             return new Rule() { Context = this.Context, Id = this.Id, TrueCondition = this.TrueCondition };
         }
+
+        public override string ToString()
+        {
+            return string.Format("{0}{1}{2}",
+                (TrueCondition) ? "" : "!",
+                this.Id,
+                (string.IsNullOrEmpty(this.Context)) ? "" : "|" + this.Context);
+        }
+        [JsonIgnore]
+        internal string RuleIdWithContext {
+            get {
+                return string.Format("{0}{1}",
+                
+                this.Id,
+                (string.IsNullOrEmpty(this.Context)) ? "" : "|" + this.Context);
+            }
+        }
     }
 }

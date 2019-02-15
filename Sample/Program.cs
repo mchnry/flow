@@ -199,7 +199,7 @@ namespace Sample
                     }
                 ).Then("doSomethingElse|123", (If) =>
                 {
-                    If.True("isInInventory");
+                    If.True("someotherrule");
                 }).End();
 
             string s = JsonConvert.SerializeObject(created, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });

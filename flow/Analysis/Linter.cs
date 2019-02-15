@@ -139,7 +139,12 @@ namespace Mchnry.Flow.Analysis
                     }
                     else //otherwise, get the rule
                     {
-                        extracted.Add(s.First);
+
+                        if (s.First.Id != "true")
+                        {
+
+                            extracted.Add(s.First);
+                        }
                     }
 
                 }
@@ -154,7 +159,10 @@ namespace Mchnry.Flow.Analysis
                     }
                     else //otherwise, get the rule
                     {
-                        extracted.Add(s.Second);
+                        if (s.Second.Id != "true")
+                        {
+                            extracted.Add(s.Second);
+                        }
                     }
 
                 }
@@ -171,8 +179,12 @@ namespace Mchnry.Flow.Analysis
 
                 //build cases for no-intent
                 List<Rule> noIntent = (from z in equationRules where !intentRules.Contains(z.Id) select z).ToList();
-                List<Case> noIntentCases = buildCases(null, noIntent, 0);
-                SubCases.Add(noIntentCases);
+
+                if (noIntent.Count > 0)
+                {
+                    List<Case> noIntentCases = buildCases(null, noIntent, 0);
+                    SubCases.Add(noIntentCases);
+                }
 
                 if (this.Intents.Count > 0)
                 {
@@ -201,7 +213,7 @@ namespace Mchnry.Flow.Analysis
 
                 }
 
-                LogicTest equationTest = new LogicTest(r);
+                LogicTest equationTest = new LogicTest(r, true);
                 if (SubCases.Count > 1)
                 {
                     List<Case> merged = new List<Case>((from c in SubCases[0] select (Case)c.Clone()));
@@ -231,10 +243,15 @@ namespace Mchnry.Flow.Analysis
 
                     equationTest.TestCases = merged;
                 }
-                else
+                else if (SubCases.Count == 1)
                 {
                     equationTest.TestCases = SubCases[0];
+                } else
+                {
+                    equationTest.TestCases = new List<Case>();
                 }
+
+                
                 toReturn.Add(equationTest);
 
             });
@@ -248,11 +265,77 @@ namespace Mchnry.Flow.Analysis
 
     internal class ActivityLinter
     {
-        //what logic cases result in reaction
-        //any activities where no reaction is executed
+        private readonly WorkflowManager workflowManager;
+        private readonly List<LogicTest> logicTests;
 
-        //for each activity ... 
+        public ActivityLinter(WorkflowManager workflowManager, List<LogicTest> logicTests )
+        {
+       
+            this.workflowManager = workflowManager;
+            this.logicTests = logicTests;
+        }
 
+        public void Lint()
+        {
+
+            /*for each root activity
+            need to get all equations involved
+            merge those test cases from top down without adding duplicates on EvaluatorID|context 
+            example
+             if (a & b) -> X -> 
+                  if !a & c -> y
+            result should be
+                a, b, c (not a,!a,b,c)
+
+            */
+
+            List<string> equationsWithCases = new List<string>();
+            equationsWithCases = (from z in logicTests where z.TestCases.Count > 0 select z.EquationId).ToList();
+            List<List<string>> cases = new List<List<string>>();
+
+            foreach(string eq in equationsWithCases)
+            {
+
+
+                LogicTest eqTest = logicTests.First(g => g.EquationId == eq);
+                List<List<string>> thisRun = new List<List<string>>();
+                foreach (Case testCase in eqTest.TestCases)
+                {
+                    List<string> ruleCases = (from g in testCase.Rules select g.ToString()).ToList();
+                    if (cases.Count == 0)
+                    {
+                        thisRun.Add(ruleCases);
+                    } else
+                    {
+                        foreach (List<string> lastRun in cases)
+                        {
+                            List<string> copyOfLastRun = (from s in lastRun select s).ToList();
+                            //whittle out any dupes where id and context match. 
+                            List<string> justIdsFromLastRun = (from s in lastRun select ((Rule)s).RuleIdWithContext).ToList();
+
+                            List<string> deduped = (from s in ruleCases where !justIdsFromLastRun.Contains(((Rule)s).RuleIdWithContext) select s).ToList();
+
+                            List<string> thisCase = copyOfLastRun;
+
+                            if (deduped.Count > 0)
+                            {
+                                thisCase = copyOfLastRun.Union(deduped).ToList();
+                                thisRun.Add(thisCase);
+                            }
+                            
+                        }
+                    }
+                    
+                }
+                if (thisRun.Count > 0)
+                {
+                    cases = thisRun;
+                }
+
+
+            }
+
+        }
 
 
     }

@@ -437,6 +437,9 @@ namespace Mchnry.Flow
 
             List<LogicTest> logicTests = linter.Lint();
 
+            ActivityLinter aLinter = new ActivityLinter(this.WorkflowManager, logicTests);
+            aLinter.Lint();
+
             int lintHash = this.WorkflowManager.WorkFlow.GetHashCode();
             return new LintResult(this.lintTracer, logicTests, lintHash.ToString());
         }
