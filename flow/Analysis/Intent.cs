@@ -5,6 +5,10 @@ using System.Linq;
 namespace Mchnry.Flow.Analysis
 {
 
+    public interface INeedIntent
+    {
+        LogicIntent Intent(string evaluatorId);
+    }
 
     public class LogicIntent
     {

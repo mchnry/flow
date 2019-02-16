@@ -1,52 +1,52 @@
 ﻿using Mchnry.Flow.Logic.Define;
+using Mchnry.Flow.Work.Define;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Mchnry.Flow.Analysis
 {
-    public class LogicLinter
-    {
 
-        private readonly WorkflowManager workflowManager;
+    internal class Linter: INeedIntent {
+
+        private List<LogicTest> logicTests = null;
+        internal Dictionary<string, List<Case>> EquationTests { get; set; } = new Dictionary<string, List<Case>>();
         private List<string> lefts = null;
         private List<string> rights = null;
         private List<string> roots = null;
 
-
-        internal Dictionary<string, List<Case>> EquationTests { get; set; } = new Dictionary<string, List<Case>>();
-
-        internal LogicLinter(WorkflowManager workflowManager)
+        internal Linter(WorkflowManager workflowManager)
         {
-            this.workflowManager = workflowManager;
+            this.WorkflowManager = workflowManager;
 
             //infer intents
-            this.lefts = (from e in this.workflowManager.WorkFlow.Equations
+            this.lefts = (from e in this.WorkflowManager.WorkFlow.Equations
                           where e.First != null
                           select e.First.Id).ToList();
 
-            this.rights = (from e in this.workflowManager.WorkFlow.Equations
+            this.rights = (from e in this.WorkflowManager.WorkFlow.Equations
                            where null != e.Second
                            select e.Second.Id).ToList();
 
-            this.roots = (from e in this.workflowManager.WorkFlow.Equations
+            this.roots = (from e in this.WorkflowManager.WorkFlow.Equations
                           where !lefts.Contains(e.Id) && !rights.Contains(e.Id)
                           select e.Id).ToList();
 
 
 
             this.InferIntent();
-            this.workflowManager = workflowManager;
+
         }
 
+        public WorkflowManager WorkflowManager { get; }
 
         internal void InferIntent()
         {
-            List<string> evalIds = (from e in this.workflowManager.WorkFlow.Evaluators select e.Id).ToList();
-            List<Rule> evalRules = (from l in this.workflowManager.WorkFlow.Equations
+            List<string> evalIds = (from e in this.WorkflowManager.WorkFlow.Evaluators select e.Id).ToList();
+            List<Rule> evalRules = (from l in this.WorkflowManager.WorkFlow.Equations
                                     where evalIds.Contains(l.First.Id)
                                     select l.First)
-                                    .Union(from r in this.workflowManager.WorkFlow.Equations
+                                    .Union(from r in this.WorkflowManager.WorkFlow.Equations
                                            where null != r.Second
                                            && evalIds.Contains(r.Second.Id)
                                            select r.Second).ToList();
@@ -80,203 +80,202 @@ namespace Mchnry.Flow.Analysis
             return toAdd;
         }
 
-        public List<LogicTest> Lint()
+
+
+        public List<LogicTest> LogicLint()
         {
 
-
-            List<LogicTest> toReturn = new List<LogicTest>();
-
-
-            //loop through roots
-            Func<List<Case>, List<Rule>, int, List<Case>> buildCases = null;
-            buildCases = (childCases, rules, ordinal) =>
+            if (this.logicTests != null)
             {
-                List<Case> resolved = new List<Case>();
-                new bool[] { true, false }.ToList().ForEach(t =>
-                  {
-                      Rule conditional = (Rule)rules[ordinal].Clone();
-                      conditional.TrueCondition = t;
-
-                      if (childCases != null)
-                      {
-                          childCases.ForEach(c =>
-                          {
-                              Case cloned = (Case)c.Clone();
-                              Case toAdd = new Case(cloned.Rules);
-                              toAdd.Rules.Add(conditional);
-                              resolved.Add(toAdd);
-                          });
-                      }
-                      else
-                      {
-                          resolved.Add(new Case(new List<Rule>() { conditional }));
-                      }
-
-
-                  });
-
-                if (ordinal < (rules.Count - 1))
-                {
-                    resolved = buildCases(resolved, rules, ordinal + 1);
-                }
-
-                return resolved;
-
-            };
-
-            Func<Equation, List<Rule>> ExtractRules = null;
-            ExtractRules = (s) =>
+                return this.logicTests;
+            }
+            else
             {
-                List<Rule> extracted = new List<Rule>();
-                if (null != s.First)
+
+                List<LogicTest> toReturn = new List<LogicTest>();
+
+
+                //loop through roots
+                Func<List<Case>, List<Rule>, int, List<Case>> buildCases = null;
+                buildCases = (childCases, rules, ordinal) =>
                 {
-                    Equation qMatch = this.workflowManager.WorkFlow.Equations.FirstOrDefault(g => g.Id.Equals(s.First.Id));
+                    List<Case> resolved = new List<Case>();
+                    new bool[] { true, false }.ToList().ForEach(t =>
+                    {
+                        Rule conditional = (Rule)rules[ordinal].Clone();
+                        conditional.TrueCondition = t;
+
+                        if (childCases != null)
+                        {
+                            childCases.ForEach(c =>
+                            {
+                                Case cloned = (Case)c.Clone();
+                                Case toAdd = new Case(cloned.Rules);
+                                toAdd.Rules.Add(conditional);
+                                resolved.Add(toAdd);
+                            });
+                        }
+                        else
+                        {
+                            resolved.Add(new Case(new List<Rule>() { conditional }));
+                        }
+
+
+                    });
+
+                    if (ordinal < (rules.Count - 1))
+                    {
+                        resolved = buildCases(resolved, rules, ordinal + 1);
+                    }
+
+                    return resolved;
+
+                };
+
+                Func<Equation, List<Rule>> ExtractRules = null;
+                ExtractRules = (s) =>
+                {
+                    List<Rule> extracted = new List<Rule>();
+                    if (null != s.First)
+                    {
+                        Equation qMatch = this.WorkflowManager.WorkFlow.Equations.FirstOrDefault(g => g.Id.Equals(s.First.Id));
                     //if first is another euqation, extract it's rules
                     if (null != qMatch)
-                    {
-                        List<Rule> fromEq = ExtractRules(qMatch);
-                        extracted.AddRange(fromEq);
-                    }
-                    else //otherwise, get the rule
-                    {
-
-                        if (s.First.Id != "true")
                         {
-
-                            extracted.Add(s.First);
+                            List<Rule> fromEq = ExtractRules(qMatch);
+                            extracted.AddRange(fromEq);
                         }
-                    }
+                        else //otherwise, get the rule
+                    {
 
-                }
-                if (null != s.Second)
-                {
-                    Equation qMatch = this.workflowManager.WorkFlow.Equations.FirstOrDefault(g => g.Id.Equals(s.Second.Id));
+                            if (s.First.Id != "true")
+                            {
+
+                                extracted.Add(s.First);
+                            }
+                        }
+
+                    }
+                    if (null != s.Second)
+                    {
+                        Equation qMatch = this.WorkflowManager.WorkFlow.Equations.FirstOrDefault(g => g.Id.Equals(s.Second.Id));
                     //if first is another euqation, extract it's rules
                     if (null != qMatch)
-                    {
-                        List<Rule> fromEq = ExtractRules(qMatch);
-                        extracted.AddRange(fromEq);
-                    }
-                    else //otherwise, get the rule
-                    {
-                        if (s.Second.Id != "true")
                         {
-                            extracted.Add(s.Second);
+                            List<Rule> fromEq = ExtractRules(qMatch);
+                            extracted.AddRange(fromEq);
                         }
+                        else //otherwise, get the rule
+                    {
+                            if (s.Second.Id != "true")
+                            {
+                                extracted.Add(s.Second);
+                            }
+                        }
+
                     }
 
-                }
+                    return extracted;
+                };
 
-                return extracted;
-            };
-
-            List<string> intentRules = (from i in this.Intents select i.evaluatorId).ToList();
-            this.roots.ForEach(r =>
-            {
-                List<List<Case>> SubCases = new List<List<Case>>();
-                Equation toTest = this.workflowManager.WorkFlow.Equations.FirstOrDefault(g => g.Id.Equals(r));
-                List<Rule> equationRules = ExtractRules(toTest);
+                List<string> intentRules = (from i in this.Intents select i.evaluatorId).ToList();
+                this.roots.ForEach(r =>
+                {
+                    List<List<Case>> SubCases = new List<List<Case>>();
+                    Equation toTest = this.WorkflowManager.WorkFlow.Equations.FirstOrDefault(g => g.Id.Equals(r));
+                    List<Rule> equationRules = ExtractRules(toTest);
 
                 //build cases for no-intent
                 List<Rule> noIntent = (from z in equationRules where !intentRules.Contains(z.Id) select z).ToList();
 
-                if (noIntent.Count > 0)
-                {
-                    List<Case> noIntentCases = buildCases(null, noIntent, 0);
-                    SubCases.Add(noIntentCases);
-                }
-
-                if (this.Intents.Count > 0)
-                {
-                    List<string> myEvals = (from i in equationRules select i.Id).Distinct().ToList();
-                    List<LogicIntent> myIntents = (from i in this.Intents where myEvals.Contains(i.evaluatorId) select i).ToList();
-
-                    myIntents.ForEach(i =>
+                    if (noIntent.Count > 0)
                     {
-                        List<Rule> myIntentRules = (from e in equationRules where e.Id == i.evaluatorId select e).ToList();
-                        List<Case> intentCases = buildCases(null, myIntentRules, 0);
+                        List<Case> noIntentCases = buildCases(null, noIntent, 0);
+                        SubCases.Add(noIntentCases);
+                    }
+
+                    if (this.Intents.Count > 0)
+                    {
+                        List<string> myEvals = (from i in equationRules select i.Id).Distinct().ToList();
+                        List<LogicIntent> myIntents = (from i in this.Intents where myEvals.Contains(i.evaluatorId) select i).ToList();
+
+                        myIntents.ForEach(i =>
+                        {
+                            List<Rule> myIntentRules = (from e in equationRules where e.Id == i.evaluatorId select e).ToList();
+                            List<Case> intentCases = buildCases(null, myIntentRules, 0);
 
                         //if intent is oneOf, get rid of any cases where more than one rule is true
                         if (i.Context.ListType == ValidateOptions.OneOf)
-                        {
-                            intentCases.RemoveAll((c) => c.Rules.Count(t => t.TrueCondition) > 1);
-                        }
+                            {
+                                intentCases.RemoveAll((c) => c.Rules.Count(t => t.TrueCondition) > 1);
+                            }
                         //if exclusive, get rid of all false case
                         if (i.Context.Exclusive)
-                        {
-                            intentCases.RemoveAll((c) => c.Rules.Count(t => !t.TrueCondition) == c.Rules.Count());
-                        }
-                        SubCases.Add(intentCases);
-                    });
+                            {
+                                intentCases.RemoveAll((c) => c.Rules.Count(t => !t.TrueCondition) == c.Rules.Count());
+                            }
+                            SubCases.Add(intentCases);
+                        });
 
 
 
-                }
+                    }
 
-                LogicTest equationTest = new LogicTest(r, true);
-                if (SubCases.Count > 1)
-                {
-                    List<Case> merged = new List<Case>((from c in SubCases[0] select (Case)c.Clone()));
+                    LogicTest equationTest = new LogicTest(r, true);
+                    if (SubCases.Count > 1)
+                    {
+                        List<Case> merged = new List<Case>((from c in SubCases[0] select (Case)c.Clone()));
 
 
                     //merge subcases
                     for (int i = 1; i < SubCases.Count; i++)
-                    {
-
-                        List<Case> toMerge = SubCases[i];
-                        List<Case> thisMerge = new List<Case>();
-
-                        for (int j = 0; j < merged.Count; j++)
                         {
-                            for (int q = 0; q < toMerge.Count; q++)
-                            {
-                                Case cloneMerged = (Case)merged[j].Clone();
-                                Case cloneThis = (Case)toMerge[q].Clone();
-                                cloneMerged.Rules.AddRange(cloneThis.Rules);
-                                Case toAdd = new Case(cloneMerged.Rules);
-                                thisMerge.Add(toAdd);
-                            }
-                        }
-                        merged = thisMerge;
 
+                            List<Case> toMerge = SubCases[i];
+                            List<Case> thisMerge = new List<Case>();
+
+                            for (int j = 0; j < merged.Count; j++)
+                            {
+                                for (int q = 0; q < toMerge.Count; q++)
+                                {
+                                    Case cloneMerged = (Case)merged[j].Clone();
+                                    Case cloneThis = (Case)toMerge[q].Clone();
+                                    cloneMerged.Rules.AddRange(cloneThis.Rules);
+                                    Case toAdd = new Case(cloneMerged.Rules);
+                                    thisMerge.Add(toAdd);
+                                }
+                            }
+                            merged = thisMerge;
+
+                        }
+
+                        equationTest.TestCases = merged;
+                    }
+                    else if (SubCases.Count == 1)
+                    {
+                        equationTest.TestCases = SubCases[0];
+                    }
+                    else
+                    {
+                        equationTest.TestCases = new List<Case>();
                     }
 
-                    equationTest.TestCases = merged;
-                }
-                else if (SubCases.Count == 1)
-                {
-                    equationTest.TestCases = SubCases[0];
-                } else
-                {
-                    equationTest.TestCases = new List<Case>();
-                }
 
-                
-                toReturn.Add(equationTest);
+                    toReturn.Add(equationTest);
 
-            });
+                });
 
-            return toReturn;
 
+                return this.logicTests = toReturn;
+            }
         }
-
-
-    }
-
-    internal class ActivityLinter
-    {
-        private readonly WorkflowManager workflowManager;
-        private readonly List<LogicTest> logicTests;
-
-        public ActivityLinter(WorkflowManager workflowManager, List<LogicTest> logicTests )
+        public List<ActivityTest> AcvityLint()
         {
-       
-            this.workflowManager = workflowManager;
-            this.logicTests = logicTests;
-        }
 
-        public void Lint()
-        {
+
+            //make sure logictest was run
+            var runLogicTests = this.LogicLint();
+
 
             /*for each root activity
             need to get all equations involved
@@ -288,55 +287,103 @@ namespace Mchnry.Flow.Analysis
                 a, b, c (not a,!a,b,c)
 
             */
+            List<ActivityTest> toReturn = new List<ActivityTest>();
 
-            List<string> equationsWithCases = new List<string>();
-            equationsWithCases = (from z in logicTests where z.TestCases.Count > 0 select z.EquationId).ToList();
-            List<List<string>> cases = new List<List<string>>();
+            Dictionary<string, int> activityRefs = new Dictionary<string, int>();
 
-            foreach(string eq in equationsWithCases)
+            Action<string> findRefs = null;
+            findRefs = (a) =>
             {
-
-
-                LogicTest eqTest = logicTests.First(g => g.EquationId == eq);
-                List<List<string>> thisRun = new List<List<string>>();
-                foreach (Case testCase in eqTest.TestCases)
+                if (!activityRefs.ContainsKey(a)) { activityRefs.Add(a, 0); }
+                else
                 {
-                    List<string> ruleCases = (from g in testCase.Rules select g.ToString()).ToList();
-                    if (cases.Count == 0)
+                    activityRefs[a] += 1;
+                }
+                Activity reffed = this.WorkflowManager.GetActivity(a);
+                if (reffed != null)
+                {
+                    if (reffed.Reactions != null && reffed.Reactions.Count() > 0)
                     {
-                        thisRun.Add(ruleCases);
-                    } else
-                    {
-                        foreach (List<string> lastRun in cases)
+                        reffed.Reactions.ForEach(r =>
                         {
-                            List<string> copyOfLastRun = (from s in lastRun select s).ToList();
-                            //whittle out any dupes where id and context match. 
-                            List<string> justIdsFromLastRun = (from s in lastRun select ((Rule)s).RuleIdWithContext).ToList();
-
-                            List<string> deduped = (from s in ruleCases where !justIdsFromLastRun.Contains(((Rule)s).RuleIdWithContext) select s).ToList();
-
-                            List<string> thisCase = copyOfLastRun;
-
-                            if (deduped.Count > 0)
+                            ActionRef workRef = r.Work;
+                            if (this.WorkflowManager.GetActivity(workRef.Id) != null)
                             {
-                                thisCase = copyOfLastRun.Union(deduped).ToList();
-                                thisRun.Add(thisCase);
+                                findRefs(workRef.Id);
                             }
-                            
-                        }
+                        });
                     }
-                    
                 }
-                if (thisRun.Count > 0)
+            };
+            this.WorkflowManager.WorkFlow.Activities.ForEach(g =>
+            {
+                findRefs(g.Id);
+            });
+
+            List<String> rootActivities = (from rootActivity in activityRefs where rootActivity.Value == 0 select rootActivity.Key).ToList();
+
+            rootActivities.ForEach((rootActivity) =>
+            {
+                List<string> equationsWithCases = new List<string>();
+                equationsWithCases = (from z in logicTests where z.TestCases.Count > 0 select z.EquationId).ToList();
+                List<List<string>> cases = new List<List<string>>();
+
+                foreach (string eq in equationsWithCases)
                 {
-                    cases = thisRun;
+
+
+                    LogicTest eqTest = logicTests.First(g => g.EquationId == eq);
+                    List<List<string>> thisRun = new List<List<string>>();
+                    foreach (Case testCase in eqTest.TestCases)
+                    {
+                        List<string> ruleCases = (from g in testCase.Rules select g.ToString()).ToList();
+                        if (cases.Count == 0)
+                        {
+                            thisRun.Add(ruleCases);
+                        }
+                        else
+                        {
+                            foreach (List<string> lastRun in cases)
+                            {
+                                List<string> copyOfLastRun = (from s in lastRun select s).ToList();
+                                //whittle out any dupes where id and context match. 
+                                List<string> justIdsFromLastRun = (from s in lastRun select ((Rule)s).RuleIdWithContext).ToList();
+
+                                List<string> deduped = (from s in ruleCases where !justIdsFromLastRun.Contains(((Rule)s).RuleIdWithContext) select s).ToList();
+
+                                List<string> thisCase = copyOfLastRun;
+
+                                if (deduped.Count > 0)
+                                {
+                                    thisCase = copyOfLastRun.Union(deduped).ToList();
+                                    thisRun.Add(thisCase);
+                                }
+
+                            }
+                        }
+
+                    }
+                    if (thisRun.Count > 0)
+                    {
+                        cases = thisRun;
+                    }
+
+
                 }
 
+                List<Case> testCases = (from z in cases select new Case((from x in z select (Rule)x).ToList())).ToList();
 
-            }
+                ActivityTest toAdd = new ActivityTest(rootActivity) { TestCases = testCases };
+                toReturn.Add(toAdd);
+
+
+            });
+
+
+            return toReturn;
 
         }
-
-
     }
+
+    
 }

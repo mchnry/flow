@@ -209,7 +209,7 @@ namespace Sample
             //lint
             IEngineLoader<ShoppingCart> workflowEngine = Engine<ShoppingCart>.CreateEngine(created);
             
-            var result = workflowEngine.Lint((a) => { });
+            var result = await workflowEngine.LintAsync((a) => { }, new CancellationToken());
             var sanitizedWorkflow = workflowEngine.Workflow;
             s = JsonConvert.SerializeObject(sanitizedWorkflow, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });
             Console.WriteLine(s);

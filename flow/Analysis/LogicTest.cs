@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Mchnry.Flow.Logic.Define;
+using System.Collections.Generic;
 
 namespace Mchnry.Flow.Analysis
 {
@@ -21,9 +22,5 @@ namespace Mchnry.Flow.Analysis
 
     }
 
-    public class FlowTest
-    {
-        
 
-    }
 }

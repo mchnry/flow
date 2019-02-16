@@ -5,16 +5,16 @@ namespace Mchnry.Flow.Analysis
 {
     public class LintResult
     {
-        internal LintResult(StepTracer<LintTrace> tracer, List<LogicTest> logicTests, string lintHash)
+        internal LintResult(StepTracer<LintTrace> tracer, List<ActivityTest> activityTests, string lintHash)
         {
             this.Trace = tracer;
-            this.LogicTests = logicTests;
+            this.ActivityTests = activityTests;
             this.LintHash = LintHash;
         }
 
         public string LintHash { get; }
         public StepTracer<LintTrace> Trace { get; }
-        public List<LogicTest> LogicTests { get; }
+        public List<ActivityTest> ActivityTests { get; }
 
     }
 }

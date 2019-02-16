@@ -1,4 +1,5 @@
-﻿using Mchnry.Flow.Logic.Define;
+﻿using Mchnry.Flow.Diagnostics;
+using Mchnry.Flow.Logic.Define;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,7 @@ namespace Mchnry.Flow.Analysis
             this.Rules = rules;
         }
 
-        public bool? Result { get; set; } = null;
+        public StepTraceNode<ActivityProcess> Trace { get; internal set; }
 
         public List<Rule> Rules { get; set; } = new List<Rule>();
 

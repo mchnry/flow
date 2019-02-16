@@ -41,5 +41,12 @@ namespace Mchnry.Flow
             this.results.Add(key.ToString(), result);
 
         }
+
+        internal virtual void Reset()
+        {
+            this.EngineStatus = EngineStatusOptions.NotStarted;
+            this.CurrentActivity = null;
+            this.results = new Dictionary<string, bool?>();
+        }
     }
 }

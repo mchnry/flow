@@ -9,10 +9,17 @@ using System.Linq;
 using System.Threading;
 using Mchnry.Flow.Diagnostics;
 using System.Threading.Tasks;
+using Mchnry.Flow.Analysis;
 
 namespace Mchnry.Flow
 {
-    internal class ImplementationManager<TModel>
+
+    internal interface IImplementationManager<TModel>
+    {
+        IAction<TModel> GetAction(string id);
+        IRuleEvaluator<TModel> GetEvaluator(string id);
+    }
+    internal class ImplementationManager<TModel>: IImplementationManager<TModel>
     {
 
         private readonly WorkDefine.Workflow workFlow;
@@ -83,7 +90,7 @@ namespace Mchnry.Flow
             return toReturn;
         }
 
-        internal virtual IRuleEvaluator<TModel> GetEvaluator(string id)
+        public virtual IRuleEvaluator<TModel> GetEvaluator(string id)
         {
             IRuleEvaluator<TModel> toReturn = default(IRuleEvaluator<TModel>);
 
@@ -128,5 +135,32 @@ namespace Mchnry.Flow
 
 
 
+    }
+
+    internal class FakeImplementationManager<TModel>: IImplementationManager<TModel>
+    {
+        internal LogicTestEvaluatorFactory ef { get; }
+        internal LogicTestActionFactory af { get; }
+        private readonly WorkDefine.Workflow workFlow;
+
+        public FakeImplementationManager(Case testCase, WorkDefine.Workflow workflow)
+        {
+            this.ef = new LogicTestEvaluatorFactory(testCase);
+            this.af = new LogicTestActionFactory();
+            this.workFlow = workflow;
+        }
+
+        public IAction<TModel> GetAction(string id)
+        {
+            WorkDefine.ActionDefinition def = this.workFlow.Actions.FirstOrDefault(g => g.Id.Equals(id));
+
+            return this.af.GetAction<TModel>(def);
+        }
+
+        public IRuleEvaluator<TModel> GetEvaluator(string id)
+        {
+            LogicDefine.Evaluator def = this.workFlow.Evaluators.FirstOrDefault(g => g.Id.Equals(id));
+            return this.ef.GetRuleEvaluator<TModel>(def);
+        }
     }
 }

@@ -22,7 +22,7 @@ namespace Mchnry.Flow
         private StepTracer<LintTrace> lintTracer = default(StepTracer<LintTrace>);
         internal virtual EngineStepTracer Tracer { get; set; }
 
-        internal virtual ImplementationManager<TModel> ImplementationManager { get; set; }
+        internal virtual IImplementationManager<TModel> ImplementationManager { get; set; }
         internal virtual WorkflowManager WorkflowManager { get; set; }
         internal virtual RunManager RunManager { get; set; }
 
@@ -140,18 +140,26 @@ namespace Mchnry.Flow
 
         async Task<IEngineFinalize> IEngineRunner.ExecuteAsync(string activityId, CancellationToken token)
         {
-
             if (!this.Sanitized)
             {
                 this.Sanitize();
             }
-
             activityId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.Configuration.Convention);
+
+            return await this.ExecuteAsync(activityId, token);
+
+        }
+
+        internal async Task<Engine<TModel>> ExecuteAsync(string activityId, CancellationToken token)
+        {
+
+
+
 
             Activity<TModel> toLoad = this.LoadActivity(activityId);
 
             this.Tracer.CurrentStep = this.Tracer.TraceStep(this.Tracer.Root, new ActivityProcess("Execute", ActivityStatusOptions.Engine_Begin, null));
-            await (toLoad.Execute(this.Tracer, token));
+            await(toLoad.Execute(this.Tracer, token));
 
             return this;
 
@@ -225,7 +233,7 @@ namespace Mchnry.Flow
 
         IEngineLoader<TModel> IEngineLoader<TModel>.SetActionFactory(IActionFactory factory)
         {
-            this.ImplementationManager.ActionFactory = factory;
+            ((ImplementationManager<TModel>)this.ImplementationManager).ActionFactory = factory;
             return this;
         }
 
@@ -243,7 +251,7 @@ namespace Mchnry.Flow
 
         IEngineLoader<TModel> IEngineLoader<TModel>.SetEvaluatorFactory(IRuleEvaluatorFactory factory)
         {
-            this.ImplementationManager.EvaluatorFactory = factory;
+            ((ImplementationManager<TModel>)this.ImplementationManager).EvaluatorFactory = factory;
             return this;
         }
 
@@ -263,7 +271,7 @@ namespace Mchnry.Flow
 
         IEngineRunner IEngineLoader<TModel>.Start()
         {
-
+           
             return this;
         }
 
@@ -288,13 +296,13 @@ namespace Mchnry.Flow
         IEngineLoader<TModel> IEngineLoader<TModel>.AddEvaluator(string id, Func<IEngineScope<TModel>, LogicEngineTrace, CancellationToken, Task<bool>> evaluator)
         {
             id = ConventionHelper.ApplyConvention(NamePrefixOptions.Evaluator, id, this.Configuration.Convention);
-            this.ImplementationManager.AddEvaluator(id, evaluator);
+            ((ImplementationManager<TModel>)this.ImplementationManager).AddEvaluator(id, evaluator);
             return this;
         }
         IEngineLoader<TModel> IEngineLoader<TModel>.AddAction(string id, Func<IEngineScope<TModel>, WorkflowEngineTrace, CancellationToken, Task<bool>> action)
         {
             id = ConventionHelper.ApplyConvention(NamePrefixOptions.Action, id, this.Configuration.Convention);
-            this.ImplementationManager.AddAction(id, action);
+            ((ImplementationManager<TModel>)this.ImplementationManager).AddAction(id, action);
             return this;
         }
 
@@ -424,24 +432,42 @@ namespace Mchnry.Flow
         }
 
 
-        public LintResult Lint(Action<LogicLinter> addIntents)
+        public async Task<LintResult> LintAsync(Action<INeedIntent> addIntents, CancellationToken token)
         {
             if (!this.Sanitized)
             {
                 this.Sanitize();
             }
 
-            LogicLinter linter = new LogicLinter(this.WorkflowManager);
+
+            Linter linter = new Linter(this.WorkflowManager);
             addIntents(linter);
 
+            List<ActivityTest> activityTests = linter.AcvityLint();
 
-            List<LogicTest> logicTests = linter.Lint();
+            //temporarily supplant implementationmanager with fake
+            IImplementationManager<TModel> holdIM = this.ImplementationManager;
 
-            ActivityLinter aLinter = new ActivityLinter(this.WorkflowManager, logicTests);
-            aLinter.Lint();
+            //loop through each activity in activityTests and run them
+            foreach (ActivityTest at in activityTests)
+            {
+                foreach (Case tc in at.TestCases)
+                {
+                    this.ImplementationManager = new FakeImplementationManager<TModel>(tc, this.WorkflowManager.WorkFlow);
+                    await this.ExecuteAsync(at.ActivityId, token);
+
+                    tc.Trace = this.Tracer.Root;
+                    this.Reset(true);
+
+                }
+                
+            }
+
+            this.ImplementationManager = holdIM;
+
 
             int lintHash = this.WorkflowManager.WorkFlow.GetHashCode();
-            return new LintResult(this.lintTracer, logicTests, lintHash.ToString());
+            return new LintResult(this.lintTracer, activityTests, lintHash.ToString());
         }
 
         public WorkDefine.Workflow Workflow { get => this.WorkflowManager.WorkFlow; }
@@ -467,6 +493,18 @@ namespace Mchnry.Flow
             this.WorkflowManager.WorkFlow = sanitized;
             this.lintTracer = lintTrace;
             this.Sanitized = true;
+        }
+
+        internal void Reset(bool hard)
+        {
+            if (hard)
+            {
+                this.RunManager.Reset();
+                this.CurrentActivityStatus = ActivityStatusOptions.Engine_Loading;
+                this.finalize = new List<IDeferredAction<TModel>>();
+                this.finalizeAlways = new List<IDeferredAction<TModel>>();
+                this.Tracer = this.Tracer = new EngineStepTracer(new ActivityProcess("CreateEngine", ActivityStatusOptions.Engine_Loading, null));
+            }
         }
     }
 
