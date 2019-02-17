@@ -16,7 +16,7 @@ namespace Mchnry.Flow.Diagnostics
         public void TraceStep(string toTrace)
         {
             string currentStep = tracer.CurrentStep.Node.Value.ProcessId;
-            tracer.TraceStep(new ActivityProcess(currentStep, ActivityStatusOptions.Action_Running, toTrace));
+            tracer.TraceStep(new ActivityProcess(currentStep, ActivityStatusOptions.Action_Executing, toTrace));
         }
     }
 
@@ -32,7 +32,7 @@ namespace Mchnry.Flow.Diagnostics
         public void TraceStep(string toTrace)
         {
             string currentStep = tracer.CurrentStep.Node.Value.ProcessId;
-            tracer.TraceStep(new ActivityProcess(currentStep, ActivityStatusOptions.Rule_Evaluating, toTrace));
+            tracer.TraceStep(new ActivityProcess(currentStep, ActivityStatusOptions.Rule_Executing, toTrace));
         }
     }
 

@@ -26,6 +26,8 @@ namespace Mchnry.Flow.Logic
             this.engineRef = EngineRef;
         }
 
+        public string Id => this.definition.Id;
+
         public async Task<bool> EvaluateAsync(bool reEvaluate, CancellationToken token)
         {
 
@@ -73,6 +75,8 @@ namespace Mchnry.Flow.Logic
             } else
             {
                 this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Rule_NotRun_Cached;
+                this.engineRef.Tracer.TraceStep(new ActivityProcess(this.definition.Id, ActivityStatusOptions.Rule_NotRun_Cached, null));
+
             }
 
             return (knownResult.Value == this.definition.TrueCondition);

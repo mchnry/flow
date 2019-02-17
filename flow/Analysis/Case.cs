@@ -10,10 +10,13 @@ namespace Mchnry.Flow.Analysis
     {
         internal Case(List<Rule> rules)
         {
+      
             this.Rules = rules;
         }
 
         public StepTraceNode<ActivityProcess> Trace { get; internal set; }
+
+
 
         public List<Rule> Rules { get; set; } = new List<Rule>();
 

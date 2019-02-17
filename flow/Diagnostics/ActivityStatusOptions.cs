@@ -7,6 +7,8 @@
         Action_Completed = 101,
         Action_Failed = 102,
         Action_Running = 103,
+        Action_Reacting = 104,
+        Action_Executing = 105,
         WorkflowEngine_Begin = 110,
         WorkflowEngine_Stop = 111,
 
@@ -16,6 +18,10 @@
         Rule_Evaluated = 203,
         Rule_Failed = 204,
         Rule_Evaluating = 205,
+        Rule_Executing = 206,
+
+        Expression_Evaluating = 207,
+
         RuleEngine_Begin = 210,
         RuleEngine_Stop = 211,
 

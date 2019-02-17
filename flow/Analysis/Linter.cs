@@ -110,7 +110,7 @@ namespace Mchnry.Flow.Analysis
                             childCases.ForEach(c =>
                             {
                                 Case cloned = (Case)c.Clone();
-                                Case toAdd = new Case(cloned.Rules);
+                                Case toAdd = new Case( cloned.Rules);
                                 toAdd.Rules.Add(conditional);
                                 resolved.Add(toAdd);
                             });

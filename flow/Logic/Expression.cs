@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using Mchnry.Flow.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Mchnry.Flow.Logic
@@ -6,7 +7,6 @@ namespace Mchnry.Flow.Logic
     public class Expression<TModel> : IRule<TModel>
     {
         private readonly Define.Rule definition;
-        private readonly bool trueCondition;
         private readonly Operand condition;
         private readonly IRule<TModel> first;
         private readonly IRule<TModel> second;
@@ -25,15 +25,23 @@ namespace Mchnry.Flow.Logic
             this.engineRef = engineRef;
         }
 
+        public string Id => this.definition.Id;
+
         public async Task<bool> EvaluateAsync(bool reEvaluate, CancellationToken token)
         {
             bool toReturn = true;
+
+            StepTraceNode<ActivityProcess> mark = this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(
+                new ActivityProcess(this.definition.Id, ActivityStatusOptions.Rule_Evaluating, null));
+
             bool testFirst = await first.EvaluateAsync(reEvaluate, token);
 
             if (this.condition == Operand.And)
             {
                 if (!testFirst)
                 {
+                    this.engineRef.Tracer.TraceStep(new ActivityProcess(this.second.Id, ActivityStatusOptions.Rule_NotRun_ShortCircuit, null));
+
                     toReturn = false;
                 }
                 else
@@ -47,6 +55,7 @@ namespace Mchnry.Flow.Logic
             {
                 if (testFirst)
                 {
+                    this.engineRef.Tracer.TraceStep(new ActivityProcess(this.second.Id, ActivityStatusOptions.Rule_NotRun_ShortCircuit, null));
                     toReturn = true;
                 }
                 else
