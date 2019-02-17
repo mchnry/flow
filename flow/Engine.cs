@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LogicDefine = Mchnry.Flow.Logic.Define;
 using WorkDefine = Mchnry.Flow.Work.Define;
+using System.Linq;
 
 namespace Mchnry.Flow
 {
@@ -18,6 +19,7 @@ namespace Mchnry.Flow
 
         internal Config Configuration;
         internal bool Sanitized = false;
+
 
         private StepTracer<LintTrace> lintTracer = default(StepTracer<LintTrace>);
         internal virtual EngineStepTracer Tracer { get; set; }
@@ -53,6 +55,7 @@ namespace Mchnry.Flow
             this.ImplementationManager = new ImplementationManager<TModel>();
             this.WorkflowManager = new WorkflowManager(workFlow);
             this.RunManager = new RunManager();
+
 
             this.Sanitized = false;
         }
@@ -432,7 +435,7 @@ namespace Mchnry.Flow
         }
 
 
-        public async Task<LintResult> LintAsync(Action<INeedIntent> addIntents, CancellationToken token)
+        public async Task<LintResult> LintAsync(Action<INeedIntent> addIntents, Action<Case> mockCase, CancellationToken token)
         {
             if (!this.Sanitized)
             {
@@ -444,6 +447,7 @@ namespace Mchnry.Flow
             addIntents(linter);
 
             List<ActivityTest> activityTests = linter.AcvityLint();
+            List<ActivityTest> mockTests = null;
 
             //temporarily supplant implementationmanager with fake
             IImplementationManager<TModel> holdIM = this.ImplementationManager;
@@ -456,18 +460,51 @@ namespace Mchnry.Flow
                     this.ImplementationManager = new FakeImplementationManager<TModel>(tc, this.WorkflowManager.WorkFlow);
                     await this.ExecuteAsync(at.ActivityId, token);
 
-                    tc.Trace = this.Tracer.Root;
+                    tc.Trace = this.Tracer.tracer.AllNodes;
                     this.Reset(true);
 
                 }
                 
             }
 
+            //restore original implementation manager
             this.ImplementationManager = holdIM;
+
+            //if the caller provided a mock callback, then we'll
+            //run through it through again, but this time using the
+            //existing implementation manager. 
+            if (mockCase != null)
+            {
+                mockTests = (from t in activityTests
+                 select new ActivityTest(t.ActivityId)
+                 {
+                     TestCases = (from z in t.TestCases select (Case)z.Clone()).ToList()
+                 }).ToList();
+
+                foreach (ActivityTest at in mockTests)
+                {
+                    foreach (Case tc in at.TestCases)
+                    {
+                        mockCase(tc);
+                        await this.ExecuteAsync(at.ActivityId, token);
+
+                        tc.Trace = this.Tracer.tracer.AllNodes;
+                        this.Reset(true);
+
+                    }
+
+                }
+
+            }
+
+            CaseAnalyzer analyzer = new CaseAnalyzer(this.Workflow, activityTests, mockTests);
+            List<Audit> auditResults = analyzer.Analyze();
+
+
 
 
             int lintHash = this.WorkflowManager.WorkFlow.GetHashCode();
-            return new LintResult(this.lintTracer, activityTests, lintHash.ToString());
+            return new LintResult(this.lintTracer, activityTests, null, auditResults, lintHash.ToString());
         }
 
         public WorkDefine.Workflow Workflow { get => this.WorkflowManager.WorkFlow; }

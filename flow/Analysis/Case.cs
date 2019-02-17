@@ -12,11 +12,14 @@ namespace Mchnry.Flow.Analysis
         {
       
             this.Rules = rules;
+            this.HitAndRuns = new List<HitAndRun>();
         }
 
-        public StepTraceNode<ActivityProcess> Trace { get; internal set; }
+        public List<StepTraceNode<ActivityProcess>> Trace { get; internal set; }
+        public List<HitAndRun> HitAndRuns { get; }
 
 
+        public int Id { get;set; }
 
         public List<Rule> Rules { get; set; } = new List<Rule>();
 

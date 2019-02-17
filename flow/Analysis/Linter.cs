@@ -380,6 +380,12 @@ namespace Mchnry.Flow.Analysis
             });
 
 
+            int counter = 0;
+            toReturn.ForEach(t =>
+            {
+                t.TestCases.ForEach(c => { counter++; c.Id = counter; });
+            });
+
             return toReturn;
 
         }

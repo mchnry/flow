@@ -31,12 +31,14 @@ namespace Mchnry.Flow.Work
 
 
             StepTraceNode<ActivityProcess> mark = this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(
-                new ActivityProcess(this.activityDefinition.Id, ActivityStatusOptions.Action_Running, null));
+                new ActivityProcess(this.activityDefinition.Id, ActivityStatusOptions.Activity_Running, null));
 
 
             try
             {
                 Stopwatch t = new Stopwatch(); t.Start();
+                this.engineRef.Tracer.TraceStep(
+                    new ActivityProcess(this.activityDefinition.Action.Id, ActivityStatusOptions.Action_Running, null));
 
                 result = await toExecute.CompleteAsync(this.engineRef, new WorkflowEngineTrace(this.engineRef.Tracer), token);
 

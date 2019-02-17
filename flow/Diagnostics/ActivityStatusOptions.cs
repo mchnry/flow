@@ -9,6 +9,9 @@
         Action_Running = 103,
         Action_Reacting = 104,
         Action_Executing = 105,
+
+        Activity_Running = 107,
+
         WorkflowEngine_Begin = 110,
         WorkflowEngine_Stop = 111,
 

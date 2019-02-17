@@ -39,7 +39,7 @@ namespace Mchnry.Flow.Diagnostics
     internal class EngineStepTracer
     {
 
-        private StepTracer<ActivityProcess> tracer;
+        internal StepTracer<ActivityProcess> tracer;
 
         public StepTraceNode<ActivityProcess> Root { get; private set; }
         public StepTraceNode<ActivityProcess> CurrentStep { get; set; }

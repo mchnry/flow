@@ -34,7 +34,7 @@ namespace Test.Lint
 
             IEngineLoader<string> e = Mchnry.Flow.Engine<string>.CreateEngine(new Mchnry.Flow.Work.Define.Workflow() { Equations = eqs, Evaluators = evals });
 
-            await e.LintAsync((l) => { }, new System.Threading.CancellationToken());
+            await e.LintAsync((l) => { }, null, new System.Threading.CancellationToken());
 
         }
 

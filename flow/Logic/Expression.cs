@@ -32,7 +32,7 @@ namespace Mchnry.Flow.Logic
             bool toReturn = true;
 
             StepTraceNode<ActivityProcess> mark = this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(
-                new ActivityProcess(this.definition.Id, ActivityStatusOptions.Rule_Evaluating, null));
+                new ActivityProcess(this.definition.Id, ActivityStatusOptions.Expression_Evaluating, null));
 
             bool testFirst = await first.EvaluateAsync(reEvaluate, token);
 

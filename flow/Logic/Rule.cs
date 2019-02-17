@@ -41,14 +41,16 @@ namespace Mchnry.Flow.Logic
             this.engineRef.RunManager.CurrentRuleDefinition = this.definition;
             this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Rule_Evaluating;
 
-            StepTraceNode<ActivityProcess> mark =  this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(
-                new ActivityProcess(this.definition.Id, ActivityStatusOptions.Rule_Evaluating, null));
             
             if (doEval)
             {
                 //#TODO implement metric in evaluation
                 try
                 {
+
+                    StepTraceNode<ActivityProcess> mark = this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(
+                        new ActivityProcess(this.definition.Id, ActivityStatusOptions.Rule_Evaluating, null));
+
                     Stopwatch t = new Stopwatch(); t.Start();
 
                     thisResult = await evaluator.EvaluateAsync(
