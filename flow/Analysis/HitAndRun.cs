@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Text;
 
 namespace Mchnry.Flow.Analysis
 {
-    public struct HitAndRun
+    public class HitAndRun: ICloneable
     {
 
         public HitAndRun(string Id)
@@ -17,5 +18,13 @@ namespace Mchnry.Flow.Analysis
         public int RunCount { get; set; }
 
         public string Id { get; }
+
+        public object Clone()
+        {
+            return new HitAndRun(this.Id) { HitCount = this.HitCount, RunCount = this.RunCount };
+        }
     }
+
+
+
 }

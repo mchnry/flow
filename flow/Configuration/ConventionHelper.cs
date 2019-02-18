@@ -102,5 +102,19 @@ namespace Mchnry.Flow.Configuration
             if (MatchesConvention(NamePrefixOptions.Evaluator, id, convention)) return NamePrefixOptions.Evaluator;
             return null;
         }
+
+        internal static string RemoveConvention(string id, Convention convention)
+        {
+            NamePrefixOptions? found = MatchesAnyConvention(id, convention);
+            string toReturn = id;
+            if (found != null)
+            {
+                string prefix = convention.GetPrefix(found.Value);
+                string delimeter = convention.Delimeter;
+                string toRemove = string.Format("{0}{1}", prefix, delimeter);
+                toRemove = id.Replace(toRemove, "");
+            }
+            return toReturn;
+        }
     }
 }

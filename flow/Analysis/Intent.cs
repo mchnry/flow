@@ -24,20 +24,20 @@ namespace Mchnry.Flow.Analysis
 
 
 
-        public Context<T> HasContext<T>()
+        public Context HasContext()
         {
 
             //if my context is already valued, it means that this intent was 
             //already inferred.  If T is not string, then we need to convert the existing values
             //and throw an exception if explicit intent does not match inferrred.
 
-            List<string> seed = null;
+            List<ContextItem> seed = null;
             if (this.Context != null)
             {
                 seed = this.Context.Values;
             }
 
-            Context<T> newContext = new Context<T>();
+            Context newContext = new Context();
             if (seed != null)
             {
                 newContext = newContext.HasValues(seed);
@@ -51,14 +51,20 @@ namespace Mchnry.Flow.Analysis
         }
     }
 
+    public struct ContextItem
+    {
+        public string Key { get; set; }
+        public string Literal { get; set; }
+    }
+
     public interface IContext
     {
-        List<string> Values { get; }
+        List<ContextItem> Values { get; }
         ValidateOptions ListType { get; }
         bool Exclusive { get; }
     }
 
-    public class Context<T> : IContext
+    public class Context : IContext
     {
 
 
@@ -66,25 +72,25 @@ namespace Mchnry.Flow.Analysis
         internal ValidateOptions ListType { get; set; } = ValidateOptions.OneOf;
         ValidateOptions IContext.ListType { get => this.ListType; }
         bool IContext.Exclusive { get => this.Exclusive; }
-        internal List<T> Values { get; set; } = new List<T>();
+        internal List<ContextItem> Values { get; set; } = new List<ContextItem>();
         internal bool Exclusive { get; set; } = false;
 
-        List<string> IContext.Values {
+        List<ContextItem> IContext.Values {
             get {
                 return (from x in this.Values
-                        select x.ToString()).ToList();
+                        select x).ToList();
             }
         }
 
-        internal Context<T> HasValues(List<string> values)
+        internal Context HasValues(List<ContextItem> values)
         {
-            this.Values = new List<T>();
+            this.Values = new List<ContextItem>();
             values.ForEach(s =>
             {
                 //box/unbox
-                T toAdd = (T)Convert.ChangeType(s, typeof(T));
+                //T toAdd = (T)Convert.ChangeType(s, typeof(T));
 
-                this.Values.Add(toAdd);
+                this.Values.Add(s);
             });
             return this;
         }

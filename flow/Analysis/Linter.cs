@@ -53,9 +53,9 @@ namespace Mchnry.Flow.Analysis
             List<string> hasContext = (from r in evalRules where !string.IsNullOrEmpty(r.Context) select r.Id).Distinct().ToList();
             hasContext.ForEach(x =>
             {
-                List<string> options = (from r in evalRules where r.Id == x select r.Context).Distinct().ToList();
+                List<ContextItem> options = (from r in evalRules where r.Id == x select new ContextItem() { Key = r.Context, Literal = "Inferred" }).Distinct().ToList();
                 LogicIntent toAdd = new LogicIntent(x);
-                toAdd.HasContext<string>().HasValues(options).OneOfExcusive();
+                toAdd.HasContext().HasValues(options).OneOfExcusive();
                 this.Intents.Add(toAdd);
             });
         }

@@ -10,6 +10,7 @@ using System.Threading;
 using Mchnry.Flow.Diagnostics;
 using System.Threading.Tasks;
 using Mchnry.Flow.Analysis;
+using Mchnry.Flow.Configuration;
 
 namespace Mchnry.Flow
 {
@@ -34,17 +35,25 @@ namespace Mchnry.Flow
 
         public IActionFactory ActionFactory { get; set; }
         public IRuleEvaluatorFactory EvaluatorFactory { get; set; }
+        public Config Configuration { get; }
 
         internal ImplementationManager()
         {
             this.ActionFactory = new NoActionFactory();
             this.EvaluatorFactory = new NoRuleEvaluatorFactory();
+            this.Configuration = new Config();
 
             IRuleEvaluator<TModel> trueEvaluator = new AlwaysTrueEvaluator<TModel>();
             this.evaluators.Add("true", trueEvaluator);
         }
 
-        internal ImplementationManager(IActionFactory actionFactory, IRuleEvaluatorFactory evaluatorFactory, WorkDefine.Workflow workFlow) {
+        internal ImplementationManager(Configuration.Config configuration): this()
+        {
+
+            this.Configuration = configuration;
+        }
+
+        internal ImplementationManager(IActionFactory actionFactory, IRuleEvaluatorFactory evaluatorFactory, WorkDefine.Workflow workFlow, Configuration.Config configuration): this(configuration) {
             this.ActionFactory = actionFactory;
             this.EvaluatorFactory = evaluatorFactory;
             this.workFlow = workFlow;
@@ -68,7 +77,14 @@ namespace Mchnry.Flow
 
                     try
                     {
-                        toReturn = this.ActionFactory.GetAction<TModel>(def);
+                        string searchId = ConventionHelper.RemoveConvention(def.Id, this.Configuration.Convention);
+                        WorkDefine.ActionDefinition withoutConvention = new WorkDefine.ActionDefinition() { Id = searchId, Description = def.Description };
+                        toReturn = this.ActionFactory.GetAction<TModel>(withoutConvention);
+                        //try with convention
+                        if (toReturn == null)
+                        {
+                            toReturn = this.ActionFactory.GetAction<TModel>(def);
+                        }
                     }
                     catch (System.Exception ex)
                     {
@@ -100,7 +116,13 @@ namespace Mchnry.Flow
                 LogicDefine.Evaluator def = this.workFlow.Evaluators.FirstOrDefault(g => g.Id.Equals(id));
                 try
                 {
-                    toReturn = this.EvaluatorFactory.GetRuleEvaluator<TModel>(def);
+                    string searchId = ConventionHelper.RemoveConvention(def.Id, this.Configuration.Convention);
+                    LogicDefine.Evaluator withoutConvention = new LogicDefine.Evaluator() { Id = searchId, Description = def.Description };
+                    toReturn = this.EvaluatorFactory.GetRuleEvaluator<TModel>(withoutConvention);
+                    if (toReturn == null)
+                    {
+                        toReturn = this.EvaluatorFactory.GetRuleEvaluator<TModel>(def);
+                    }
                 }
                 catch (System.Exception ex)
                 {

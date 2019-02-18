@@ -52,7 +52,7 @@ namespace Mchnry.Flow
 
             this.Configuration = new Config();
             this.Tracer = new EngineStepTracer(new ActivityProcess("CreateEngine", ActivityStatusOptions.Engine_Loading, null));
-            this.ImplementationManager = new ImplementationManager<TModel>();
+            this.ImplementationManager = new ImplementationManager<TModel>(this.Configuration);
             this.WorkflowManager = new WorkflowManager(workFlow);
             this.RunManager = new RunManager();
 
@@ -497,7 +497,7 @@ namespace Mchnry.Flow
 
             }
 
-            CaseAnalyzer analyzer = new CaseAnalyzer(this.Workflow, activityTests, mockTests);
+            CaseAnalyzer analyzer = new CaseAnalyzer(this.Workflow, activityTests, mockTests, this.Configuration);
             List<Audit> auditResults = analyzer.Analyze();
 
 
