@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="mchnry.core" Version="1.0.1-alpha" />
+    <PackageReference Include="mchnry.core" Version="1.0.1-alpha*" />
     <PackageReference Include="newtonsoft.json" Version="12.0.1" />
   </ItemGroup>
 
