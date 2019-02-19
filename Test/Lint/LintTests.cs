@@ -33,8 +33,8 @@ namespace Test.Lint
             };
 
             IEngineLoader<string> e = Mchnry.Flow.Engine<string>.CreateEngine(new Mchnry.Flow.Work.Define.Workflow() { Equations = eqs, Evaluators = evals });
-
-            await e.LintAsync((l) => { }, null, new System.Threading.CancellationToken());
+            IEngineLinter<string> linter = e.Lint();
+            await linter.LintAsync((l) => { }, null, new System.Threading.CancellationToken());
 
         }
 

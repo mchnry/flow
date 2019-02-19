@@ -7,14 +7,18 @@ using System.Text;
 using System.Linq;
 using Mchnry.Flow.Work;
 using Mchnry.Flow.Work.Define;
+using Mchnry.Flow.Configuration;
 
 namespace Mchnry.Flow
 {
     internal class LogicTestEvaluatorFactory : IRuleEvaluatorFactory
     {
-        public LogicTestEvaluatorFactory(Case testCase)
+        private readonly Configuration.Config configuration;
+
+        public LogicTestEvaluatorFactory(Case testCase, Configuration.Config configuration)
         {
             this.TestCase = testCase;
+            this.configuration = configuration;
         }
 
         public Case TestCase { get; }
@@ -22,7 +26,7 @@ namespace Mchnry.Flow
         public IRuleEvaluator<TModel> GetRuleEvaluator<TModel>(Evaluator definition)
         {
 
-            if (definition.Id == "true")
+            if (definition.Id == ConventionHelper.TrueEvaluator(this.configuration.Convention))
             {
                 return new AlwaysTrueEvaluator<TModel>();
             } else {

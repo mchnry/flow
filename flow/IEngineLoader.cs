@@ -25,7 +25,8 @@ namespace Mchnry.Flow
              //Task<bool> CompleteAsync(IEngineScope<TModel> scope, WorkflowEngineTrace trace, CancellationToken token);
 
         IEngineRunner Start();
-        Task<LintResult> LintAsync(Action<INeedIntent> addIntents, Action<Case> mockCase, CancellationToken token);
+        IEngineLinter<TModel> Lint();
+        
         WorkDefine.Workflow Workflow { get; }
     }
 }

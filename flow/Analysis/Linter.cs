@@ -1,4 +1,5 @@
-﻿using Mchnry.Flow.Logic.Define;
+﻿using Mchnry.Flow.Configuration;
+using Mchnry.Flow.Logic.Define;
 using Mchnry.Flow.Work.Define;
 using System;
 using System.Collections.Generic;
@@ -14,10 +15,12 @@ namespace Mchnry.Flow.Analysis
         private List<string> lefts = null;
         private List<string> rights = null;
         private List<string> roots = null;
+        private readonly Config configuration;
 
-        internal Linter(WorkflowManager workflowManager)
+        internal Linter(WorkflowManager workflowManager, Configuration.Config configuration)
         {
             this.WorkflowManager = workflowManager;
+            this.configuration = configuration;
 
             //infer intents
             this.lefts = (from e in this.WorkflowManager.WorkFlow.Equations
@@ -65,6 +68,7 @@ namespace Mchnry.Flow.Analysis
 
         public LogicIntent Intent(string evaluatorId)
         {
+            evaluatorId = ConventionHelper.EnsureConvention(NamePrefixOptions.Evaluator, evaluatorId, this.configuration.Convention);
             LogicIntent match = this.Intents.FirstOrDefault(g => g.evaluatorId == evaluatorId);
             LogicIntent toAdd = default(LogicIntent);
             if (match != null)
@@ -132,6 +136,8 @@ namespace Mchnry.Flow.Analysis
 
                 };
 
+
+
                 Func<Equation, List<Rule>> ExtractRules = null;
                 ExtractRules = (s) =>
                 {
@@ -148,7 +154,7 @@ namespace Mchnry.Flow.Analysis
                         else //otherwise, get the rule
                     {
 
-                            if (s.First.Id != "true")
+                            if (s.First.Id != ConventionHelper.TrueEvaluator(this.configuration.Convention))
                             {
 
                                 extracted.Add(s.First);
@@ -167,7 +173,7 @@ namespace Mchnry.Flow.Analysis
                         }
                         else //otherwise, get the rule
                     {
-                            if (s.Second.Id != "true")
+                            if (s.Second.Id != ConventionHelper.TrueEvaluator(this.configuration.Convention))
                             {
                                 extracted.Add(s.Second);
                             }

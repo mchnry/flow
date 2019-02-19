@@ -63,6 +63,9 @@ namespace Mchnry.Flow.Analysis
                 
                 foreach (Case testCase in at.TestCases)
                 {
+
+                    
+
                     int actionRuns = (from z in testCase.HitAndRuns where z.Id.StartsWith(actionConvention) select z).Aggregate(0, (a, b) =>
                     {
                         return a + b.RunCount;

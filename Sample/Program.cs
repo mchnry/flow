@@ -208,12 +208,19 @@ namespace Sample
 
             //lint
             IEngineLoader<ShoppingCart> workflowEngine = Engine<ShoppingCart>.CreateEngine(created);
-            
-            var result = await workflowEngine.LintAsync((a) => { }, null, new CancellationToken());
+            IEngineLinter<ShoppingCart> linter = workflowEngine.Lint();
+            var result = await linter.LintAsync((a) => {
+                
+               
+            }, null, new CancellationToken());
             var sanitizedWorkflow = workflowEngine.Workflow;
             s = JsonConvert.SerializeObject(sanitizedWorkflow, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });
             Console.WriteLine(s);
 
+
+            var articulated = result.ArticulateActivity("main");
+            s = JsonConvert.SerializeObject(articulated, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented, NullValueHandling = NullValueHandling.Ignore });
+            Console.WriteLine(s);
 
 
             Console.ReadLine();

@@ -200,7 +200,7 @@ namespace Mchnry.Flow
                     Condition = Logic.Operand.And,
                     First = evaluatorId,
                     Id = equationId,
-                    Second = "true"
+                    Second = ConventionHelper.TrueEvaluator(this.config.Convention)
                 };
                 this.epxressionStack.Push(toAdd);
 

@@ -44,7 +44,7 @@ namespace Mchnry.Flow
             this.Configuration = new Config();
 
             IRuleEvaluator<TModel> trueEvaluator = new AlwaysTrueEvaluator<TModel>();
-            this.evaluators.Add("true", trueEvaluator);
+            this.evaluators.Add(ConventionHelper.TrueEvaluator(this.Configuration.Convention), trueEvaluator);
         }
 
         internal ImplementationManager(Configuration.Config configuration): this()
@@ -164,12 +164,15 @@ namespace Mchnry.Flow
         internal LogicTestEvaluatorFactory ef { get; }
         internal LogicTestActionFactory af { get; }
         private readonly WorkDefine.Workflow workFlow;
+        private readonly Config configuration;
 
-        public FakeImplementationManager(Case testCase, WorkDefine.Workflow workflow)
+        public FakeImplementationManager(Case testCase, WorkDefine.Workflow workflow, Configuration.Config configuration)
         {
-            this.ef = new LogicTestEvaluatorFactory(testCase);
-            this.af = new LogicTestActionFactory();
             this.workFlow = workflow;
+            this.configuration = configuration;
+            this.ef = new LogicTestEvaluatorFactory(testCase, this.configuration);
+            this.af = new LogicTestActionFactory();
+            
         }
 
         public IAction<TModel> GetAction(string id)

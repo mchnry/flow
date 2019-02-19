@@ -14,7 +14,7 @@ using System.Linq;
 namespace Mchnry.Flow
 {
     public class Engine<TModel> :
-        IEngineLoader<TModel>, IEngineRunner, IEngineScope<TModel>, IEngineFinalize, IEngineComplete
+        IEngineLoader<TModel>, IEngineRunner, IEngineScope<TModel>, IEngineFinalize, IEngineComplete, IEngineLinter<TModel>
     {
 
         internal Config Configuration;
@@ -434,8 +434,14 @@ namespace Mchnry.Flow
 
         }
 
+        IEngineLinter<TModel> IEngineLoader<TModel>.Lint()
+        {
+            return this;
+        }
 
-        public async Task<LintResult> LintAsync(Action<INeedIntent> addIntents, Action<Case> mockCase, CancellationToken token)
+
+
+        public async Task<LintInspector> LintAsync(Action<INeedIntent> addIntents, Action<Case> mockCase, CancellationToken token)
         {
             if (!this.Sanitized)
             {
@@ -443,7 +449,7 @@ namespace Mchnry.Flow
             }
 
 
-            Linter linter = new Linter(this.WorkflowManager);
+            Linter linter = new Linter(this.WorkflowManager, this.Configuration);
             addIntents(linter);
 
             List<ActivityTest> activityTests = linter.AcvityLint();
@@ -457,7 +463,7 @@ namespace Mchnry.Flow
             {
                 foreach (Case tc in at.TestCases)
                 {
-                    this.ImplementationManager = new FakeImplementationManager<TModel>(tc, this.WorkflowManager.WorkFlow);
+                    this.ImplementationManager = new FakeImplementationManager<TModel>(tc, this.WorkflowManager.WorkFlow, this.Configuration);
                     await this.ExecuteAsync(at.ActivityId, token);
 
                     tc.Trace = this.Tracer.tracer.AllNodes;
@@ -504,7 +510,8 @@ namespace Mchnry.Flow
 
 
             int lintHash = this.WorkflowManager.WorkFlow.GetHashCode();
-            return new LintResult(this.lintTracer, activityTests, null, auditResults, lintHash.ToString());
+            return new LintInspector(new LintResult(this.lintTracer, activityTests, null, auditResults, lintHash.ToString()), linter.Intents, this.Workflow, this.Configuration);
+            //return new LintResult(this.lintTracer, activityTests, null, auditResults, lintHash.ToString());
         }
 
         public WorkDefine.Workflow Workflow { get => this.WorkflowManager.WorkFlow; }

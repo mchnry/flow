@@ -42,6 +42,15 @@ namespace Mchnry.Flow.Configuration
             return toReturn;
         }
 
+        internal static string TrueEquation(Convention convention)
+        {
+            return ApplyConvention(NamePrefixOptions.Equation, "true", convention);
+        }
+        internal static string TrueEvaluator(Convention convention)
+        {
+            return ApplyConvention(NamePrefixOptions.Evaluator, "true", convention);
+        }
+
         internal static string ApplyConvention(NamePrefixOptions to, string currentName, Convention convention )
         {
             string toReturn = null;

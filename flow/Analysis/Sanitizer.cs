@@ -33,6 +33,7 @@ namespace Mchnry.Flow.Analysis
         private void LoadActivity(WorkDefine.Workflow workFlow, string activityId)
         {
 
+
             WorkDefine.Activity definition = workFlow.Activities.FirstOrDefault(a => a.Id == activityId);
 
 
@@ -102,7 +103,7 @@ namespace Mchnry.Flow.Analysis
 
                         if (string.IsNullOrEmpty(r.Logic))
                         {
-                            r.Logic = "true";
+                            r.Logic = ConventionHelper.TrueEquation(this.config.Convention);
                         }
 
                         r.Logic = LoadLogic(workFlow, r.Logic);
@@ -134,13 +135,18 @@ namespace Mchnry.Flow.Analysis
 
             //load conventions
 
-            LogicDefine.Evaluator trueDef = workFlow.Evaluators.FirstOrDefault(z => z.Id == "true");
+            LogicDefine.Evaluator trueDef = workFlow.Evaluators.FirstOrDefault(z => z.Id == ConventionHelper.TrueEvaluator(this.config.Convention));
             if (null == trueDef)
             {
-                trueDef = new LogicDefine.Evaluator() { Id = "true", Description = "Always True" };
+                trueDef = new LogicDefine.Evaluator() { Id = ConventionHelper.TrueEvaluator(this.config.Convention), Description = "Always True" };
                 workFlow.Evaluators.Add(trueDef);
             }
-
+            LogicDefine.Equation trueEqDef = workFlow.Equations.FirstOrDefault(z => z.Id == ConventionHelper.TrueEquation(this.config.Convention));
+            if (null == trueEqDef)
+            {
+                trueEqDef = new LogicDefine.Equation() { Condition = Logic.Operand.Or, First = trueDef.Id, Second = trueDef.Id, Id = ConventionHelper.TrueEquation(this.config.Convention) };
+                workFlow.Equations.Add(trueEqDef);
+            }
 
             //List<string> lefts = (from e in workFlow.Equations
             //                      where e.First != null
@@ -172,7 +178,7 @@ namespace Mchnry.Flow.Analysis
                     }
                     else
                     {
-                        eq.First = new LogicDefine.Rule() { Id = "true", Context = string.Empty, TrueCondition = true };
+                        eq.First = new LogicDefine.Rule() { Id = ConventionHelper.TrueEvaluator(this.config.Convention), Context = string.Empty, TrueCondition = true };
                     }
 
                     if (null != eq.Second)
@@ -182,7 +188,7 @@ namespace Mchnry.Flow.Analysis
                     else
                     {
 
-                        eq.Second = new LogicDefine.Rule() { Id = "true", Context = string.Empty, TrueCondition = true };
+                        eq.Second = new LogicDefine.Rule() { Id = ConventionHelper.TrueEvaluator(this.config.Convention), Context = string.Empty, TrueCondition = true };
                     }
 
                     if (!rule.TrueCondition)
@@ -200,7 +206,7 @@ namespace Mchnry.Flow.Analysis
                                 First = negated,
                                 Id = negationId,
                                 Condition = Logic.Operand.And,
-                                Second = "true"
+                                Second = ConventionHelper.TrueEvaluator(this.config.Convention)
                             };
                             workFlow.Equations.Add(toAdd);
                         }
@@ -234,9 +240,9 @@ namespace Mchnry.Flow.Analysis
                         LogicDefine.Rule cloned = (LogicDefine.Rule)rule.Clone();
                         string newId = string.Empty;
                         Logic.Operand condition = Logic.Operand.And;
-                        if (rule.Id == "true")
+                        if (rule.Id == ConventionHelper.TrueEquation(this.config.Convention))
                         {
-                            newId = this.config.Convention.GetPrefix(NamePrefixOptions.Equation) + this.config.Convention.Delimeter + "true";
+                            newId = ConventionHelper.TrueEquation(this.config.Convention);
                             condition = Logic.Operand.Or;
                         }
                         else
@@ -255,7 +261,7 @@ namespace Mchnry.Flow.Analysis
                             {
                                 Condition = condition,
                                 First = cloned,
-                                Second = "true",
+                                Second = ConventionHelper.TrueEvaluator(this.config.Convention),
                                 Id = newId
                             });
                         }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Mchnry.Flow.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -16,10 +17,12 @@ namespace Mchnry.Flow.Analysis
         internal readonly string evaluatorId;
 
         public IContext Context { get; set; } = default(IContext);
+        
 
         public LogicIntent(string evaluatorId)
         {
             this.evaluatorId = evaluatorId;
+            
         }
 
 
