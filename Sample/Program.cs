@@ -199,7 +199,7 @@ namespace Sample
                     }
                 ).Then("doSomethingElse|123", (If) =>
                 {
-                    If.True("someotherrule");
+                    If.True("someotherrule|xyz");
                 }).End();
 
             string s = JsonConvert.SerializeObject(created, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });
@@ -210,7 +210,10 @@ namespace Sample
             IEngineLoader<ShoppingCart> workflowEngine = Engine<ShoppingCart>.CreateEngine(created);
             IEngineLinter<ShoppingCart> linter = workflowEngine.Lint();
             var result = await linter.LintAsync((a) => {
-                
+                a.Intent("someotherrule").HasContext("todo").HasValues(new System.Collections.Generic.List<Mchnry.Flow.Analysis.ContextItem>()
+                {
+                    new Mchnry.Flow.Analysis.ContextItem() { Key = "xyz", Literal = "dothis" }
+                });
                
             }, null, new CancellationToken());
             var sanitizedWorkflow = workflowEngine.Workflow;

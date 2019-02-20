@@ -104,7 +104,7 @@ namespace Mchnry.Flow.Analysis
             return this;
         }
 
-        internal Context HasValues(List<ContextItem> values)
+        public Context HasValues(List<ContextItem> values)
         {
             if (this.Values != null)
             {
