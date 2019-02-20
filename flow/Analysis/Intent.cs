@@ -27,7 +27,7 @@ namespace Mchnry.Flow.Analysis
 
 
 
-        public Context HasContext()
+        public Context HasContext(string literal)
         {
 
             //if my context is already valued, it means that this intent was 
@@ -40,7 +40,7 @@ namespace Mchnry.Flow.Analysis
                 seed = this.Context.Values;
             }
 
-            Context newContext = new Context();
+            Context newContext = new Context(literal);
             if (seed != null)
             {
                 newContext = newContext.HasValues(seed);
@@ -62,6 +62,7 @@ namespace Mchnry.Flow.Analysis
 
     public interface IContext
     {
+        string Literal { get; }
         List<ContextItem> Values { get; }
         ValidateOptions ListType { get; }
         bool Exclusive { get; }
@@ -69,7 +70,10 @@ namespace Mchnry.Flow.Analysis
 
     public class Context : IContext
     {
-
+        public Context(string literal)
+        {
+            this.Literal = literal;
+        }
 
 
         internal ValidateOptions ListType { get; set; } = ValidateOptions.OneOf;
@@ -85,7 +89,9 @@ namespace Mchnry.Flow.Analysis
             }
         }
 
-        internal Context HasValues(List<ContextItem> values)
+        public string Literal { get; }
+
+        internal Context InitializeValues(List<ContextItem> values)
         {
             this.Values = new List<ContextItem>();
             values.ForEach(s =>
@@ -96,6 +102,30 @@ namespace Mchnry.Flow.Analysis
                 this.Values.Add(s);
             });
             return this;
+        }
+
+        internal Context HasValues(List<ContextItem> values)
+        {
+            if (this.Values != null)
+            {
+                List<ContextItem> merged = values;
+                foreach(ContextItem i in this.Values)
+                {
+                    var match = (from g in values where g.Key == i.Key select g).FirstOrDefault();
+                    if (string.IsNullOrEmpty(match.Key))
+                    {
+                        merged.Add(match);
+                    }
+
+                }
+                this.Values = merged;
+            } else
+            {
+                this.Values = values;
+            }
+            return this;
+
+  
         }
 
         /// <summary>

@@ -26,6 +26,12 @@ namespace Mchnry.Flow.Analysis
         public List<ArticulateReaction> Reactions { get; set; }
     }
 
+    public class ArticulateContext
+    {
+        public string Literal { get; set; }
+        public ContextItem Context { get; set; }
+    }
+
     public class ArticulateReaction
     {
         public IArticulateExpression If { get; set; }
@@ -36,7 +42,7 @@ namespace Mchnry.Flow.Analysis
     {
         public string Id { get; set; }
         public bool TrueCondition { get; set; }
-        public ContextItem? Context { get; set; }
+        public ArticulateContext Context { get; set; }
     }
 
     public class ArticulateExpression: IArticulateExpression

@@ -19,6 +19,7 @@ namespace Mchnry.Flow
         /// Alerts the calling system of a stop-condition that must be fixed.
         /// </summary>
         Fatal = 2
+        
 
     }
 }

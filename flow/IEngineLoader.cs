@@ -18,7 +18,7 @@ namespace Mchnry.Flow
         IEngineLoader<TModel> SetEvaluatorFactory(IRuleEvaluatorFactory factory);
         IEngineLoader<TModel> SetActionFactory(IActionFactory factory);
 
-        IEngineLoader<TModel> AddEvaluator(string id, Func<IEngineScope<TModel>, LogicEngineTrace, CancellationToken, Task<bool>> evaluator);
+        IEngineLoader<TModel> AddEvaluator(string id, Func<IEngineScope<TModel>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluator);
         IEngineLoader<TModel> AddAction(string id, Func<IEngineScope<TModel>, WorkflowEngineTrace, CancellationToken, Task<bool>> action);
 
 

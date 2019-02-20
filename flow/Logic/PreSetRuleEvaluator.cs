@@ -16,10 +16,10 @@ namespace Mchnry.Flow.Logic
 
         public bool Expected { get; }
 
-        public async Task<bool> EvaluateAsync(IEngineScope<TModel> scope, LogicEngineTrace trace, CancellationToken token)
+        public async Task EvaluateAsync(IEngineScope<TModel> scope, LogicEngineTrace trace, IRuleResult result, CancellationToken token)
         {
             trace.TraceStep(string.Format("Preset:{0}", this.Expected));
-            return this.Expected;
+            result.SetResult(Expected);
         }
     }
 }

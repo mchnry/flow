@@ -58,7 +58,7 @@ namespace Mchnry.Flow.Analysis
             {
                 List<ContextItem> options = (from r in evalRules where r.Id == x select new ContextItem() { Key = r.Context, Literal = "Inferred" }).Distinct().ToList();
                 LogicIntent toAdd = new LogicIntent(x);
-                toAdd.HasContext().HasValues(options).OneOfExcusive();
+                toAdd.HasContext("inferred").InitializeValues(options).OneOfExcusive();
                 this.Intents.Add(toAdd);
             });
         }

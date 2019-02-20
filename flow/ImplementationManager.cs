@@ -143,7 +143,7 @@ namespace Mchnry.Flow
             return toReturn;
         }
 
-        internal virtual void AddEvaluator(string id, Func<IEngineScope<TModel>, LogicEngineTrace, CancellationToken, Task<bool>> evaluator)
+        internal virtual void AddEvaluator(string id, Func<IEngineScope<TModel>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluator)
         {
             this.evaluators.Add(id, new DynamicEvaluator<TModel>(evaluator));
             

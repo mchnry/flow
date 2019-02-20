@@ -29,10 +29,15 @@ namespace Mchnry.Flow.Analysis
             toBuild.TrueCondition = x.TrueCondition;
             if (!string.IsNullOrEmpty(x.Context))
             {
-                ContextItem ctx = new ContextItem() { Key = x.Context };
+                ContextItem ctx = new ContextItem() { Key = x.Context, Literal = "Inferred" };
+                ArticulateContext articulateContext = new ArticulateContext()
+                {
+                    Literal = "Inferred", Context = ctx
+                };
                 var intent = this.logicIntents.FirstOrDefault(g => g.evaluatorId == x.Id);
                 if (intent != null && intent.Context != null)
                 {
+                    articulateContext.Literal = intent.Context.Literal;
                     if (intent.Context.Values != null)
                     {
                         ContextItem match = intent.Context.Values.FirstOrDefault(k => k.Key == ctx.Key);
@@ -40,10 +45,15 @@ namespace Mchnry.Flow.Analysis
                         {
                             ctx.Literal = match.Literal;
                         }
+                        
                     }
+
 
                 }
                 if (string.IsNullOrEmpty(ctx.Literal)) { ctx.Literal = "Inferred"; }
+                if (string.IsNullOrEmpty(articulateContext.Literal)) { articulateContext.Literal = "Inferred"; }
+                articulateContext.Context = ctx;
+                toBuild.Context = articulateContext;
 
             }
 

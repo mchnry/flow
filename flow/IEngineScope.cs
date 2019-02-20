@@ -22,7 +22,7 @@ namespace Mchnry.Flow
         Logic.Define.Rule CurrentRuleDefinition { get; }
         Work.Define.Activity CurrentActivity { get; }
 
-        void AddValidation(Validation toAdd);
+
 
         void Defer(IDeferredAction<TModel> action, bool onlyIfValidationsResolved);
 

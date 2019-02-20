@@ -102,7 +102,7 @@ namespace Mchnry.Flow
         IValidationContainer IEngineComplete.Validations => this.ValidationContainer;
 
 
-        void IEngineScope<TModel>.AddValidation(Validation toAdd)
+        internal void AddValidation(Validation toAdd)
         {
             //can only occure when rule is evaluating or activity is executing
             if (this.CurrentActivityStatus == ActivityStatusOptions.Action_Running)
@@ -296,7 +296,7 @@ namespace Mchnry.Flow
 
         }
 
-        IEngineLoader<TModel> IEngineLoader<TModel>.AddEvaluator(string id, Func<IEngineScope<TModel>, LogicEngineTrace, CancellationToken, Task<bool>> evaluator)
+        IEngineLoader<TModel> IEngineLoader<TModel>.AddEvaluator(string id, Func<IEngineScope<TModel>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluator)
         {
             id = ConventionHelper.ApplyConvention(NamePrefixOptions.Evaluator, id, this.Configuration.Convention);
             ((ImplementationManager<TModel>)this.ImplementationManager).AddEvaluator(id, evaluator);

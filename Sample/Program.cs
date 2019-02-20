@@ -85,7 +85,7 @@ namespace Sample
     #region Evaluators
     public class IsInInventoryEvaluator : IRuleEvaluator<ShoppingCart>
     {
-        public async Task<bool> EvaluateAsync(IEngineScope<ShoppingCart> scope, LogicEngineTrace trace, CancellationToken token)
+        public async Task EvaluateAsync(IEngineScope<ShoppingCart> scope, LogicEngineTrace trace, IRuleResult result, CancellationToken token)
         {
             ShoppingCart model = scope.GetModel();
             //check inventory to see if item is still in stock
@@ -94,14 +94,14 @@ namespace Sample
 
             int inventoryCount = await svc.GetInventoryCount(sku);
 
-            return inventoryCount > 0;
+            result.SetResult(inventoryCount > 0);
 
 
         }
     }
     public class IsPaymentAuthorizedEvaluator : IRuleEvaluator<ShoppingCart>
     {
-        public async Task<bool> EvaluateAsync(IEngineScope<ShoppingCart> scope, LogicEngineTrace trace, CancellationToken token)
+        public async Task EvaluateAsync(IEngineScope<ShoppingCart> scope, LogicEngineTrace trace, IRuleResult result, CancellationToken token)
         {
 
 
@@ -111,7 +111,7 @@ namespace Sample
 
             bool isGood = await svc.IsAuthorizied(model.Payment);
 
-            return isGood;
+            result.SetResult(isGood);
         }
     }
 
