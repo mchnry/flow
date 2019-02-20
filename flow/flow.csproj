@@ -7,6 +7,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Description>Mchnry Workflow and Logic Engine</Description>
     <Version>1.0.3-alpha2</Version>
+    <PackageDest>$(userprofile)\.nuget\packages</PackageDest>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,4 +21,10 @@
     <PackageReference Include="newtonsoft.json" Version="12.0.1" />
   </ItemGroup>
 
+  <Target Name="PubNugetDev" AfterTargets="Pack">
+    <MakeDir Directories="$(PackageDir)" ContinueOnError="true" />
+    <Exec WorkingDirectory="$(OutputPath)" Command="NuGet.exe delete $(PackageId) $(PackageVersion) -Source &quot;$(PackageDest)&quot; -NonInteractive" Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " ContinueOnError="WarnAndContinue" />
+    <Exec WorkingDirectory="$(OutputPath)" Command="NuGet.exe push &quot;$(PackageId).$(PackageVersion).nupkg&quot; -Source &quot;$(PackageDest)&quot; -NonInteractive" Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
+  </Target>
+  
 </Project>
