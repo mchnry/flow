@@ -213,13 +213,15 @@ namespace Mchnry.Flow.Analysis
                         //if intent is oneOf, get rid of any cases where more than one rule is true
                         if (i.Context.ListType == ValidateOptions.OneOf)
                             {
+                                //if exclusive, get rid of all false case
+                                if (i.Context.Exclusive)
+                                {
+                                    intentCases.RemoveAll((c) => c.Rules.Count(t => !t.TrueCondition) == c.Rules.Count());
+                                }
+
                                 intentCases.RemoveAll((c) => c.Rules.Count(t => t.TrueCondition) > 1);
                             }
-                        //if exclusive, get rid of all false case
-                        if (i.Context.Exclusive)
-                            {
-                                intentCases.RemoveAll((c) => c.Rules.Count(t => !t.TrueCondition) == c.Rules.Count());
-                            }
+
                             SubCases.Add(intentCases);
                         });
 

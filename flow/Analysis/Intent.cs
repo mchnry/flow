@@ -104,17 +104,30 @@ namespace Mchnry.Flow.Analysis
             return this;
         }
 
+
+        /// <summary>
+        /// Options are inferred when traversing the logic.  However, caller can
+        /// use this to provide details (literals) about those options.
+        /// Caller need only provide the values that exist in the logic
+        /// </summary>
+        /// <param name="values"></param>
+        /// <returns></returns>
         public Context HasValues(List<ContextItem> values)
         {
             if (this.Values != null)
             {
                 List<ContextItem> merged = values;
+                //this.values is inferred from the logic set, so the items in it are defacto.  
+                //if the callers values are in the defacto set, use the callers, otherwise, it is superfluous, so get rid of it.
                 foreach(ContextItem i in this.Values)
                 {
                     var match = (from g in values where g.Key == i.Key select g).FirstOrDefault();
-                    if (string.IsNullOrEmpty(match.Key))
+                    if (!string.IsNullOrEmpty(match.Key))
                     {
                         merged.Add(match);
+                    } else
+                    {
+                        merged.Add(i);
                     }
 
                 }
