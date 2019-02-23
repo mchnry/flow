@@ -9,46 +9,31 @@ using System.Linq;
 namespace Mchnry.Flow
 {
 
-    public interface IMainActivityBuilder
-    {
-        /// <summary>
-        /// Create the main activity
-        /// </summary>
-        /// <param name="activityId">Identifies the activity</param>
-        /// <returns></returns>
-        IReactionBuilder Do(string activityId);
 
-        /// <summary>
-        /// create the main activity 
-        /// </summary>
-        /// <param name="activityId">Identifies the activity</param>
-        /// <param name="DoFirst">The actions to execute first, before evaluating any reactions</param>
-        /// <returns></returns>
-        IReactionBuilder Do(string activityId, Action<IActionBuilder> DoFirst);
-
-    }
 
     public interface IActivityBuilder
     {
-        IReactionBuilder Do();
-        IReactionBuilder Do(Action<IActionBuilder> DoFirst);
-        IReactionBuilder Do(string activityId);
-        IReactionBuilder Do(string activityId, Action<IActionBuilder> DoFirst);
+        INextActivityBuilder Do(WorkDefine.ActionRef action);
+        IThenBuilder IfThenDo(Action<IExpressionBuilder> If);
 
     }
 
-    public interface IActionBuilder
+    public interface IThenBuilder
     {
-        void Do(WorkDefine.ActionRef action);
+        INextActivityBuilder Then(WorkDefine.ActionRef action);
     }
 
-    public interface IReactionBuilder
+    public interface INextActivityBuilder
     {
-        IReactionBuilder ThenAction(Action<IExpressionBuilder> If, Action<IActionBuilder> Then);
-        IReactionBuilder ThenActivity(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then);
-        IReactionBuilder ThenAction(Action<IActionBuilder> Then);
-        IReactionBuilder ThenActivity(Action<IActivityBuilder> Then);
-        WorkDefine.Workflow End();
+        INextActivityBuilder Next(WorkDefine.ActionRef action);
+        IThenBuilder IfThenDo(Action<IExpressionBuilder> If);
+    }
+
+ 
+
+    public interface IBuilder
+    {
+        WorkDefine.Workflow Build(string Id, Action<IActivityBuilder> First);
     }
 
     public interface IExpressionBuilder
@@ -61,7 +46,7 @@ namespace Mchnry.Flow
 
     }
 
-    public class Builder : IActivityBuilder, IReactionBuilder, IExpressionBuilder, IActionBuilder, IMainActivityBuilder
+    public class Builder : IBuilder, IExpressionBuilder, IActionBuilder
     {
 
         internal WorkflowManager workflowManager;
@@ -72,12 +57,12 @@ namespace Mchnry.Flow
         internal WorkDefine.ActionRef created = null;
         internal Dictionary<string, int> subActivities = new Dictionary<string, int>();
 
-        public static IMainActivityBuilder CreateBuilder()
+        public static IBuilder CreateBuilder()
         {
             return new Builder();
         }
 
-        public static IMainActivityBuilder CreateBuilder(Action<Configuration.Config> configure)
+        public static IBuilder CreateBuilder(Action<Configuration.Config> configure)
         {
             return new Builder(configure);
         }

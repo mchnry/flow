@@ -178,48 +178,36 @@ namespace Sample
 
 
             var builder = Builder.CreateBuilder();
-            WorkDefine.Workflow created = builder.Do("main", DoFirst => DoFirst.Do("SayHi"))
-                .ThenActivity(
-                    (If) => If.And(
-                            (IfFirst) => { IfFirst.True("isInInventory"); },
-                            (IfSecond) => { IfSecond.True("isPaymentValid"); })
-                    ,
-                    (Then) => Then.Do()
-                        .ThenAction((Thena) => Thena.Do("decrementInventory"))
-                        .ThenAction((Thena) => Thena.Do("recordSale"))
-                        .ThenActivity((Thena) => Thena.Do().ThenAction(ThenB => ThenB.Do("SayBy")).ThenAction(ThenC => ThenC.Do("OK")))
-                ).ThenAction(
-                    (If) => 
-                        If.True("!isInInventory"),
-                    (Then) => Then.Do("notifyPurchasing")
-                ).ThenAction(
-                    (If) => If.True("someotherrule|xyz"),
-                    (Then) => Then.Do("doSomethingElse|123")
-                )
-                .End();
+            var x = builder.Build("abc", 
+                First => First.Do("abc")
+                .Next("asdf")
+                .IfThenDo(If =>
+                    If.True("!abc")
+                ).Then("asdfasd"));
+
 
             string s = JsonConvert.SerializeObject(created, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });
             Console.WriteLine(s);
 
 
-            //lint
-            IEngineLoader<ShoppingCart> workflowEngine = Engine<ShoppingCart>.CreateEngine(created);
-            IEngineLinter<ShoppingCart> linter = workflowEngine.Lint();
-            var result = await linter.LintAsync((a) => {
-                a.Intent("someotherrule").HasContext("todo").HasValues(new System.Collections.Generic.List<Mchnry.Flow.Analysis.ContextItem>()
-                {
-                    new Mchnry.Flow.Analysis.ContextItem() { Key = "xyz", Literal = "dothis" }
-                });
+            ////lint
+            //IEngineLoader<ShoppingCart> workflowEngine = Engine<ShoppingCart>.CreateEngine(created);
+            //IEngineLinter<ShoppingCart> linter = workflowEngine.Lint();
+            //var result = await linter.LintAsync((a) => {
+            //    a.Intent("someotherrule").HasContext("todo").HasValues(new System.Collections.Generic.List<Mchnry.Flow.Analysis.ContextItem>()
+            //    {
+            //        new Mchnry.Flow.Analysis.ContextItem() { Key = "xyz", Literal = "dothis" }
+            //    });
                
-            }, null, new CancellationToken());
-            var sanitizedWorkflow = workflowEngine.Workflow;
-            s = JsonConvert.SerializeObject(sanitizedWorkflow, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });
-            Console.WriteLine(s);
+            //}, null, new CancellationToken());
+            //var sanitizedWorkflow = workflowEngine.Workflow;
+            //s = JsonConvert.SerializeObject(sanitizedWorkflow, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });
+            //Console.WriteLine(s);
 
 
-            var articulated = result.ArticulateActivity("main");
-            s = JsonConvert.SerializeObject(articulated, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented, NullValueHandling = NullValueHandling.Ignore });
-            Console.WriteLine(s);
+            //var articulated = result.ArticulateActivity("main");
+            //s = JsonConvert.SerializeObject(articulated, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented, NullValueHandling = NullValueHandling.Ignore });
+            //Console.WriteLine(s);
 
 
             Console.ReadLine();
