@@ -78,7 +78,7 @@ namespace Mchnry.Flow.Analysis
             }
 
             //mismatch on mock and surface counts
-
+            //activities with no reactions
 
 
 

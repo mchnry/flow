@@ -178,18 +178,19 @@ namespace Sample
 
 
             var builder = Builder.CreateBuilder();
-            WorkDefine.Workflow created = builder.Do("main")
+            WorkDefine.Workflow created = builder.Do("main", DoFirst => DoFirst.Do("SayHi"))
                 .ThenActivity(
                     (If) => If.And(
                             (IfFirst) => { IfFirst.True("isInInventory"); },
                             (IfSecond) => { IfSecond.True("isPaymentValid"); })
                     ,
-                    (Then) => Then.Do("completePurchase")
+                    (Then) => Then.Do()
                         .ThenAction((Thena) => Thena.Do("decrementInventory"))
                         .ThenAction((Thena) => Thena.Do("recordSale"))
-                        .ThenAction((Thena) => Thena.Do("sendToShipping"))
+                        .ThenActivity((Thena) => Thena.Do().ThenAction(ThenB => ThenB.Do("SayBy")).ThenAction(ThenC => ThenC.Do("OK")))
                 ).ThenAction(
-                    (If) => If.True("!isInInventory"),
+                    (If) => 
+                        If.True("!isInInventory"),
                     (Then) => Then.Do("notifyPurchasing")
                 ).ThenAction(
                     (If) => If.True("someotherrule|xyz"),

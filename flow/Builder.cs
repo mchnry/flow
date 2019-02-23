@@ -9,11 +9,31 @@ using System.Linq;
 namespace Mchnry.Flow
 {
 
+    public interface IMainActivityBuilder
+    {
+        /// <summary>
+        /// Create the main activity
+        /// </summary>
+        /// <param name="activityId">Identifies the activity</param>
+        /// <returns></returns>
+        IReactionBuilder Do(string activityId);
+
+        /// <summary>
+        /// create the main activity 
+        /// </summary>
+        /// <param name="activityId">Identifies the activity</param>
+        /// <param name="DoFirst">The actions to execute first, before evaluating any reactions</param>
+        /// <returns></returns>
+        IReactionBuilder Do(string activityId, Action<IActionBuilder> DoFirst);
+
+    }
 
     public interface IActivityBuilder
     {
+        IReactionBuilder Do();
+        IReactionBuilder Do(Action<IActionBuilder> DoFirst);
         IReactionBuilder Do(string activityId);
-        IReactionBuilder Do(string activityId, Action<IActionBuilder> doFirst);
+        IReactionBuilder Do(string activityId, Action<IActionBuilder> DoFirst);
 
     }
 
@@ -24,10 +44,10 @@ namespace Mchnry.Flow
 
     public interface IReactionBuilder
     {
-        IReactionBuilder ThenAction(Action<IExpressionBuilder> If, Action<IActionBuilder> action);
-        IReactionBuilder ThenActivity(Action<IExpressionBuilder> If, Action<IActivityBuilder> activity);
-        IReactionBuilder ThenAction(Action<IActionBuilder> action);
-        IReactionBuilder ThenActivity(Action<IActivityBuilder> activity);
+        IReactionBuilder ThenAction(Action<IExpressionBuilder> If, Action<IActionBuilder> Then);
+        IReactionBuilder ThenActivity(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then);
+        IReactionBuilder ThenAction(Action<IActionBuilder> Then);
+        IReactionBuilder ThenActivity(Action<IActivityBuilder> Then);
         WorkDefine.Workflow End();
     }
 
@@ -41,31 +61,37 @@ namespace Mchnry.Flow
 
     }
 
-    public class Builder : IActivityBuilder, IReactionBuilder, IExpressionBuilder, IActionBuilder
+    public class Builder : IActivityBuilder, IReactionBuilder, IExpressionBuilder, IActionBuilder, IMainActivityBuilder
     {
 
-        internal WorkDefine.Workflow workflow = null;
+        internal WorkflowManager workflowManager;
 
         internal Stack<WorkDefine.Activity> activityStack = new Stack<WorkDefine.Activity>();
         internal Stack<LogicDefine.IExpression> epxressionStack = new Stack<LogicDefine.IExpression>();
         internal Config config = new Config();
         internal WorkDefine.ActionRef created = null;
+        internal Dictionary<string, int> subActivities = new Dictionary<string, int>();
 
-
-        public static IActivityBuilder CreateBuilder()
+        public static IMainActivityBuilder CreateBuilder()
         {
             return new Builder();
         }
 
+        public static IMainActivityBuilder CreateBuilder(Action<Configuration.Config> configure)
+        {
+            return new Builder(configure);
+        }
+
         internal Builder()
         {
-            this.workflow = new WorkDefine.Workflow()
+            WorkDefine.Workflow workflow = new WorkDefine.Workflow()
             {
                 Actions = new List<WorkDefine.ActionDefinition>(),
                 Activities = new List<WorkDefine.Activity>(),
                 Equations = new List<LogicDefine.Equation>(),
                 Evaluators = new List<LogicDefine.Evaluator>()
             };
+            this.workflowManager = new WorkflowManager(workflow);
         }
         public Builder (Action<Configuration.Config> configure): this()
         {
@@ -74,37 +100,91 @@ namespace Mchnry.Flow
 
         public WorkDefine.Workflow End()
         {
-            return this.workflow;
+            return this.workflowManager.WorkFlow;
         }
 
-        IReactionBuilder IActivityBuilder.Do(string activityId)
+
+        IReactionBuilder IActivityBuilder.Do()
         {
-            WorkDefine.Activity toBuild = new WorkDefine.Activity() {
-                Id = ConventionHelper.ApplyConvention(NamePrefixOptions.Activity, activityId, this.config.Convention)
+            //need to pull the parent activity off of stack and build on its id
+            WorkDefine.Activity parent = this.activityStack.Peek();
+
+            int subCount = this.subActivities[parent.Id];
+            subCount++;
+            this.subActivities[parent.Id] = subCount;
+
+            string activityId = string.Format("{0}{1}{2}", parent.Id, this.config.Convention.Delimeter, subCount);
+            WorkDefine.Activity toBuild = new WorkDefine.Activity()
+            {
+                Id = activityId
             };
 
-
+            this.subActivities.Add(activityId, 0);
             activityStack.Push(toBuild);
-            
-            workflow.Activities.Add(toBuild);
-            
+
+            this.workflowManager.AddActivity(toBuild);
+   
+
             return this;
         }
 
-        IReactionBuilder IActivityBuilder.Do(string activityId, Action<IActionBuilder> DoFirst)
+        IReactionBuilder IActivityBuilder.Do(Action<IActionBuilder> DoFirst)
         {
+            DoFirst(this);
+            //need to pull the parent activity off of stack and build on its id
+            WorkDefine.Activity parent = this.activityStack.Peek();
 
-            
+            int subCount = this.subActivities[parent.Id];
+            subCount++;
+            this.subActivities[parent.Id] = subCount;
+
+            string activityId = string.Format("{0}{1}{2}", parent.Id, this.config.Convention.Delimeter, subCount);
             WorkDefine.Activity toBuild = new WorkDefine.Activity()
             {
-                Id = ConventionHelper.ApplyConvention(NamePrefixOptions.Activity, activityId, this.config.Convention),
+                Id = activityId,
+                Action = this.created
+            };
+
+            this.subActivities.Add(activityId, 0);
+            activityStack.Push(toBuild);
+
+            this.workflowManager.AddActivity(toBuild);
+
+            return this;
+        }
+
+        IReactionBuilder IMainActivityBuilder.Do(string activityId) { return ((IActivityBuilder)this).Do(activityId); }
+        IReactionBuilder IActivityBuilder.Do(string activityId)
+        {
+            activityId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.config.Convention);
+            WorkDefine.Activity toBuild = new WorkDefine.Activity() {
+                Id = activityId
+            };
+
+            this.subActivities.Add(activityId, 0);
+            activityStack.Push(toBuild);
+
+            this.workflowManager.AddActivity(toBuild);
+
+            return this;
+        }
+
+        IReactionBuilder IMainActivityBuilder.Do(string activityId, Action<IActionBuilder> DoFirst) { return ((IActivityBuilder)this).Do(activityId, DoFirst); }
+        IReactionBuilder IActivityBuilder.Do(string activityId, Action<IActionBuilder> DoFirst)
+        {
+            DoFirst(this);
+            activityId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.config.Convention);
+            WorkDefine.Activity toBuild = new WorkDefine.Activity()
+            {
+                Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.config.Convention),
                 Action = this.created
             };
             this.created = null;
 
+            this.subActivities.Add(activityId, 0);
             activityStack.Push(toBuild);
 
-            workflow.Activities.Add(toBuild);
+            this.workflowManager.AddActivity(toBuild);
 
             return this;
 
@@ -137,10 +217,8 @@ namespace Mchnry.Flow
             };
 
             this.epxressionStack.Push(toAdd);
-            if (this.workflow.Equations.Count(g => g.Id == equationId) == 0)
-            {
-                this.workflow.Equations.Add(toAdd);
-            }
+            this.workflowManager.AddEquation(toAdd);
+            
 
             string firstId, secondId = null;
             first(this);
@@ -179,10 +257,7 @@ namespace Mchnry.Flow
             };
 
             this.epxressionStack.Push(toAdd);
-            if (this.workflow.Equations.Count(g => g.Id == equationId) == 0)
-            {
-                this.workflow.Equations.Add(toAdd);
-            }
+            this.workflowManager.AddEquation(toAdd);
 
             string firstId, secondId = null;
             first(this);
@@ -197,8 +272,8 @@ namespace Mchnry.Flow
         void IExpressionBuilder.True(LogicDefine.Rule evaluatorId)
         {
 
-            evaluatorId.Id = ConventionHelper.ApplyConvention(NamePrefixOptions.Evaluator, evaluatorId.Id, this.config.Convention);
-
+            evaluatorId.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Evaluator, evaluatorId.Id, this.config.Convention);
+            this.workflowManager.AddEvaluator(new LogicDefine.Evaluator() { Id = evaluatorId.Id, Description = "Builder" });
             bool isRoot = this.epxressionStack.Count == 0;
 
             if (isRoot)
@@ -217,11 +292,7 @@ namespace Mchnry.Flow
                 };
                 this.epxressionStack.Push(toAdd);
 
-                if (this.workflow.Equations.Count(g => g.Id == equationId) == 0)
-                {
-
-                    this.workflow.Equations.Add(toAdd);
-                }
+                this.workflowManager.AddEquation(toAdd);
             } else
             {
                 this.epxressionStack.Push(evaluatorId);
@@ -244,6 +315,7 @@ namespace Mchnry.Flow
 
             
             If(this);
+            Then(this);
 
             string lastEquationId = this.epxressionStack.Pop().RuleIdWithContext;
             //string lastActivityId = this.activityStack.Pop().Id;
@@ -255,15 +327,14 @@ namespace Mchnry.Flow
             return this;
         }
 
-        IReactionBuilder IReactionBuilder.ThenActivity(Action<IExpressionBuilder> If, Action<IActivityBuilder> activity)
+        IReactionBuilder IReactionBuilder.ThenActivity(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then)
         {
             WorkDefine.Activity inBuild =  activityStack.Peek();
 
             if (inBuild.Reactions == null) { inBuild.Reactions = new List<WorkDefine.Reaction>(); }
 
-            activity(this);
             If(this);
-            
+            Then(this);
 
             string lastEquationId = this.epxressionStack.Pop().RuleIdWithContext;
             string lastActivityId = this.activityStack.Pop().Id;
@@ -272,7 +343,7 @@ namespace Mchnry.Flow
             return this;
         }
 
-        IReactionBuilder IReactionBuilder.ThenAction(Action<IActionBuilder> action)
+        IReactionBuilder IReactionBuilder.ThenAction(Action<IActionBuilder> Then)
         {
 
             
@@ -281,6 +352,7 @@ namespace Mchnry.Flow
 
             if (inBuild.Reactions == null) { inBuild.Reactions = new List<WorkDefine.Reaction>(); }
 
+            Then(this);
 
 
             inBuild.Reactions.Add(new WorkDefine.Reaction() {  Work =  this.created.ToString() });
@@ -288,12 +360,12 @@ namespace Mchnry.Flow
             return this;
         }
 
-        IReactionBuilder IReactionBuilder.ThenActivity(Action<IActivityBuilder> activity)
+        IReactionBuilder IReactionBuilder.ThenActivity(Action<IActivityBuilder> Then)
         {
             WorkDefine.Activity inBuild = activityStack.Peek();
 
             if (inBuild.Reactions == null) { inBuild.Reactions = new List<WorkDefine.Reaction>(); }
-            activity(this);
+            Then(this);
 
             string lastActivityId = this.activityStack.Pop().Id;
 
@@ -301,10 +373,11 @@ namespace Mchnry.Flow
             return this;
         }
 
-        void IActionBuilder.Do(WorkDefine.ActionRef action)
+        void IActionBuilder.Do(WorkDefine.ActionRef DoFirst)
         {
-            action.Id = ConventionHelper.ApplyConvention(NamePrefixOptions.Action, action.Id, this.config.Convention);
-            this.created = action;
+            DoFirst.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Action, DoFirst.Id, this.config.Convention);
+            this.workflowManager.AddAction(new WorkDefine.ActionDefinition() { Id = DoFirst.Id, Description = "Builder" });
+            this.created = DoFirst;
         }
     }
 }
