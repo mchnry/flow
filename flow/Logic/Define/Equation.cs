@@ -16,6 +16,6 @@ namespace Mchnry.Flow.Logic.Define
         [JsonProperty("c")]
         public Operand Condition { get; set; }
 
-
+        public string RuleIdWithContext => this.Id;
     }
 }

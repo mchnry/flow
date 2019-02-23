@@ -177,30 +177,25 @@ namespace Sample
         {
 
 
-            Builder b = new Builder();
-            WorkDefine.Workflow created = b.Activity("main")
-                .Then(
-                    (vb) =>
-                    {
-                        vb.Activity("completePurchase")
-                        .Then("decrementInventory")
-                        .Then("recordSale")
-                        .Then("sendToShipping");
-                    },
-                    (If) =>
-                    {
-                        If.And(
+            var builder = Builder.CreateBuilder();
+            WorkDefine.Workflow created = builder.Do("main")
+                .ThenActivity(
+                    (If) => If.And(
                             (IfFirst) => { IfFirst.True("isInInventory"); },
-                            (IfSecond) => { IfSecond.True("isPaymentValid"); });
-                    }
-                ).Then("notifyPurchasing", (If) =>
-                    {
-                        If.True("!isInInventory");
-                    }
-                ).Then("doSomethingElse|123", (If) =>
-                {
-                    If.True("someotherrule|xyz");
-                }).End();
+                            (IfSecond) => { IfSecond.True("isPaymentValid"); })
+                    ,
+                    (Then) => Then.Do("completePurchase")
+                        .ThenAction((Thena) => Thena.Do("decrementInventory"))
+                        .ThenAction((Thena) => Thena.Do("recordSale"))
+                        .ThenAction((Thena) => Thena.Do("sendToShipping"))
+                ).ThenAction(
+                    (If) => If.True("!isInInventory"),
+                    (Then) => Then.Do("notifyPurchasing")
+                ).ThenAction(
+                    (If) => If.True("someotherrule|xyz"),
+                    (Then) => Then.Do("doSomethingElse|123")
+                )
+                .End();
 
             string s = JsonConvert.SerializeObject(created, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });
             Console.WriteLine(s);

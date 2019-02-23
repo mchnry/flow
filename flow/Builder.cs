@@ -12,16 +12,22 @@ namespace Mchnry.Flow
 
     public interface IActivityBuilder
     {
-        IReactionBuilder Activity(string activityId);
-        IReactionBuilder Activity(string activityId, WorkDefine.ActionRef actionId);
+        IReactionBuilder Do(string activityId);
+        IReactionBuilder Do(string activityId, Action<IActionBuilder> doFirst);
 
     }
+
+    public interface IActionBuilder
+    {
+        void Do(WorkDefine.ActionRef action);
+    }
+
     public interface IReactionBuilder
     {
-        IReactionBuilder Then(WorkDefine.ActionRef actionId, Action<IExpressionBuilder> If);
-        IReactionBuilder Then(Action<IActivityBuilder> activity, Action<IExpressionBuilder> If);
-        IReactionBuilder Then(WorkDefine.ActionRef actionId);
-        IReactionBuilder Then(Action<IActivityBuilder> activity);
+        IReactionBuilder ThenAction(Action<IExpressionBuilder> If, Action<IActionBuilder> action);
+        IReactionBuilder ThenActivity(Action<IExpressionBuilder> If, Action<IActivityBuilder> activity);
+        IReactionBuilder ThenAction(Action<IActionBuilder> action);
+        IReactionBuilder ThenActivity(Action<IActivityBuilder> activity);
         WorkDefine.Workflow End();
     }
 
@@ -35,7 +41,7 @@ namespace Mchnry.Flow
 
     }
 
-    public class Builder : IActivityBuilder, IReactionBuilder, IExpressionBuilder
+    public class Builder : IActivityBuilder, IReactionBuilder, IExpressionBuilder, IActionBuilder
     {
 
         internal WorkDefine.Workflow workflow = null;
@@ -43,8 +49,15 @@ namespace Mchnry.Flow
         internal Stack<WorkDefine.Activity> activityStack = new Stack<WorkDefine.Activity>();
         internal Stack<LogicDefine.IExpression> epxressionStack = new Stack<LogicDefine.IExpression>();
         internal Config config = new Config();
+        internal WorkDefine.ActionRef created = null;
 
-        public Builder()
+
+        public static IActivityBuilder CreateBuilder()
+        {
+            return new Builder();
+        }
+
+        internal Builder()
         {
             this.workflow = new WorkDefine.Workflow()
             {
@@ -64,7 +77,7 @@ namespace Mchnry.Flow
             return this.workflow;
         }
 
-        public IReactionBuilder Activity(string activityId)
+        IReactionBuilder IActivityBuilder.Do(string activityId)
         {
             WorkDefine.Activity toBuild = new WorkDefine.Activity() {
                 Id = ConventionHelper.ApplyConvention(NamePrefixOptions.Activity, activityId, this.config.Convention)
@@ -78,16 +91,16 @@ namespace Mchnry.Flow
             return this;
         }
 
-        public IReactionBuilder Activity(string activityId, WorkDefine.ActionRef actionId)
+        IReactionBuilder IActivityBuilder.Do(string activityId, Action<IActionBuilder> DoFirst)
         {
 
-            actionId.Id = ConventionHelper.ApplyConvention(NamePrefixOptions.Action, actionId.Id, this.config.Convention);
+            
             WorkDefine.Activity toBuild = new WorkDefine.Activity()
             {
                 Id = ConventionHelper.ApplyConvention(NamePrefixOptions.Activity, activityId, this.config.Convention),
-                Action = actionId
+                Action = this.created
             };
-
+            this.created = null;
 
             activityStack.Push(toBuild);
 
@@ -132,8 +145,8 @@ namespace Mchnry.Flow
             string firstId, secondId = null;
             first(this);
             second(this);
-            secondId = this.epxressionStack.Pop().Id;
-            firstId = this.epxressionStack.Pop().Id;
+            secondId = this.epxressionStack.Pop().RuleIdWithContext;
+            firstId = this.epxressionStack.Pop().RuleIdWithContext;
 
             toAdd.First = firstId;
             toAdd.Second = secondId;
@@ -174,8 +187,8 @@ namespace Mchnry.Flow
             string firstId, secondId = null;
             first(this);
             second(this);
-            secondId = this.epxressionStack.Pop().Id;
-            firstId = this.epxressionStack.Pop().Id;
+            secondId = this.epxressionStack.Pop().RuleIdWithContext;
+            firstId = this.epxressionStack.Pop().RuleIdWithContext;
 
             toAdd.First = firstId;
             toAdd.Second = secondId;
@@ -222,27 +235,27 @@ namespace Mchnry.Flow
         }
 
      
-        IReactionBuilder IReactionBuilder.Then(WorkDefine.ActionRef actionId, Action<IExpressionBuilder> If)
+        IReactionBuilder IReactionBuilder.ThenAction(Action<IExpressionBuilder> If, Action<IActionBuilder> Then)
         {
             WorkDefine.Activity inBuild = activityStack.Peek();
-            actionId.Id = ConventionHelper.ApplyConvention(NamePrefixOptions.Action, actionId.Id, this.config.Convention);
+            
 
             if (inBuild.Reactions == null) { inBuild.Reactions = new List<WorkDefine.Reaction>(); }
 
             
             If(this);
 
-            string lastEquationId = this.epxressionStack.Pop().Id;
+            string lastEquationId = this.epxressionStack.Pop().RuleIdWithContext;
             //string lastActivityId = this.activityStack.Pop().Id;
 
-            inBuild.Reactions.Add(new WorkDefine.Reaction() { Logic = lastEquationId, Work = actionId.ToString() });
-            
+            inBuild.Reactions.Add(new WorkDefine.Reaction() { Logic = lastEquationId, Work = this.created.ToString() });
+            this.created = null;
             //no need to pop the last activity since we didn't create a new child activity.
 
             return this;
         }
 
-        IReactionBuilder IReactionBuilder.Then(Action<IActivityBuilder> activity, Action<IExpressionBuilder> If)
+        IReactionBuilder IReactionBuilder.ThenActivity(Action<IExpressionBuilder> If, Action<IActivityBuilder> activity)
         {
             WorkDefine.Activity inBuild =  activityStack.Peek();
 
@@ -252,17 +265,17 @@ namespace Mchnry.Flow
             If(this);
             
 
-            string lastEquationId = this.epxressionStack.Pop().Id;
+            string lastEquationId = this.epxressionStack.Pop().RuleIdWithContext;
             string lastActivityId = this.activityStack.Pop().Id;
 
             inBuild.Reactions.Add(new WorkDefine.Reaction() { Logic = lastEquationId, Work = lastActivityId });
             return this;
         }
 
-        IReactionBuilder IReactionBuilder.Then(WorkDefine.ActionRef actionId)
+        IReactionBuilder IReactionBuilder.ThenAction(Action<IActionBuilder> action)
         {
 
-            actionId.Id = ConventionHelper.ApplyConvention(NamePrefixOptions.Action, actionId.Id, this.config.Convention);
+            
 
             WorkDefine.Activity inBuild = activityStack.Peek();
 
@@ -270,11 +283,12 @@ namespace Mchnry.Flow
 
 
 
-            inBuild.Reactions.Add(new WorkDefine.Reaction() {  Work =  actionId.ToString() });
+            inBuild.Reactions.Add(new WorkDefine.Reaction() {  Work =  this.created.ToString() });
+            this.created = null;
             return this;
         }
 
-        IReactionBuilder IReactionBuilder.Then(Action<IActivityBuilder> activity)
+        IReactionBuilder IReactionBuilder.ThenActivity(Action<IActivityBuilder> activity)
         {
             WorkDefine.Activity inBuild = activityStack.Peek();
 
@@ -287,6 +301,10 @@ namespace Mchnry.Flow
             return this;
         }
 
-
+        void IActionBuilder.Do(WorkDefine.ActionRef action)
+        {
+            action.Id = ConventionHelper.ApplyConvention(NamePrefixOptions.Action, action.Id, this.config.Convention);
+            this.created = action;
+        }
     }
 }

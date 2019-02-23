@@ -46,7 +46,7 @@ namespace Mchnry.Flow.Logic.Define
                 (string.IsNullOrEmpty(this.Context)) ? "" : "|" + this.Context);
         }
         [JsonIgnore]
-        internal string RuleIdWithContext {
+        public string RuleIdWithContext {
             get {
                 return string.Format("{0}{1}",
                 

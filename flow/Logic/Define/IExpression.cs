@@ -7,5 +7,6 @@ namespace Mchnry.Flow.Logic.Define
     public interface IExpression
     {
         string Id { get; }
+        string RuleIdWithContext { get; }
     }
 }
