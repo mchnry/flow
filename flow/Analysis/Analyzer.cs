@@ -7,6 +7,13 @@ using System.Linq;
 
 namespace Mchnry.Flow.Analysis
 {
+    public enum AuditCode
+    {
+        ActionNeverRun,
+        NoActionRunInTestCase,
+        EvaluatorNeverRun
+    }
+
     internal class CaseAnalyzer
     {
         private readonly WorkDefine.Workflow workflow;
@@ -44,7 +51,9 @@ namespace Mchnry.Flow.Analysis
                                    select a);
             if (neverRunActions.Count() > 0)
             {
-                toReturn.AddRange(from a in neverRunActions select new Audit(AuditSeverity.Critical, a.Id, "Action is never run"));
+                toReturn.AddRange(from a in neverRunActions select new Audit(
+                    AuditCode.ActionNeverRun,
+                    AuditSeverity.Critical, a.Id, "Action is never run"));
             }
             //any evaluator that is never run
             var neverRunEvaluators = (from a in workflow.Evaluators
@@ -53,7 +62,9 @@ namespace Mchnry.Flow.Analysis
                                    select a);
             if (neverRunEvaluators.Count() > 0)
             {
-                toReturn.AddRange(from a in neverRunEvaluators select new Audit(AuditSeverity.Critical, a.Id, "Evaluator is never run"));
+                toReturn.AddRange(from a in neverRunEvaluators select new Audit(
+                    AuditCode.EvaluatorNeverRun,
+                    AuditSeverity.Critical, a.Id, "Evaluator is never run"));
             }
 
             string actionConvention = string.Format("{0}{1}", this.configuration.Convention.GetPrefix(Configuration.NamePrefixOptions.Action), this.configuration.Convention.Delimeter);
@@ -72,7 +83,9 @@ namespace Mchnry.Flow.Analysis
                     });
                     if (actionRuns == 0)
                     {
-                        toReturn.Add(new Audit(AuditSeverity.Critical, testCase.Id.ToString(), string.Format("Test Case for Activity {0} did not run any actions", at.ActivityId)));
+                        toReturn.Add(new Audit(
+                            AuditCode.NoActionRunInTestCase,
+                            AuditSeverity.Critical, testCase.Id.ToString(), string.Format("Test Case for Activity {0} did not run any actions", at.ActivityId)));
                     }
                 }
             }

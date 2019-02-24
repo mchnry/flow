@@ -176,64 +176,76 @@ namespace Sample
         public static async Task Main(string[] args)
         {
 
-
             var builder = Builder.CreateBuilder();
-            var created = builder.Build("ShoppingCart",
-                activity => activity
+
+            var workflow = builder.Build("CompletePurchase", ToDo => ToDo
+                .IfThenDo(
+                    If => If.And(
+                        First => First.True("IsInInventory"),
+                        Second => Second.True("PaymentAccepted")
+                        ),
+                    Then => Then
+                        .Do("UpdateInventory")
+                        .Do("ProcessPayment")
+                        .Do("RecordSale")
+                        .Do("ShipIt")
+                ).Else(Then => Then
                     .IfThenDo(
-                        If => If.And(
-                            First => First.True("isInInventory"),
-                            Second => Second.True("paymentAccepted")
-                            ),
-                        Then => Then
-                            .Do("ProcessPaymentMethod")
-                            .Do("DecrementInventory")
-                            .Do("ShipIt")
+                        If => If.True("!IsInInventory"),
+                        Thenb => Thenb
+                            .Do("NotifyPurchasing")
                     )
-                    .Else(
-                        
-                        Then => Then
-                            .IfThenDo(
-                                If => If.True("!isInInventory"),
-                                Thenb => Then.Do("NotifyShipping")
-                            )
+                )
+            );
 
-                    )
-                );
+            var loader = Engine<string>.CreateEngine(workflow)
+                .AddAction("UpdateInventory", async (scope, trace, tkn) => { Console.WriteLine("Updating Inventory"); return true; })
+                .AddAction("ProcessPayment", async (scope, trace, tkn) => { Console.WriteLine("Processing Payment"); return true; })
+                .AddAction("RecordSale", async (scope, trace, tkn) => { Console.WriteLine("Recording Sale"); return true; })
+                .AddAction("ShipIt", async (scope, trace, tkn) => { Console.WriteLine("Shipping It"); return true; })
+                .AddAction("NotifyPurchasing", async (scope, trace, tkn) =>
+                {
+                    Console.WriteLine("Notifying Purchasing"); return true;
+                })
+                .AddEvaluator("IsInInventory", async (scope, trace, result, tkn) => { result.Fail(); })
+                .AddEvaluator("PaymentAccepted", async (scope, trace, result, tkn) => { result.Pass(); });
 
+            //lint.  This is done anyway, but you can call first to get the result.
+            var linter = loader.Lint();
+            var inspector = await linter.LintAsync((a) => { }, null, new System.Threading.CancellationToken());
 
-
-            string s = JsonConvert.SerializeObject(created, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });
-            Console.WriteLine(s);
-
-
-            //lint
-            IEngineLoader<ShoppingCart> workflowEngine = Engine<ShoppingCart>.CreateEngine(created);
-            IEngineLinter<ShoppingCart> linter = workflowEngine.Lint();
-            var result = await linter.LintAsync((a) =>
+            JsonSerializerSettings settings = new JsonSerializerSettings()
             {
-                //a.Intent("someotherrule").HasContext("todo").HasValues(new System.Collections.Generic.List<Mchnry.Flow.Analysis.ContextItem>()
-                //{
-                //    new Mchnry.Flow.Analysis.ContextItem() { Key = "xyz", Literal = "dothis" }
-                //});
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                Formatting = Formatting.Indented
+            };
 
-            }, null, new CancellationToken());
-            var sanitizedWorkflow = workflowEngine.Workflow;
-            s = JsonConvert.SerializeObject(sanitizedWorkflow, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });
-            Console.WriteLine(s);
+            Console.WriteLine("Trace Result");
+            string traceResult = JsonConvert.SerializeObject(inspector.Result.Trace, settings);
+            Console.WriteLine(traceResult);
 
+            Console.WriteLine("\n" + "Workflow Definition (sanitized)");
 
+            WorkDefine.Workflow flow = loader.Workflow;
+            string sanitizedWorkFlow = JsonConvert.SerializeObject(flow, settings);
+            Console.WriteLine(sanitizedWorkFlow);
 
+            var runner = loader.Start();
+            var finalizer = await runner.ExecuteAsync("CompletePurchase", new System.Threading.CancellationToken());
+            var complete = await finalizer.FinalizeAsync(new System.Threading.CancellationToken());
 
-            var articulated = result.ArticulateActivity("ShoppingCart");
-            s = JsonConvert.SerializeObject(articulated, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented, NullValueHandling = NullValueHandling.Ignore });
-            Console.WriteLine(s);
-
+            Console.WriteLine("\n" + "Run History");
+            string runTrace = JsonConvert.SerializeObject(complete.Process, settings);
+            Console.WriteLine(runTrace);
 
             Console.ReadLine();
 
+
+
         }
 
-
     }
+
+
 }
+

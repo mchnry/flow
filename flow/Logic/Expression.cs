@@ -33,7 +33,7 @@ namespace Mchnry.Flow.Logic
         public async Task<bool> EvaluateAsync(bool reEvaluate, CancellationToken token)
         {
             bool toReturn = true;
-
+            
             StepTraceNode<ActivityProcess> mark = this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(
                 new ActivityProcess(this.definition.Id, ActivityStatusOptions.Expression_Evaluating, null));
 
@@ -68,7 +68,7 @@ namespace Mchnry.Flow.Logic
                 }
             }
 
-            return toReturn;
+            return toReturn == this.definition.TrueCondition;
         }
     }
 }
