@@ -6,7 +6,7 @@ namespace Mchnry.Flow.Logic.Define
     {
         public string Id { get; set; }
 
-        [JsonProperty("d")]
+    
         public string Description { get; set; }
     }
 }

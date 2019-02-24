@@ -26,7 +26,7 @@ namespace Mchnry.Flow.Work
             this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Action_Running;
             bool result = false;
             //execute action
-            IAction<TModel> toExecute = this.engineRef.ImplementationManager.GetAction(this.activityDefinition.Action.Id);
+            //IAction<TModel> toExecute = this.engineRef.ImplementationManager.GetAction(this.activityDefinition.Action.Id);
       
 
 
@@ -34,27 +34,27 @@ namespace Mchnry.Flow.Work
                 new ActivityProcess(this.activityDefinition.Id, ActivityStatusOptions.Activity_Running, null));
 
 
-            try
-            {
-                Stopwatch t = new Stopwatch(); t.Start();
-                this.engineRef.Tracer.TraceStep(
-                    new ActivityProcess(this.activityDefinition.Action.Id, ActivityStatusOptions.Action_Running, null));
+            //try
+            //{
+            //    Stopwatch t = new Stopwatch(); t.Start();
+            //    this.engineRef.Tracer.TraceStep(
+            //        new ActivityProcess(this.activityDefinition.Action.Id, ActivityStatusOptions.Action_Running, null));
 
-                result = await toExecute.CompleteAsync(this.engineRef, new WorkflowEngineTrace(this.engineRef.Tracer), token);
+            //    result = await toExecute.CompleteAsync(this.engineRef, new WorkflowEngineTrace(this.engineRef.Tracer), token);
 
-                t.Stop();
+            //    t.Stop();
 
-                this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Action_Completed;
-                this.engineRef.Tracer.TraceStep(new ActivityProcess(this.activityDefinition.Action.Id, ActivityStatusOptions.Action_Completed, null, t.Elapsed));
+            //    this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Action_Completed;
+            //    this.engineRef.Tracer.TraceStep(new ActivityProcess(this.activityDefinition.Action.Id, ActivityStatusOptions.Action_Completed, null, t.Elapsed));
 
-            }
-            catch (System.Exception ex)
-            {
-                this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Action_Failed;
-                this.engineRef.Tracer.TraceStep(new ActivityProcess(this.activityDefinition.Action.Id, ActivityStatusOptions.Action_Failed, ex.Message));
-            }
+            //}
+            //catch (System.Exception ex)
+            //{
+            //    this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Action_Failed;
+            //    this.engineRef.Tracer.TraceStep(new ActivityProcess(this.activityDefinition.Action.Id, ActivityStatusOptions.Action_Failed, ex.Message));
+            //}
 
-            this.Executed = true;
+
 
             //if i have reactions, loop through each and run
             if (this.Reactions.Count > 0)
@@ -92,6 +92,7 @@ namespace Mchnry.Flow.Work
                     }
                 }
             }
+            this.Executed = true;
         }
 
 

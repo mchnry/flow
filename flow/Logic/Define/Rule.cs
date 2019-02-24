@@ -26,11 +26,11 @@ namespace Mchnry.Flow.Logic.Define
 
         }
 
-        [JsonProperty(PropertyName = "Id")]
+
         public string Id { get; set; }
-        [JsonProperty(PropertyName = "ctx")]
+
         public string Context { get; set; }
-        [JsonProperty(PropertyName = "t")]
+  
         public bool TrueCondition { get; set; }
 
         public object Clone()
@@ -54,5 +54,8 @@ namespace Mchnry.Flow.Logic.Define
                 (string.IsNullOrEmpty(this.Context)) ? "" : "|" + this.Context);
             }
         }
+
+        [JsonIgnore]
+        public string ShortHand => string.Format("{0}{1}", (this.TrueCondition) ? "" : "!", this.RuleIdWithContext);
     }
 }

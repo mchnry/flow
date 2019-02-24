@@ -22,7 +22,6 @@ namespace Mchnry.Flow.Analysis
     public class ArticulateActivity : IArticulateActivity
     {
         public string Id { get; set; }
-        public IArticulateActivity DoFirst { get; set; }
         public List<ArticulateReaction> Reactions { get; set; }
     }
 

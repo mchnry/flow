@@ -24,7 +24,7 @@ namespace Test.Analysis
                 {
                     new WorkDefine.Activity()
                     {
-                        Action = "action.test",
+                        //Action = "action.test",
                         Id = "activity.test",
                         Reactions = new List<WorkDefine.Reaction>()
                         {
@@ -74,7 +74,7 @@ namespace Test.Analysis
                 {
                     new WorkDefine.Activity()
                     {
-                        Action = "action.test",
+                        //Action = "action.test",
                         Id = "activity.test",
                         Reactions = new List<WorkDefine.Reaction>()
                         {
@@ -100,7 +100,7 @@ namespace Test.Analysis
                 {
                     new WorkDefine.Activity()
                     {
-                        Action = "action.test",
+                        //Action = "action.test",
                         Id = "activity.test",
                         Reactions = new List<WorkDefine.Reaction>()
                         {
@@ -126,7 +126,7 @@ namespace Test.Analysis
                 {
                     new WorkDefine.Activity()
                     {
-                        Action = "action.test",
+                        //Action = "action.test",
                         Id = "activity.test",
                         Reactions = new List<WorkDefine.Reaction>()
                         {
@@ -178,7 +178,7 @@ namespace Test.Analysis
                 {
                     new WorkDefine.Activity()
                     {
-                        Action = "action.test",
+                        //Action = "action.test",
                         Id = "activity.test",
                         Reactions = new List<WorkDefine.Reaction>()
                         {
@@ -204,7 +204,7 @@ namespace Test.Analysis
                 {
                     new WorkDefine.Activity()
                     {
-                        Action = "action.test",
+                        //Action = "action.test",
                         Id = "activity.test",
                         Reactions = new List<WorkDefine.Reaction>()
                         {
@@ -235,7 +235,7 @@ namespace Test.Analysis
                 {
                     new WorkDefine.Activity()
                     {
-                        Action = "action.test",
+                        //Action = "action.test",
                         Id = "activity.test",
                         Reactions = new List<WorkDefine.Reaction>()
                         {
@@ -266,7 +266,7 @@ namespace Test.Analysis
                 {
                     new WorkDefine.Activity()
                     {
-                        Action = "action.test",
+                        //Action = "action.test",
                         Id = "activity.test",
                         Reactions = new List<WorkDefine.Reaction>()
                         {

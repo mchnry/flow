@@ -178,36 +178,56 @@ namespace Sample
 
 
             var builder = Builder.CreateBuilder();
-            var x = builder.Build("abc", 
-                First => First.Do("abc")
-                .Next("asdf")
-                .IfThenDo(If =>
-                    If.True("!abc")
-                ).Then("asdfasd"));
+            var created = builder.Build("ShoppingCart",
+                activity => activity
+                    .IfThenDo(
+                        If => If.And(
+                            First => First.True("isInInventory"),
+                            Second => Second.True("paymentAccepted")
+                            ),
+                        Then => Then
+                            .Do("ProcessPaymentMethod")
+                            .Do("DecrementInventory")
+                            .Do("ShipIt")
+                    )
+                    .Else(
+                        
+                        Then => Then
+                            .IfThenDo(
+                                If => If.True("!isInInventory"),
+                                Thenb => Then.Do("NotifyShipping")
+                            )
+
+                    )
+                );
+
 
 
             string s = JsonConvert.SerializeObject(created, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });
             Console.WriteLine(s);
 
 
-            ////lint
-            //IEngineLoader<ShoppingCart> workflowEngine = Engine<ShoppingCart>.CreateEngine(created);
-            //IEngineLinter<ShoppingCart> linter = workflowEngine.Lint();
-            //var result = await linter.LintAsync((a) => {
-            //    a.Intent("someotherrule").HasContext("todo").HasValues(new System.Collections.Generic.List<Mchnry.Flow.Analysis.ContextItem>()
-            //    {
-            //        new Mchnry.Flow.Analysis.ContextItem() { Key = "xyz", Literal = "dothis" }
-            //    });
-               
-            //}, null, new CancellationToken());
-            //var sanitizedWorkflow = workflowEngine.Workflow;
-            //s = JsonConvert.SerializeObject(sanitizedWorkflow, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });
-            //Console.WriteLine(s);
+            //lint
+            IEngineLoader<ShoppingCart> workflowEngine = Engine<ShoppingCart>.CreateEngine(created);
+            IEngineLinter<ShoppingCart> linter = workflowEngine.Lint();
+            var result = await linter.LintAsync((a) =>
+            {
+                //a.Intent("someotherrule").HasContext("todo").HasValues(new System.Collections.Generic.List<Mchnry.Flow.Analysis.ContextItem>()
+                //{
+                //    new Mchnry.Flow.Analysis.ContextItem() { Key = "xyz", Literal = "dothis" }
+                //});
+
+            }, null, new CancellationToken());
+            var sanitizedWorkflow = workflowEngine.Workflow;
+            s = JsonConvert.SerializeObject(sanitizedWorkflow, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented });
+            Console.WriteLine(s);
 
 
-            //var articulated = result.ArticulateActivity("main");
-            //s = JsonConvert.SerializeObject(articulated, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented, NullValueHandling = NullValueHandling.Ignore });
-            //Console.WriteLine(s);
+
+
+            var articulated = result.ArticulateActivity("ShoppingCart");
+            s = JsonConvert.SerializeObject(articulated, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented, NullValueHandling = NullValueHandling.Ignore });
+            Console.WriteLine(s);
 
 
             Console.ReadLine();

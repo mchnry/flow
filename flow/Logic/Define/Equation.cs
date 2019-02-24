@@ -7,15 +7,19 @@ namespace Mchnry.Flow.Logic.Define
 
         public string Id { get; set; }
 
-        [JsonProperty("f")]
+        
         public Rule First { get; set; }
 
-        [JsonProperty("s")]
+        
         public Rule Second { get; set; }
 
-        [JsonProperty("c")]
+        
         public Operand Condition { get; set; }
 
+        [JsonIgnore]
         public string RuleIdWithContext => this.Id;
+
+        [JsonIgnore]
+        public string ShortHand => this.Id;
     }
 }

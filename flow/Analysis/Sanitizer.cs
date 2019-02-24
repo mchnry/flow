@@ -40,17 +40,17 @@ namespace Mchnry.Flow.Analysis
             Action<WorkDefine.Activity, bool> LoadReactions = null;
             LoadReactions = (d, isroot) =>
             {
-                if (d.Action == null) d.Action = "*placeHolder";
+                //if (d.Action == null) d.Action = "*placeHolder";
 
-                WorkDefine.ActionDefinition match = workFlow.Actions.FirstOrDefault(z => z.Id == d.Action.Id);
-                if (null == match)
-                {
-                    workFlow.Actions.Add(new WorkDefine.ActionDefinition()
-                    {
-                        Id = d.Action.Id,
-                        Description = ""
-                    });
-                }
+                //WorkDefine.ActionDefinition match = workFlow.Actions.FirstOrDefault(z => z.Id == d.Action.Id);
+                //if (null == match)
+                //{
+                //    workFlow.Actions.Add(new WorkDefine.ActionDefinition()
+                //    {
+                //        Id = d.Action.Id,
+                //        Description = ""
+                //    });
+                //}
 
                 if (d.Reactions != null && d.Reactions.Count > 0)
                 {
@@ -94,7 +94,7 @@ namespace Mchnry.Flow.Analysis
 
                             toCreatedef = new WorkDefine.Activity()
                             {
-                                Action = asActionRef,
+                                //Action = asActionRef,
                                 Id = Guid.NewGuid().ToString(),
                                 Reactions = new List<WorkDefine.Reaction>()
                             };

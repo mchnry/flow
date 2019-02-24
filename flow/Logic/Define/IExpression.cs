@@ -8,5 +8,6 @@ namespace Mchnry.Flow.Logic.Define
     {
         string Id { get; }
         string RuleIdWithContext { get; }
+        string ShortHand { get; }
     }
 }

@@ -28,6 +28,7 @@ namespace Mchnry.Flow.Logic
         public string Id => this.definition.Id;
 
         public string RuleIdWithContext => this.definition.RuleIdWithContext;
+        public string ShortHand => this.definition.ShortHand;
 
         public async Task<bool> EvaluateAsync(bool reEvaluate, CancellationToken token)
         {

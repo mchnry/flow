@@ -8,9 +8,7 @@ namespace Mchnry.Flow.Work.Define
     {
 
         public string Id { get; set; }
-        [JsonProperty("X")]
-        public ActionRef Action { get; set; }
-        [JsonProperty("RXV")]
+
         public List<Reaction> Reactions { get; set; }
     }
 
@@ -18,10 +16,8 @@ namespace Mchnry.Flow.Work.Define
     {
 
 
-
-        [JsonProperty("L")]
         public string Logic { get; set; }
-        [JsonProperty("W")]
+ 
         public string Work { get; set; }
     }
 }

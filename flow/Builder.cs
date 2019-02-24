@@ -13,27 +13,21 @@ namespace Mchnry.Flow
 
     public interface IActivityBuilder
     {
-        INextActivityBuilder Do(WorkDefine.ActionRef action);
-        IThenBuilder IfThenDo(Action<IExpressionBuilder> If);
+        IActivityBuilder Do(WorkDefine.ActionRef action);
+        IElseActivityBuilder IfThenDo(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then);
 
     }
-
-    public interface IThenBuilder
+    public interface IElseActivityBuilder
     {
-        INextActivityBuilder Then(WorkDefine.ActionRef action);
-    }
+        IActivityBuilder Do(WorkDefine.ActionRef action);
+        IElseActivityBuilder IfThenDo(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then);
+        IActivityBuilder Else(Action<IActivityBuilder> Then);
 
-    public interface INextActivityBuilder
-    {
-        INextActivityBuilder Next(WorkDefine.ActionRef action);
-        IThenBuilder IfThenDo(Action<IExpressionBuilder> If);
     }
-
- 
 
     public interface IBuilder
     {
-        WorkDefine.Workflow Build(string Id, Action<IActivityBuilder> First);
+        WorkDefine.Workflow Build(string Id, Action<IActivityBuilder> Activity);
     }
 
     public interface IExpressionBuilder
@@ -46,7 +40,7 @@ namespace Mchnry.Flow
 
     }
 
-    public class Builder : IBuilder, IExpressionBuilder, IActionBuilder
+    public class Builder : IBuilder, IExpressionBuilder, IActivityBuilder, IElseActivityBuilder
     {
 
         internal WorkflowManager workflowManager;
@@ -56,6 +50,8 @@ namespace Mchnry.Flow
         internal Config config = new Config();
         internal WorkDefine.ActionRef created = null;
         internal Dictionary<string, int> subActivities = new Dictionary<string, int>();
+        internal string WorkflowId;
+        internal string LastEquationid;
 
         public static IBuilder CreateBuilder()
         {
@@ -83,40 +79,52 @@ namespace Mchnry.Flow
             configure(this.config);
         }
 
-        public WorkDefine.Workflow End()
+
+        private void Do(WorkDefine.ActionRef ToDo)
         {
+            ToDo.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Action, ToDo.Id, this.config.Convention);
+            this.workflowManager.AddAction(new WorkDefine.ActionDefinition() { Id = ToDo.Id, Description = "Builder" });
+            this.created = ToDo;
+        }
+
+        WorkDefine.Workflow IBuilder.Build(string Id, Action<IActivityBuilder> First)
+        {
+            this.WorkflowId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, Id, this.config.Convention);
+
+            WorkDefine.Activity parent = new WorkDefine.Activity()
+            {
+                Id = this.WorkflowId,
+                Reactions = new List<WorkDefine.Reaction>() { }
+            };
+            this.activityStack.Push(parent);
+            this.workflowManager.AddActivity(parent);
+            this.subActivities.Add(parent.Id, 0);
+
+            First(this);
+
             return this.workflowManager.WorkFlow;
         }
 
-
-        IReactionBuilder IActivityBuilder.Do()
+        IActivityBuilder IElseActivityBuilder.Do(WorkDefine.ActionRef action) { return ((IActivityBuilder)this).Do(action); }
+        IActivityBuilder IActivityBuilder.Do(WorkDefine.ActionRef action)
         {
-            //need to pull the parent activity off of stack and build on its id
-            WorkDefine.Activity parent = this.activityStack.Peek();
 
-            int subCount = this.subActivities[parent.Id];
-            subCount++;
-            this.subActivities[parent.Id] = subCount;
+            WorkDefine.Activity parent = default(WorkDefine.Activity);
+            //get the parent, add this as a reaction
 
-            string activityId = string.Format("{0}{1}{2}", parent.Id, this.config.Convention.Delimeter, subCount);
-            WorkDefine.Activity toBuild = new WorkDefine.Activity()
-            {
-                Id = activityId
-            };
+            parent = this.activityStack.Peek();
 
-            this.subActivities.Add(activityId, 0);
-            activityStack.Push(toBuild);
 
-            this.workflowManager.AddActivity(toBuild);
-   
+            this.Do(action);
+            parent.Reactions.Add(new WorkDefine.Reaction() { Work = this.created.ToString() });
 
             return this;
+
         }
 
-        IReactionBuilder IActivityBuilder.Do(Action<IActionBuilder> DoFirst)
+        IElseActivityBuilder IElseActivityBuilder.IfThenDo(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then) { return ((IActivityBuilder)this).IfThenDo(If, Then); }
+        IElseActivityBuilder IActivityBuilder.IfThenDo(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then)
         {
-            DoFirst(this);
-            //need to pull the parent activity off of stack and build on its id
             WorkDefine.Activity parent = this.activityStack.Peek();
 
             int subCount = this.subActivities[parent.Id];
@@ -127,53 +135,60 @@ namespace Mchnry.Flow
             WorkDefine.Activity toBuild = new WorkDefine.Activity()
             {
                 Id = activityId,
-                Action = this.created
+                Reactions = new List<WorkDefine.Reaction>() { }
             };
+
+            
 
             this.subActivities.Add(activityId, 0);
             activityStack.Push(toBuild);
-
             this.workflowManager.AddActivity(toBuild);
+
+            If(this);
+            Then(this);
+
+            LastEquationid = this.epxressionStack.Pop().RuleIdWithContext;
+            
+            parent.Reactions.Add(new WorkDefine.Reaction() { Logic = LastEquationid, Work = toBuild.Id });
+
+            this.activityStack.Pop();
 
             return this;
         }
 
-        IReactionBuilder IMainActivityBuilder.Do(string activityId) { return ((IActivityBuilder)this).Do(activityId); }
-        IReactionBuilder IActivityBuilder.Do(string activityId)
+        IActivityBuilder IElseActivityBuilder.Else(Action<IActivityBuilder> Then)
         {
-            activityId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.config.Convention);
-            WorkDefine.Activity toBuild = new WorkDefine.Activity() {
-                Id = activityId
-            };
+            WorkDefine.Activity parent = this.activityStack.Peek();
 
-            this.subActivities.Add(activityId, 0);
-            activityStack.Push(toBuild);
+            int subCount = this.subActivities[parent.Id];
+            subCount++;
+            this.subActivities[parent.Id] = subCount;
 
-            this.workflowManager.AddActivity(toBuild);
-
-            return this;
-        }
-
-        IReactionBuilder IMainActivityBuilder.Do(string activityId, Action<IActionBuilder> DoFirst) { return ((IActivityBuilder)this).Do(activityId, DoFirst); }
-        IReactionBuilder IActivityBuilder.Do(string activityId, Action<IActionBuilder> DoFirst)
-        {
-            DoFirst(this);
-            activityId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.config.Convention);
+            string activityId = string.Format("{0}{1}{2}", parent.Id, this.config.Convention.Delimeter, subCount);
             WorkDefine.Activity toBuild = new WorkDefine.Activity()
             {
-                Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.config.Convention),
-                Action = this.created
+                Id = activityId,
+                Reactions = new List<WorkDefine.Reaction>() { }
             };
-            this.created = null;
+
+
 
             this.subActivities.Add(activityId, 0);
             activityStack.Push(toBuild);
-
             this.workflowManager.AddActivity(toBuild);
 
-            return this;
+             string equationId = "!" + LastEquationid;           
+            Then(this);
 
+
+
+            parent.Reactions.Add(new WorkDefine.Reaction() { Logic = equationId, Work = toBuild.Id });
+
+            this.activityStack.Pop();
+
+            return this;
         }
+
 
         void IExpressionBuilder.And(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second)
         {
@@ -207,9 +222,10 @@ namespace Mchnry.Flow
 
             string firstId, secondId = null;
             first(this);
+            firstId = this.epxressionStack.Pop().ShortHand;
             second(this);
-            secondId = this.epxressionStack.Pop().RuleIdWithContext;
-            firstId = this.epxressionStack.Pop().RuleIdWithContext;
+            secondId = this.epxressionStack.Pop().ShortHand;
+            
 
             toAdd.First = firstId;
             toAdd.Second = secondId;
@@ -246,9 +262,10 @@ namespace Mchnry.Flow
 
             string firstId, secondId = null;
             first(this);
+            firstId = this.epxressionStack.Pop().ShortHand;
+            
             second(this);
-            secondId = this.epxressionStack.Pop().RuleIdWithContext;
-            firstId = this.epxressionStack.Pop().RuleIdWithContext;
+            secondId = this.epxressionStack.Pop().ShortHand;
 
             toAdd.First = firstId;
             toAdd.Second = secondId;
@@ -290,79 +307,161 @@ namespace Mchnry.Flow
 
         }
 
-     
-        IReactionBuilder IReactionBuilder.ThenAction(Action<IExpressionBuilder> If, Action<IActionBuilder> Then)
-        {
-            WorkDefine.Activity inBuild = activityStack.Peek();
-            
-
-            if (inBuild.Reactions == null) { inBuild.Reactions = new List<WorkDefine.Reaction>(); }
-
-            
-            If(this);
-            Then(this);
-
-            string lastEquationId = this.epxressionStack.Pop().RuleIdWithContext;
-            //string lastActivityId = this.activityStack.Pop().Id;
-
-            inBuild.Reactions.Add(new WorkDefine.Reaction() { Logic = lastEquationId, Work = this.created.ToString() });
-            this.created = null;
-            //no need to pop the last activity since we didn't create a new child activity.
-
-            return this;
-        }
-
-        IReactionBuilder IReactionBuilder.ThenActivity(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then)
-        {
-            WorkDefine.Activity inBuild =  activityStack.Peek();
-
-            if (inBuild.Reactions == null) { inBuild.Reactions = new List<WorkDefine.Reaction>(); }
-
-            If(this);
-            Then(this);
-
-            string lastEquationId = this.epxressionStack.Pop().RuleIdWithContext;
-            string lastActivityId = this.activityStack.Pop().Id;
-
-            inBuild.Reactions.Add(new WorkDefine.Reaction() { Logic = lastEquationId, Work = lastActivityId });
-            return this;
-        }
-
-        IReactionBuilder IReactionBuilder.ThenAction(Action<IActionBuilder> Then)
-        {
-
-            
-
-            WorkDefine.Activity inBuild = activityStack.Peek();
-
-            if (inBuild.Reactions == null) { inBuild.Reactions = new List<WorkDefine.Reaction>(); }
-
-            Then(this);
 
 
-            inBuild.Reactions.Add(new WorkDefine.Reaction() {  Work =  this.created.ToString() });
-            this.created = null;
-            return this;
-        }
+        //IReactionBuilder IActivityBuilder.Do()
+        //{
+        //    need to pull the parent activity off of stack and build on its id
+        //    WorkDefine.Activity parent = this.activityStack.Peek();
 
-        IReactionBuilder IReactionBuilder.ThenActivity(Action<IActivityBuilder> Then)
-        {
-            WorkDefine.Activity inBuild = activityStack.Peek();
+        //    int subCount = this.subActivities[parent.Id];
+        //    subCount++;
+        //    this.subActivities[parent.Id] = subCount;
 
-            if (inBuild.Reactions == null) { inBuild.Reactions = new List<WorkDefine.Reaction>(); }
-            Then(this);
+        //    string activityId = string.Format("{0}{1}{2}", parent.Id, this.config.Convention.Delimeter, subCount);
+        //    WorkDefine.Activity toBuild = new WorkDefine.Activity()
+        //    {
+        //        Id = activityId
+        //    };
 
-            string lastActivityId = this.activityStack.Pop().Id;
+        //    this.subActivities.Add(activityId, 0);
+        //    activityStack.Push(toBuild);
 
-            inBuild.Reactions.Add(new WorkDefine.Reaction() {  Work = lastActivityId });
-            return this;
-        }
+        //    this.workflowManager.AddActivity(toBuild);
 
-        void IActionBuilder.Do(WorkDefine.ActionRef DoFirst)
-        {
-            DoFirst.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Action, DoFirst.Id, this.config.Convention);
-            this.workflowManager.AddAction(new WorkDefine.ActionDefinition() { Id = DoFirst.Id, Description = "Builder" });
-            this.created = DoFirst;
-        }
+
+        //    return this;
+        //}
+
+        //IReactionBuilder IActivityBuilder.Do(Action<IActionBuilder> DoFirst)
+        //{
+        //    DoFirst(this);
+        //    //need to pull the parent activity off of stack and build on its id
+        //    WorkDefine.Activity parent = this.activityStack.Peek();
+
+        //    int subCount = this.subActivities[parent.Id];
+        //    subCount++;
+        //    this.subActivities[parent.Id] = subCount;
+
+        //    string activityId = string.Format("{0}{1}{2}", parent.Id, this.config.Convention.Delimeter, subCount);
+        //    WorkDefine.Activity toBuild = new WorkDefine.Activity()
+        //    {
+        //        Id = activityId,
+        //        Action = this.created
+        //    };
+
+        //    this.subActivities.Add(activityId, 0);
+        //    activityStack.Push(toBuild);
+
+        //    this.workflowManager.AddActivity(toBuild);
+
+        //    return this;
+        //}
+
+        //IReactionBuilder IMainActivityBuilder.Do(string activityId) { return ((IActivityBuilder)this).Do(activityId); }
+        //IReactionBuilder IActivityBuilder.Do(string activityId)
+        //{
+        //    activityId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.config.Convention);
+        //    WorkDefine.Activity toBuild = new WorkDefine.Activity() {
+        //        Id = activityId
+        //    };
+
+        //    this.subActivities.Add(activityId, 0);
+        //    activityStack.Push(toBuild);
+
+        //    this.workflowManager.AddActivity(toBuild);
+
+        //    return this;
+        //}
+
+        //IReactionBuilder IMainActivityBuilder.Do(string activityId, Action<IActionBuilder> DoFirst) { return ((IActivityBuilder)this).Do(activityId, DoFirst); }
+        //IReactionBuilder IActivityBuilder.Do(string activityId, Action<IActionBuilder> DoFirst)
+        //{
+        //    DoFirst(this);
+        //    activityId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.config.Convention);
+        //    WorkDefine.Activity toBuild = new WorkDefine.Activity()
+        //    {
+        //        Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.config.Convention),
+        //        Action = this.created
+        //    };
+        //    this.created = null;
+
+        //    this.subActivities.Add(activityId, 0);
+        //    activityStack.Push(toBuild);
+
+        //    this.workflowManager.AddActivity(toBuild);
+
+        //    return this;
+
+        //}
+
+        //IReactionBuilder IReactionBuilder.ThenAction(Action<IExpressionBuilder> If, Action<IActionBuilder> Then)
+        //{
+        //    WorkDefine.Activity inBuild = activityStack.Peek();
+
+
+        //    if (inBuild.Reactions == null) { inBuild.Reactions = new List<WorkDefine.Reaction>(); }
+
+
+        //    If(this);
+        //    Then(this);
+
+        //    string lastEquationId = this.epxressionStack.Pop().RuleIdWithContext;
+        //    //string lastActivityId = this.activityStack.Pop().Id;
+
+        //    inBuild.Reactions.Add(new WorkDefine.Reaction() { Logic = lastEquationId, Work = this.created.ToString() });
+        //    this.created = null;
+        //    //no need to pop the last activity since we didn't create a new child activity.
+
+        //    return this;
+        //}
+
+        //IReactionBuilder IReactionBuilder.ThenActivity(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then)
+        //{
+        //    WorkDefine.Activity inBuild =  activityStack.Peek();
+
+        //    if (inBuild.Reactions == null) { inBuild.Reactions = new List<WorkDefine.Reaction>(); }
+
+        //    If(this);
+        //    Then(this);
+
+        //    string lastEquationId = this.epxressionStack.Pop().RuleIdWithContext;
+        //    string lastActivityId = this.activityStack.Pop().Id;
+
+        //    inBuild.Reactions.Add(new WorkDefine.Reaction() { Logic = lastEquationId, Work = lastActivityId });
+        //    return this;
+        //}
+
+        //IReactionBuilder IReactionBuilder.ThenAction(Action<IActionBuilder> Then)
+        //{
+
+
+
+        //    WorkDefine.Activity inBuild = activityStack.Peek();
+
+        //    if (inBuild.Reactions == null) { inBuild.Reactions = new List<WorkDefine.Reaction>(); }
+
+        //    Then(this);
+
+
+        //    inBuild.Reactions.Add(new WorkDefine.Reaction() {  Work =  this.created.ToString() });
+        //    this.created = null;
+        //    return this;
+        //}
+
+        //IReactionBuilder IReactionBuilder.ThenActivity(Action<IActivityBuilder> Then)
+        //{
+        //    WorkDefine.Activity inBuild = activityStack.Peek();
+
+        //    if (inBuild.Reactions == null) { inBuild.Reactions = new List<WorkDefine.Reaction>(); }
+        //    Then(this);
+
+        //    string lastActivityId = this.activityStack.Pop().Id;
+
+        //    inBuild.Reactions.Add(new WorkDefine.Reaction() {  Work = lastActivityId });
+        //    return this;
+        //}
+
+
     }
 }

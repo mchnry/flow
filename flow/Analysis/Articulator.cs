@@ -90,10 +90,7 @@ namespace Mchnry.Flow.Analysis
        
             WorkDefine.Activity toArticulate = this.workflow.Activities.FirstOrDefault(g => g.Id == activityId);
             toReturn.Id = toArticulate.Id;
-            if (toArticulate.Action != null)
-            {
-                toReturn.DoFirst = createAction(toArticulate.Action);
-            }
+
 
 
 
