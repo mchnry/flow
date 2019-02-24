@@ -41,29 +41,29 @@ namespace Test.Analysis
 
         }
         //placeholder added to actions
-        [Fact]
-        public void PlaceHolderActionAdded()
-        {
-            WorkDefine.Workflow testWF = new WorkDefine.Workflow()
-            {
-                Activities = new List<WorkDefine.Activity>()
-                {
-                    new WorkDefine.Activity()
-                    {
-                        Id = "activity.test",
-                        Reactions = new List<WorkDefine.Reaction>()
-                        {
-                            new WorkDefine.Reaction() { Logic = "evaluator.test", Work ="action.reaction" }
-                        }
-                    }
-                }
-            };
-            StepTracer<LintTrace> tracer = new StepTracer<LintTrace>();
-            tracer.TraceFirst(new LintTrace(LintStatusOptions.Sanitizing, "Testing Sanitizer"));
-            Sanitizer toTest = new Sanitizer(tracer, this.defaultConfig);
-            WorkDefine.Workflow sanitized = toTest.Sanitize(testWF);
-            Assert.Equal(1, sanitized.Actions.Count(g => g.Id == "*placeHolder"));
-        }
+        //[Fact]
+        //public void PlaceHolderActionAdded()
+        //{
+        //    WorkDefine.Workflow testWF = new WorkDefine.Workflow()
+        //    {
+        //        Activities = new List<WorkDefine.Activity>()
+        //        {
+        //            new WorkDefine.Activity()
+        //            {
+        //                Id = "activity.test",
+        //                Reactions = new List<WorkDefine.Reaction>()
+        //                {
+        //                    new WorkDefine.Reaction() { Logic = "evaluator.test", Work ="action.reaction" }
+        //                }
+        //            }
+        //        }
+        //    };
+        //    StepTracer<LintTrace> tracer = new StepTracer<LintTrace>();
+        //    tracer.TraceFirst(new LintTrace(LintStatusOptions.Sanitizing, "Testing Sanitizer"));
+        //    Sanitizer toTest = new Sanitizer(tracer, this.defaultConfig);
+        //    WorkDefine.Workflow sanitized = toTest.Sanitize(testWF);
+        //    Assert.Equal(1, sanitized.Actions.Count(g => g.Id == "*placeHolder"));
+        //}
         //evaluator added only once
         [Fact]
         public void InferredEvaluatorAddedOnlyOnce()
