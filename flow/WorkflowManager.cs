@@ -70,5 +70,43 @@ namespace Mchnry.Flow
                 this.WorkFlow.Evaluators.Add(toAdd);
             }
         }
+
+        public virtual List<String> GetRootActivities()
+        {
+            Dictionary<string, int> activityRefs = new Dictionary<string, int>();
+
+            Action<string> findRefs = null;
+            findRefs = (a) =>
+            {
+                if (!activityRefs.ContainsKey(a)) { activityRefs.Add(a, 0); }
+                else
+                {
+                    activityRefs[a] += 1;
+                }
+                WorkDefine.Activity reffed = this.GetActivity(a);
+                if (reffed != null)
+                {
+                    if (reffed.Reactions != null && reffed.Reactions.Count() > 0)
+                    {
+                        reffed.Reactions.ForEach(r =>
+                        {
+                            WorkDefine.ActionRef workRef = r.Work;
+                            if (this.GetActivity(workRef.Id) != null)
+                            {
+                                findRefs(workRef.Id);
+                            }
+                        });
+                    }
+                }
+            };
+            this.WorkFlow.Activities.ForEach(g =>
+            {
+                findRefs(g.Id);
+            });
+
+            List<String> rootActivities = (from rootActivity in activityRefs where rootActivity.Value == 0 select rootActivity.Key).ToList();
+            return rootActivities;
+
+        }
     }
 }

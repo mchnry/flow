@@ -297,38 +297,9 @@ namespace Mchnry.Flow.Analysis
             */
             List<ActivityTest> toReturn = new List<ActivityTest>();
 
-            Dictionary<string, int> activityRefs = new Dictionary<string, int>();
 
-            Action<string> findRefs = null;
-            findRefs = (a) =>
-            {
-                if (!activityRefs.ContainsKey(a)) { activityRefs.Add(a, 0); }
-                else
-                {
-                    activityRefs[a] += 1;
-                }
-                Activity reffed = this.WorkflowManager.GetActivity(a);
-                if (reffed != null)
-                {
-                    if (reffed.Reactions != null && reffed.Reactions.Count() > 0)
-                    {
-                        reffed.Reactions.ForEach(r =>
-                        {
-                            ActionRef workRef = r.Work;
-                            if (this.WorkflowManager.GetActivity(workRef.Id) != null)
-                            {
-                                findRefs(workRef.Id);
-                            }
-                        });
-                    }
-                }
-            };
-            this.WorkflowManager.WorkFlow.Activities.ForEach(g =>
-            {
-                findRefs(g.Id);
-            });
 
-            List<String> rootActivities = (from rootActivity in activityRefs where rootActivity.Value == 0 select rootActivity.Key).ToList();
+            List<String> rootActivities = this.WorkflowManager.GetRootActivities();
 
             rootActivities.ForEach((rootActivity) =>
             {

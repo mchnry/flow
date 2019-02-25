@@ -503,7 +503,7 @@ namespace Mchnry.Flow
 
             }
 
-            CaseAnalyzer analyzer = new CaseAnalyzer(this.Workflow, activityTests, mockTests, this.Configuration);
+            CaseAnalyzer analyzer = new CaseAnalyzer(this.WorkflowManager, activityTests, mockTests, this.Configuration);
             List<Audit> auditResults = analyzer.Analyze();
 
 

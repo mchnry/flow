@@ -16,15 +16,15 @@ namespace Mchnry.Flow.Analysis
 
     internal class CaseAnalyzer
     {
-        private readonly WorkDefine.Workflow workflow;
+        private readonly WorkflowManager workflowManager;
         private readonly List<ActivityTest> surfaceTests;
         private readonly List<ActivityTest> mockTests;
         private readonly Configuration.Config configuration;
 
-        public CaseAnalyzer(WorkDefine.Workflow workflow, List<ActivityTest> surfaceTests, Configuration.Config configuration) : this(workflow, surfaceTests, null, configuration) { }
-        public CaseAnalyzer(WorkDefine.Workflow workflow, List<ActivityTest> surfaceTests, List<ActivityTest> mockTests, Configuration.Config configuration)
+        public CaseAnalyzer(WorkflowManager workflowManager, List<ActivityTest> surfaceTests, Configuration.Config configuration) : this(workflowManager, surfaceTests, null, configuration) { }
+        public CaseAnalyzer(WorkflowManager workflowManager, List<ActivityTest> surfaceTests, List<ActivityTest> mockTests, Configuration.Config configuration)
         {
-            this.workflow = workflow;
+            this.workflowManager = workflowManager;
             this.surfaceTests = surfaceTests;
             this.mockTests = mockTests;
             this.configuration = configuration;
@@ -45,7 +45,7 @@ namespace Mchnry.Flow.Analysis
             List<HitAndRun> aggregate = AggregateHitAndRuns(this.surfaceTests);
 
             //any action that is never run
-            var neverRunActions = (from a in workflow.Actions
+            var neverRunActions = (from a in this.workflowManager.WorkFlow.Actions
                                    join b in aggregate on a.Id equals b.Id
                                    where b.RunCount == 0
                                    select a);
@@ -56,7 +56,7 @@ namespace Mchnry.Flow.Analysis
                     AuditSeverity.Critical, a.Id, "Action is never run"));
             }
             //any evaluator that is never run
-            var neverRunEvaluators = (from a in workflow.Evaluators
+            var neverRunEvaluators = (from a in this.workflowManager.WorkFlow.Evaluators
                                    join b in aggregate on a.Id equals b.Id
                                    where b.RunCount == 0
                                    select a);
@@ -68,8 +68,9 @@ namespace Mchnry.Flow.Analysis
             }
 
             string actionConvention = string.Format("{0}{1}", this.configuration.Convention.GetPrefix(Configuration.NamePrefixOptions.Action), this.configuration.Convention.Delimeter);
+            List<String> rootActivities = this.workflowManager.GetRootActivities();
             //any case where no action is run (exclude placeholder)
-            foreach (ActivityTest at in this.surfaceTests)
+            foreach (ActivityTest at in this.surfaceTests.Where(t => rootActivities.Contains(t.ActivityId)))
             {
                 
                 foreach (Case testCase in at.TestCases)
@@ -105,7 +106,7 @@ namespace Mchnry.Flow.Analysis
             {
                 t.TestCases.ForEach(tc =>
                 {
-                    foreach (LogicDefine.Evaluator ev in this.workflow.Evaluators)
+                    foreach (LogicDefine.Evaluator ev in this.workflowManager.WorkFlow.Evaluators)
                     {
                         HitAndRun toAdd = new HitAndRun(ev.Id);
 
@@ -123,7 +124,7 @@ namespace Mchnry.Flow.Analysis
 
                         tc.HitAndRuns.Add(toAdd);
                     }
-                    foreach (WorkDefine.ActionDefinition ad in this.workflow.Actions)
+                    foreach (WorkDefine.ActionDefinition ad in this.workflowManager.WorkFlow.Actions)
                     {
                         HitAndRun toAdd = new HitAndRun(ad.Id);
 
@@ -154,7 +155,7 @@ namespace Mchnry.Flow.Analysis
             {
                 t.TestCases.ForEach(tc =>
                 {
-                    foreach (LogicDefine.Evaluator ev in this.workflow.Evaluators)
+                    foreach (LogicDefine.Evaluator ev in this.workflowManager.WorkFlow.Evaluators)
                     {
 
                         
@@ -171,7 +172,7 @@ namespace Mchnry.Flow.Analysis
 
                         
                     }
-                    foreach (WorkDefine.ActionDefinition ad in this.workflow.Actions)
+                    foreach (WorkDefine.ActionDefinition ad in this.workflowManager.WorkFlow.Actions)
                     {
                         HitAndRun toAdd = toReturn.FirstOrDefault(i => i.Id == ad.Id);
                         if (toAdd == null)
