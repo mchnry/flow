@@ -8,7 +8,8 @@ using System.Linq;
 namespace Mchnry.Flow.Analysis
 {
 
-    internal class Linter: INeedIntent {
+    internal class Linter : INeedIntent
+    {
 
         private List<LogicTest> logicTests = null;
         internal Dictionary<string, List<Case>> EquationTests { get; set; } = new Dictionary<string, List<Case>>();
@@ -114,7 +115,7 @@ namespace Mchnry.Flow.Analysis
                             childCases.ForEach(c =>
                             {
                                 Case cloned = (Case)c.Clone();
-                                Case toAdd = new Case( cloned.Rules);
+                                Case toAdd = new Case(cloned.Rules);
                                 toAdd.Rules.Add(conditional);
                                 resolved.Add(toAdd);
                             });
@@ -145,14 +146,14 @@ namespace Mchnry.Flow.Analysis
                     if (null != s.First)
                     {
                         Equation qMatch = this.WorkflowManager.WorkFlow.Equations.FirstOrDefault(g => g.Id.Equals(s.First.Id));
-                    //if first is another euqation, extract it's rules
-                    if (null != qMatch)
+                        //if first is another euqation, extract it's rules
+                        if (null != qMatch)
                         {
                             List<Rule> fromEq = ExtractRules(qMatch);
                             extracted.AddRange(fromEq);
                         }
                         else //otherwise, get the rule
-                    {
+                        {
 
                             if (s.First.Id != ConventionHelper.TrueEvaluator(this.configuration.Convention))
                             {
@@ -165,14 +166,14 @@ namespace Mchnry.Flow.Analysis
                     if (null != s.Second)
                     {
                         Equation qMatch = this.WorkflowManager.WorkFlow.Equations.FirstOrDefault(g => g.Id.Equals(s.Second.Id));
-                    //if first is another euqation, extract it's rules
-                    if (null != qMatch)
+                        //if first is another euqation, extract it's rules
+                        if (null != qMatch)
                         {
                             List<Rule> fromEq = ExtractRules(qMatch);
                             extracted.AddRange(fromEq);
                         }
                         else //otherwise, get the rule
-                    {
+                        {
                             if (s.Second.Id != ConventionHelper.TrueEvaluator(this.configuration.Convention))
                             {
                                 extracted.Add(s.Second);
@@ -191,8 +192,8 @@ namespace Mchnry.Flow.Analysis
                     Equation toTest = this.WorkflowManager.WorkFlow.Equations.FirstOrDefault(g => g.Id.Equals(r));
                     List<Rule> equationRules = ExtractRules(toTest);
 
-                //build cases for no-intent
-                List<Rule> noIntent = (from z in equationRules where !intentRules.Contains(z.Id) select z).ToList();
+                    //build cases for no-intent
+                    List<Rule> noIntent = (from z in equationRules where !intentRules.Contains(z.Id) select z).ToList();
 
                     if (noIntent.Count > 0)
                     {
@@ -210,8 +211,8 @@ namespace Mchnry.Flow.Analysis
                             List<Rule> myIntentRules = (from e in equationRules where e.Id == i.evaluatorId select e).ToList();
                             List<Case> intentCases = buildCases(null, myIntentRules, 0);
 
-                        //if intent is oneOf, get rid of any cases where more than one rule is true
-                        if (i.Context.ListType == ValidateOptions.OneOf)
+                            //if intent is oneOf, get rid of any cases where more than one rule is true
+                            if (i.Context.ListType == ValidateOptions.OneOf)
                             {
                                 //if exclusive, get rid of all false case
                                 if (i.Context.Exclusive)
@@ -235,8 +236,8 @@ namespace Mchnry.Flow.Analysis
                         List<Case> merged = new List<Case>((from c in SubCases[0] select (Case)c.Clone()));
 
 
-                    //merge subcases
-                    for (int i = 1; i < SubCases.Count; i++)
+                        //merge subcases
+                        for (int i = 1; i < SubCases.Count; i++)
                         {
 
                             List<Case> toMerge = SubCases[i];
@@ -299,64 +300,63 @@ namespace Mchnry.Flow.Analysis
 
 
 
-            List<String> rootActivities = this.WorkflowManager.GetRootActivities();
+            string rootName = this.WorkflowManager.RootActivityId;
+            Activity rootActivity = this.WorkflowManager.GetActivity(rootName);
 
-            rootActivities.ForEach((rootActivity) =>
+
+            List<string> equationsWithCases = new List<string>();
+            equationsWithCases = (from z in logicTests where z.TestCases.Count > 0 select z.EquationId).ToList();
+            List<List<string>> cases = new List<List<string>>();
+
+            foreach (string eq in equationsWithCases)
             {
-                List<string> equationsWithCases = new List<string>();
-                equationsWithCases = (from z in logicTests where z.TestCases.Count > 0 select z.EquationId).ToList();
-                List<List<string>> cases = new List<List<string>>();
 
-                foreach (string eq in equationsWithCases)
+
+                LogicTest eqTest = logicTests.First(g => g.EquationId == eq);
+                List<List<string>> thisRun = new List<List<string>>();
+                foreach (Case testCase in eqTest.TestCases)
                 {
-
-
-                    LogicTest eqTest = logicTests.First(g => g.EquationId == eq);
-                    List<List<string>> thisRun = new List<List<string>>();
-                    foreach (Case testCase in eqTest.TestCases)
+                    List<string> ruleCases = (from g in testCase.Rules select g.ToString()).ToList();
+                    if (cases.Count == 0)
                     {
-                        List<string> ruleCases = (from g in testCase.Rules select g.ToString()).ToList();
-                        if (cases.Count == 0)
+                        thisRun.Add(ruleCases);
+                    }
+                    else
+                    {
+                        foreach (List<string> lastRun in cases)
                         {
-                            thisRun.Add(ruleCases);
-                        }
-                        else
-                        {
-                            foreach (List<string> lastRun in cases)
+                            List<string> copyOfLastRun = (from s in lastRun select s).ToList();
+                            //whittle out any dupes where id and context match. 
+                            List<string> justIdsFromLastRun = (from s in lastRun select ((Rule)s).RuleIdWithContext).ToList();
+
+                            List<string> deduped = (from s in ruleCases where !justIdsFromLastRun.Contains(((Rule)s).RuleIdWithContext) select s).ToList();
+
+                            List<string> thisCase = copyOfLastRun;
+
+                            if (deduped.Count > 0)
                             {
-                                List<string> copyOfLastRun = (from s in lastRun select s).ToList();
-                                //whittle out any dupes where id and context match. 
-                                List<string> justIdsFromLastRun = (from s in lastRun select ((Rule)s).RuleIdWithContext).ToList();
-
-                                List<string> deduped = (from s in ruleCases where !justIdsFromLastRun.Contains(((Rule)s).RuleIdWithContext) select s).ToList();
-
-                                List<string> thisCase = copyOfLastRun;
-
-                                if (deduped.Count > 0)
-                                {
-                                    thisCase = copyOfLastRun.Union(deduped).ToList();
-                                    thisRun.Add(thisCase);
-                                }
-
+                                thisCase = copyOfLastRun.Union(deduped).ToList();
+                                thisRun.Add(thisCase);
                             }
+
                         }
-
                     }
-                    if (thisRun.Count > 0)
-                    {
-                        cases = thisRun;
-                    }
-
 
                 }
+                if (thisRun.Count > 0)
+                {
+                    cases = thisRun;
+                }
 
-                List<Case> testCases = (from z in cases select new Case((from x in z select (Rule)x).ToList())).ToList();
 
-                ActivityTest toAdd = new ActivityTest(rootActivity) { TestCases = testCases };
-                toReturn.Add(toAdd);
+            }
+
+            List<Case> testCases = (from z in cases select new Case((from x in z select (Rule)x).ToList())).ToList();
+
+            ActivityTest toAdd = new ActivityTest(rootName) { TestCases = testCases };
+            toReturn.Add(toAdd);
 
 
-            });
 
 
             int counter = 0;
@@ -370,5 +370,5 @@ namespace Mchnry.Flow.Analysis
         }
     }
 
-    
+
 }

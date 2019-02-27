@@ -1,31 +1,28 @@
-﻿using Mchnry.Flow.Logic;
+﻿using Mchnry.Flow.Analysis;
+using Mchnry.Flow.Configuration;
+using Mchnry.Flow.Diagnostics;
+using Mchnry.Flow.Logic;
 using Mchnry.Flow.Work;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using WorkDefine = Mchnry.Flow.Work.Define;
-using LogicDefine = Mchnry.Flow.Logic.Define;
-using System.Linq;
 using System.Threading;
-using Mchnry.Flow.Diagnostics;
 using System.Threading.Tasks;
-using Mchnry.Flow.Analysis;
-using Mchnry.Flow.Configuration;
+using LogicDefine = Mchnry.Flow.Logic.Define;
+using WorkDefine = Mchnry.Flow.Work.Define;
 
 namespace Mchnry.Flow
 {
 
     internal interface IImplementationManager<TModel>
     {
-        IAction<TModel> GetAction(string id);
-        IRuleEvaluator<TModel> GetEvaluator(string id);
+
+        IAction<TModel> GetAction(WorkDefine.ActionDefinition id);
+        IRuleEvaluator<TModel> GetEvaluator(LogicDefine.Evaluator id);
+        IActionFactory ActionFactory { get; }
+        IRuleEvaluatorFactory EvaluatorFactory { get; }
     }
-    internal class ImplementationManager<TModel>: IImplementationManager<TModel>
+    internal class ImplementationManager<TModel> : IImplementationManager<TModel>
     {
-
-        private readonly WorkDefine.Workflow workFlow;
-
-
 
 
         //store reference to all factory created actions
@@ -47,77 +44,89 @@ namespace Mchnry.Flow
             this.evaluators.Add(ConventionHelper.TrueEvaluator(this.Configuration.Convention), trueEvaluator);
         }
 
-        internal ImplementationManager(Configuration.Config configuration): this()
+        internal ImplementationManager(Configuration.Config configuration) : this()
         {
 
             this.Configuration = configuration;
         }
 
-        internal ImplementationManager(IActionFactory actionFactory, IRuleEvaluatorFactory evaluatorFactory, WorkDefine.Workflow workFlow, Configuration.Config configuration): this(configuration) {
+        internal ImplementationManager(IActionFactory actionFactory, IRuleEvaluatorFactory evaluatorFactory, Configuration.Config configuration) : this(configuration)
+        {
             this.ActionFactory = actionFactory;
             this.EvaluatorFactory = evaluatorFactory;
-            this.workFlow = workFlow;
 
 
         }
 
-        public virtual IAction<TModel> GetAction(string actionId)
+        public virtual IAction<TModel> GetAction(WorkDefine.ActionDefinition def)
         {
-            IAction<TModel> toReturn = default(IAction<TModel>);
-            if (!this.actions.ContainsKey(actionId))
+            WorkDefine.ActionDefinition withoutConvention = new WorkDefine.ActionDefinition()
             {
-                if ("*placeHolder" == actionId)
+                Id = ConventionHelper.RemoveConvention(def.Id, this.Configuration.Convention),
+                Description = def.Description
+            };
+
+            IAction<TModel> toReturn = default(IAction<TModel>);
+            if (!this.actions.ContainsKey(def.Id) && !this.actions.ContainsKey(withoutConvention.Id))
+            {
+
+
+
+                try
                 {
-                    toReturn = new NoAction<TModel>();
+
+
+                    toReturn = this.ActionFactory.GetAction<TModel>(withoutConvention);
+                    //try with convention
+                    if (toReturn == null)
+                    {
+                        toReturn = this.ActionFactory.GetAction<TModel>(def);
+                    }
                 }
-                else
+                catch (System.Exception ex)
                 {
-
-                    WorkDefine.ActionDefinition def = this.workFlow.Actions.FirstOrDefault(g => g.Id.Equals(actionId));
-
-                    try
-                    {
-                        string searchId = ConventionHelper.RemoveConvention(def.Id, this.Configuration.Convention);
-                        WorkDefine.ActionDefinition withoutConvention = new WorkDefine.ActionDefinition() { Id = searchId, Description = def.Description };
-                        toReturn = this.ActionFactory.GetAction<TModel>(withoutConvention);
-                        //try with convention
-                        if (toReturn == null)
-                        {
-                            toReturn = this.ActionFactory.GetAction<TModel>(def);
-                        }
-                    }
-                    catch (System.Exception ex)
-                    {
-                        throw new LoadActionException(actionId, ex);
-                    }
-
-                    if (default(IAction<TModel>) == toReturn)
-                    {
-                        throw new LoadActionException(actionId);
-                    }
-
-                    this.actions.Add(actionId, toReturn);
+                    throw new LoadActionException(def.Id, ex);
                 }
+
+                if (default(IAction<TModel>) == toReturn)
+                {
+                    throw new LoadActionException(def.Id);
+                }
+
+                this.actions.Add(def.Id, toReturn);
+
             }
             else
             {
-                toReturn = this.actions[actionId];
+                if (this.actions.ContainsKey(withoutConvention.Id))
+                {
+                    toReturn = this.actions[withoutConvention.Id];
+                }
+                else
+                {
+                    toReturn = this.actions[def.Id];
+                }
             }
             return toReturn;
         }
 
-        public virtual IRuleEvaluator<TModel> GetEvaluator(string id)
+        public virtual IRuleEvaluator<TModel> GetEvaluator(LogicDefine.Evaluator def)
         {
+
+            LogicDefine.Evaluator withoutConvention = new LogicDefine.Evaluator()
+            {
+                Id = ConventionHelper.RemoveConvention(def.Id, this.Configuration.Convention),
+                Description = def.Description
+            };
             IRuleEvaluator<TModel> toReturn = default(IRuleEvaluator<TModel>);
 
 
-            if (!this.evaluators.ContainsKey(id))
+            if (!this.evaluators.ContainsKey(def.Id) && !this.evaluators.ContainsKey(withoutConvention.Id))
             {
-                LogicDefine.Evaluator def = this.workFlow.Evaluators.FirstOrDefault(g => g.Id.Equals(id));
+
                 try
                 {
                     string searchId = ConventionHelper.RemoveConvention(def.Id, this.Configuration.Convention);
-                    LogicDefine.Evaluator withoutConvention = new LogicDefine.Evaluator() { Id = searchId, Description = def.Description };
                     toReturn = this.EvaluatorFactory.GetRuleEvaluator<TModel>(withoutConvention);
                     if (toReturn == null)
                     {
@@ -126,19 +135,27 @@ namespace Mchnry.Flow
                 }
                 catch (System.Exception ex)
                 {
-                    throw new LoadEvaluatorException(id, ex);
+                    throw new LoadEvaluatorException(def.Id, ex);
                 }
 
                 if (default(IRuleEvaluator<TModel>) == toReturn)
                 {
-                    throw new LoadEvaluatorException(id);
+                    throw new LoadEvaluatorException(def.Id);
                 }
 
                 this.evaluators.Add(def.Id, toReturn);
             }
             else
             {
-                toReturn = this.evaluators[id];
+                if (this.evaluators.ContainsKey(withoutConvention.Id))
+                {
+                    toReturn = this.evaluators[withoutConvention.Id];
+                }
+
+                else
+                {
+                    toReturn = this.evaluators[def.Id];
+                }
             }
             return toReturn;
         }
@@ -146,23 +163,28 @@ namespace Mchnry.Flow
         internal virtual void AddEvaluator(string id, Func<IEngineScope<TModel>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluator)
         {
             this.evaluators.Add(id, new DynamicEvaluator<TModel>(evaluator));
-            
+
         }
         internal virtual void AddAction(string id, Func<IEngineScope<TModel>, WorkflowEngineTrace, CancellationToken, Task<bool>> action)
         {
 
             this.actions.Add(id, new DynamicAction<TModel>(action));
-       
+
         }
 
 
 
     }
 
-    internal class FakeImplementationManager<TModel>: IImplementationManager<TModel>
+    internal class FakeImplementationManager<TModel> : IImplementationManager<TModel>
     {
         internal LogicTestEvaluatorFactory ef { get; }
         internal LogicTestActionFactory af { get; }
+
+        IActionFactory IImplementationManager<TModel>.ActionFactory => null;
+
+        IRuleEvaluatorFactory IImplementationManager<TModel>.EvaluatorFactory => null;
+
         private readonly WorkDefine.Workflow workFlow;
         private readonly Config configuration;
 
@@ -172,20 +194,30 @@ namespace Mchnry.Flow
             this.configuration = configuration;
             this.ef = new LogicTestEvaluatorFactory(testCase, this.configuration);
             this.af = new LogicTestActionFactory();
-            
+
         }
 
-        public IAction<TModel> GetAction(string id)
+        public IAction<TModel> GetAction(WorkDefine.ActionDefinition def)
         {
-            WorkDefine.ActionDefinition def = this.workFlow.Actions.FirstOrDefault(g => g.Id.Equals(id));
+
 
             return this.af.GetAction<TModel>(def);
         }
 
-        public IRuleEvaluator<TModel> GetEvaluator(string id)
+        public IRuleEvaluator<TModel> GetEvaluator(LogicDefine.Evaluator def)
         {
-            LogicDefine.Evaluator def = this.workFlow.Evaluators.FirstOrDefault(g => g.Id.Equals(id));
+
             return this.ef.GetRuleEvaluator<TModel>(def);
+        }
+
+        IAction<TModel> IImplementationManager<TModel>.GetAction(WorkDefine.ActionDefinition def)
+        {
+            throw new NotImplementedException();
+        }
+
+        IRuleEvaluator<TModel> IImplementationManager<TModel>.GetEvaluator(LogicDefine.Evaluator def)
+        {
+            throw new NotImplementedException();
         }
     }
 }

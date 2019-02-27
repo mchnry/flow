@@ -38,7 +38,8 @@ namespace Mchnry.Flow.Logic
             bool thisResult = !this.definition.TrueCondition;
             
             bool? knownResult = this.engineRef.RunManager.GetResult(this.definition);
-            IRuleEvaluator<TModel> evaluator = this.engineRef.ImplementationManager.GetEvaluator(this.definition.Id);
+            IRuleEvaluator<TModel> evaluator = this.engineRef.ImplementationManager.GetEvaluator(
+                new Define.Evaluator() { Id = this.definition.Id });
 
             bool doEval = reEvaluate || !knownResult.HasValue;
 

@@ -83,9 +83,11 @@ namespace Mchnry.Flow.Work
 
                         if (doReact)
                         {
-                            IAction<TModel> reactionToExecute = this.engineRef.ImplementationManager.GetAction(react.Action.Id);
+                            IAction<TModel> reactionToExecute = this.engineRef.ImplementationManager.GetAction(
+                                new Define.ActionDefinition() { Id = react.Action.Id });
                             this.engineRef.Tracer.CurrentStep = this.engineRef.Tracer.TraceStep(reactionMark,
                                 new ActivityProcess(react.Action.Id, ActivityStatusOptions.Action_Running, "Reacting"));
+                            this.engineRef.RunManager.CurrentAction = react.Action;
                             bool reactionResult = await reactionToExecute.CompleteAsync(this.engineRef, new WorkflowEngineTrace(this.engineRef.Tracer), token);
                         }
 

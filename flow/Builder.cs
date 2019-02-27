@@ -27,7 +27,7 @@ namespace Mchnry.Flow
 
     public interface IBuilder
     {
-        WorkDefine.Workflow Build(string Id, Action<IActivityBuilder> Activity);
+        WorkDefine.Workflow Build(Action<IActivityBuilder> Activity);
     }
 
     public interface IExpressionBuilder
@@ -53,30 +53,33 @@ namespace Mchnry.Flow
         internal string WorkflowId;
         internal string LastEquationid;
 
-        public static IBuilder CreateBuilder()
+        public static IBuilder CreateBuilder(string workflowId)
         {
-            return new Builder();
+            return new Builder(workflowId);
         }
 
-        public static IBuilder CreateBuilder(Action<Configuration.Config> configure)
+        public static IBuilder CreateBuilder(string workflowId, Action<Configuration.Config> configure)
         {
-            return new Builder(configure);
+            return new Builder(workflowId, configure);
         }
 
-        internal Builder()
+        internal Builder(string workflowId): this(workflowId, null)
         {
-            WorkDefine.Workflow workflow = new WorkDefine.Workflow()
+            
+        }
+        public Builder (string workflowId, Action<Configuration.Config> configure)
+        {
+            configure?.Invoke(this.config);
+
+            
+            WorkDefine.Workflow workflow = new WorkDefine.Workflow(workflowId)
             {
                 Actions = new List<WorkDefine.ActionDefinition>(),
                 Activities = new List<WorkDefine.Activity>(),
                 Equations = new List<LogicDefine.Equation>(),
                 Evaluators = new List<LogicDefine.Evaluator>()
             };
-            this.workflowManager = new WorkflowManager(workflow);
-        }
-        public Builder (Action<Configuration.Config> configure): this()
-        {
-            configure(this.config);
+            this.workflowManager = new WorkflowManager(workflow, this.config);
         }
 
 
@@ -87,13 +90,15 @@ namespace Mchnry.Flow
             this.created = ToDo;
         }
 
-        WorkDefine.Workflow IBuilder.Build(string Id, Action<IActivityBuilder> First)
+        WorkDefine.Workflow IBuilder.Build(Action<IActivityBuilder> First)
         {
-            this.WorkflowId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, Id, this.config.Convention);
+
+            string workflowId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, this.workflowManager.WorkFlow.Id, this.config.Convention);
+            workflowId = workflowId + this.config.Convention.Delimeter + "Main";
 
             WorkDefine.Activity parent = new WorkDefine.Activity()
             {
-                Id = this.WorkflowId,
+                Id = workflowId,
                 Reactions = new List<WorkDefine.Reaction>() { }
             };
             this.activityStack.Push(parent);

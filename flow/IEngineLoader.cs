@@ -12,9 +12,13 @@ namespace Mchnry.Flow
 {
     public interface IEngineLoader<TModel>
     {
-        IEngineLoader<TModel> SetModel(TModel model);
+
         IEngineLoader<TModel> OverrideValidation(ValidationOverride oride);
 
+        IEngineLoader<TModel> LoadWorkflow(WorkDefine.Workflow workflow);
+  
+
+        IEngineLoader<TModel> SetWorkflowDefinitionFactory(IWorkflowDefinitionFactory factory);
         IEngineLoader<TModel> SetEvaluatorFactory(IRuleEvaluatorFactory factory);
         IEngineLoader<TModel> SetActionFactory(IActionFactory factory);
 
@@ -24,8 +28,8 @@ namespace Mchnry.Flow
 
              //Task<bool> CompleteAsync(IEngineScope<TModel> scope, WorkflowEngineTrace trace, CancellationToken token);
 
-        IEngineRunner Start();
-        IEngineLinter<TModel> Lint();
+        IEngineRunner<TModel> Start(string workflowId, TModel model);
+        IEngineLinter<TModel> Lint(string workflowId);
         
         WorkDefine.Workflow Workflow { get; }
     }

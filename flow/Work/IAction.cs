@@ -9,8 +9,9 @@ namespace Mchnry.Flow.Work
         Task<bool> CompleteAsync(IEngineScope<TModel> scope, WorkflowEngineTrace trace, CancellationToken token);
 
     }
-    public interface IDeferredAction<TModel> : IAction<TModel>
+    public interface IDeferredAction<TModel> 
     {
-        string Id { get; }
+        Task<bool> CompleteAsync(IEngineScopeDefer<TModel> scope, WorkflowEngineTrace trace, CancellationToken token);
+
     }
 }

@@ -18,7 +18,7 @@ namespace Test.Analysis
         [Fact]
         public void EvaluatorInferredAndAdded()
         {
-            WorkDefine.Workflow testWF = new WorkDefine.Workflow()
+            WorkDefine.Workflow testWF = new WorkDefine.Workflow("test")
             {
                 Activities = new List<WorkDefine.Activity>()
                 {
@@ -68,7 +68,7 @@ namespace Test.Analysis
         [Fact]
         public void InferredEvaluatorAddedOnlyOnce()
         {
-            WorkDefine.Workflow testWF = new WorkDefine.Workflow()
+            WorkDefine.Workflow testWF = new WorkDefine.Workflow("test")
             {
                 Activities = new List<WorkDefine.Activity>()
                 {
@@ -94,7 +94,7 @@ namespace Test.Analysis
         [Fact]
         public void InferredActionAddedOnlyOnce()
         {
-            WorkDefine.Workflow testWF = new WorkDefine.Workflow()
+            WorkDefine.Workflow testWF = new WorkDefine.Workflow("test")
             {
                 Activities = new List<WorkDefine.Activity>()
                 {
@@ -120,7 +120,7 @@ namespace Test.Analysis
         [Fact]
         public void InferredEquationAddedOnlyOnce()
         {
-            WorkDefine.Workflow testWF = new WorkDefine.Workflow()
+            WorkDefine.Workflow testWF = new WorkDefine.Workflow("test")
             {
                 Activities = new List<WorkDefine.Activity>()
                 {
@@ -172,7 +172,7 @@ namespace Test.Analysis
         [Fact]
         public void InferredNegatedEvaluatorEquationAdded()
         {
-            WorkDefine.Workflow testWF = new WorkDefine.Workflow()
+            WorkDefine.Workflow testWF = new WorkDefine.Workflow("test")
             {
                 Activities = new List<WorkDefine.Activity>()
                 {
@@ -198,7 +198,7 @@ namespace Test.Analysis
         [Fact]
         public void InferredNegatedEvaluatorEquationAddedOnlyOnce()
         {
-            WorkDefine.Workflow testWF = new WorkDefine.Workflow()
+            WorkDefine.Workflow testWF = new WorkDefine.Workflow("test")
             {
                 Activities = new List<WorkDefine.Activity>()
                 {
@@ -225,7 +225,7 @@ namespace Test.Analysis
         [Fact]
         public void InferredNegatedEquationAdded()
         {
-            WorkDefine.Workflow testWF = new WorkDefine.Workflow()
+            WorkDefine.Workflow testWF = new WorkDefine.Workflow("test")
             {
                 Equations = new List<LogicDefine.Equation>()
                 {
@@ -256,7 +256,7 @@ namespace Test.Analysis
         [Fact]
         public void InferredNegatedEquationAddedOnlyOnce()
         {
-            WorkDefine.Workflow testWF = new WorkDefine.Workflow()
+            WorkDefine.Workflow testWF = new WorkDefine.Workflow("test")
             {
                 Equations = new List<LogicDefine.Equation>()
                 {

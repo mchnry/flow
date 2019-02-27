@@ -3,8 +3,8 @@ using System.Threading.Tasks;
 
 namespace Mchnry.Flow
 {
-    public interface IEngineFinalize
+    public interface IEngineFinalize<TModel>
     {
-        Task<IEngineComplete> FinalizeAsync(CancellationToken token);
+        Task<IEngineComplete<TModel>> FinalizeAsync(CancellationToken token);
     }
 }

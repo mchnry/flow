@@ -121,7 +121,7 @@ namespace Mchnry.Flow.Configuration
                 string prefix = convention.GetPrefix(found.Value);
                 string delimeter = convention.Delimeter;
                 string toRemove = string.Format("{0}{1}", prefix, delimeter);
-                toRemove = id.Replace(toRemove, "");
+                toReturn = id.Replace(toRemove, "");
             }
             return toReturn;
         }

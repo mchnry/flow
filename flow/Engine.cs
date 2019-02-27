@@ -10,16 +10,18 @@ using System.Threading.Tasks;
 using LogicDefine = Mchnry.Flow.Logic.Define;
 using WorkDefine = Mchnry.Flow.Work.Define;
 using System.Linq;
+using Mchnry.Core.Cache;
 
 namespace Mchnry.Flow
 {
     public class Engine<TModel> :
-        IEngineLoader<TModel>, IEngineRunner, IEngineScope<TModel>, IEngineFinalize, IEngineComplete, IEngineLinter<TModel>
+        IEngineLoader<TModel>, IEngineRunner<TModel>, IEngineScope<TModel>, IEngineFinalize<TModel>, IEngineComplete<TModel>, IEngineLinter<TModel>, IEngineScopeDefer<TModel>
     {
 
         internal Config Configuration;
         internal bool Sanitized = false;
 
+        internal IWorkflowDefinitionFactory workflowDefinitionFactory;
 
         private StepTracer<LintTrace> lintTracer = default(StepTracer<LintTrace>);
         internal virtual EngineStepTracer Tracer { get; set; }
@@ -29,11 +31,14 @@ namespace Mchnry.Flow
         internal virtual RunManager RunManager { get; set; }
 
         //store reference to all actions to run during finalize (if all validations succeed)
-        private List<IDeferredAction<TModel>> finalize = new List<IDeferredAction<TModel>>();
+        private Dictionary<string, IDeferredAction<TModel>> finalize = new Dictionary<string, IDeferredAction<TModel>>();
         //store reference to all actions to run during finalize always
-        private List<IDeferredAction<TModel>> finalizeAlways = new List<IDeferredAction<TModel>>(); //actions to complete at end regardless of validation state
+        private Dictionary<string, IDeferredAction<TModel>> finalizeAlways = new Dictionary<string, IDeferredAction<TModel>>(); //actions to complete at end regardless of validation state
 
-
+        private ICacheManager GlobalCache;
+        private ICacheManager WorkflowCache;
+        private int subWFCount = 1;
+        private string workflowId;
 
         /// <summary>
         /// engine construcor
@@ -47,33 +52,39 @@ namespace Mchnry.Flow
         /// </list>
         /// </remarks>
         /// <param name="workFlow">workflow definition</param>
-        internal Engine(WorkDefine.Workflow workFlow)
+        internal Engine(Configuration.Config config)
         {
 
-            this.Configuration = new Config();
+            this.Configuration = config;
             this.Tracer = new EngineStepTracer(new ActivityProcess("CreateEngine", ActivityStatusOptions.Engine_Loading, null));
             this.ImplementationManager = new ImplementationManager<TModel>(this.Configuration);
-            this.WorkflowManager = new WorkflowManager(workFlow);
-            this.RunManager = new RunManager();
 
+            this.RunManager = new RunManager(this.Configuration);
+
+
+            this.GlobalCache = config.Cache;
 
             this.Sanitized = false;
         }
 
-        public static IEngineLoader<TModel> CreateEngine(WorkDefine.Workflow workFlow)
+        public static IEngineLoader<TModel> CreateEngine()
         {
 
 
-            return new Engine<TModel>(workFlow);
+            return new Engine<TModel>(new Config());
 
 
         }
-        public static IEngineLoader<TModel> CreateEngine(WorkDefine.Workflow workFlow, Action<Config> Configure)
+        public static IEngineLoader<TModel> CreateEngine(Action<Config> Configure)
         {
-            Engine<TModel> toReturn = new Engine<TModel>(workFlow);
+            Config config = new Config();
+            Configure?.Invoke(config);
+            Engine<TModel> toReturn = new Engine<TModel>(config);
 
 
-            Configure(toReturn.Configuration);
+            
+
+            
 
             return toReturn;
 
@@ -89,17 +100,18 @@ namespace Mchnry.Flow
         WorkDefine.Activity IEngineScope<TModel>.CurrentActivity => this.RunManager.CurrentActivity;
 
 
+        StepTraceNode<ActivityProcess> IEngineScopeDefer<TModel>.Process => this.Tracer.Root;
         StepTraceNode<ActivityProcess> IEngineScope<TModel>.Process => this.Tracer.Root;
 
-        StepTraceNode<ActivityProcess> IEngineComplete.Process => this.Tracer.Root;
+        StepTraceNode<ActivityProcess> IEngineComplete<TModel>.Process => this.Tracer.Root;
 
 
-        EngineStatusOptions IEngineComplete.Status => this.RunManager.EngineStatus;
+        EngineStatusOptions IEngineComplete<TModel>.Status => this.RunManager.EngineStatus;
 
 
         //store all validations created by validators/evaluators
-        internal virtual ValidationContainer ValidationContainer { get; set; } = new ValidationContainer();
-        IValidationContainer IEngineComplete.Validations => this.ValidationContainer;
+        internal virtual ValidationContainer ValidationContainer { get; set; } 
+        IValidationContainer IEngineComplete<TModel>.Validations => this.ValidationContainer;
 
 
         internal void AddValidation(Validation toAdd)
@@ -108,7 +120,7 @@ namespace Mchnry.Flow
             if (this.CurrentActivityStatus == ActivityStatusOptions.Action_Running)
             {
                 string scope = this.RunManager.CurrentActivity.Id;
-                this.ValidationContainer.Scope(scope).AddValidation(toAdd);
+                this.ValidationContainer.ScopeToRoot().Scope(scope).AddValidation(toAdd);
 
 
             }
@@ -119,7 +131,7 @@ namespace Mchnry.Flow
                 {
                     scope = string.Format("{0}.{1}", scope, this.RunManager.CurrentRuleDefinition.Context.GetHashCode().ToString());
                 }
-                this.ValidationContainer.Scope(scope).AddValidation(toAdd);
+                this.ValidationContainer.ScopeToRoot().Scope(scope).AddValidation(toAdd);
 
             }
             else
@@ -129,27 +141,31 @@ namespace Mchnry.Flow
 
         }
 
+        //defer is called during the execution of an IAction
         void IEngineScope<TModel>.Defer(IDeferredAction<TModel> action, bool onlyIfValidationsResolved)
         {
+            string key = this.RunManager.GetDeferralId();
             if (onlyIfValidationsResolved)
             {
-                this.finalize.Add(action);
+                this.finalize.Add(key,action);
             }
             else
             {
-                this.finalizeAlways.Add(action);
+                this.finalizeAlways.Add(key,action);
             }
         }
 
-        async Task<IEngineFinalize> IEngineRunner.ExecuteAsync(string activityId, CancellationToken token)
+        async Task<IEngineFinalize<TModel>> IEngineRunner<TModel>.ExecuteAsync(CancellationToken token)
         {
             if (!this.Sanitized)
             {
                 this.Sanitize();
             }
-            activityId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.Configuration.Convention);
 
-            return await this.ExecuteAsync(activityId, token);
+            string workflowId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, this.WorkflowManager.WorkFlow.Id, this.Configuration.Convention);
+            workflowId = workflowId + this.Configuration.Convention.Delimeter + "Main";
+
+            return await this.ExecuteAsync(workflowId, token);
 
         }
 
@@ -168,62 +184,73 @@ namespace Mchnry.Flow
 
         }
 
-        async Task<IEngineComplete> IEngineRunner.ExecuteAutoFinalizeAsync(string activityId, CancellationToken token)
+        async Task<IEngineComplete<TModel>> IEngineRunner<TModel>.ExecuteAutoFinalizeAsync( CancellationToken token)
         {
 
-            IEngineFinalize finalizer = await ((IEngineRunner)this).ExecuteAsync(activityId, token);
+            IEngineFinalize<TModel> finalizer = await ((IEngineRunner<TModel>)this).ExecuteAsync( token);
             return await finalizer.FinalizeAsync(token);
 
         }
 
-        async Task<IEngineComplete> IEngineFinalize.FinalizeAsync(CancellationToken token)
+        async Task<IEngineComplete<TModel>> IEngineFinalize<TModel>.FinalizeAsync(CancellationToken token)
         {
             StepTraceNode<ActivityProcess> mark = this.Tracer.CurrentStep = this.Tracer.TraceStep(this.Tracer.Root, new ActivityProcess("Finalize", ActivityStatusOptions.Engine_Finalizing, null));
             if (this.ValidationContainer.ResolveValidations())
             {
 
 
-                foreach (IDeferredAction<TModel> toFinalize in this.finalize)
+                foreach (KeyValuePair<string, IDeferredAction<TModel>> toFinalize in this.finalize)
                 {
-                    this.Tracer.CurrentStep = this.Tracer.TraceStep(mark, new ActivityProcess(toFinalize.Id, ActivityStatusOptions.Action_Running, null));
+                    this.Tracer.CurrentStep = this.Tracer.TraceStep(mark, new ActivityProcess(toFinalize.Key, ActivityStatusOptions.Action_Running, null));
 
-                    await toFinalize.CompleteAsync(this, new WorkflowEngineTrace(this.Tracer), token);
+                    await toFinalize.Value.CompleteAsync(this, new WorkflowEngineTrace(this.Tracer), token);
 
                 }
 
 
             }
 
-            foreach (IDeferredAction<TModel> toFinalize in this.finalizeAlways)
+            foreach (KeyValuePair<string, IDeferredAction<TModel>> toFinalize in this.finalizeAlways)
             {
-                this.Tracer.CurrentStep = this.Tracer.TraceStep(mark, new ActivityProcess(toFinalize.Id, ActivityStatusOptions.Action_Running, null));
+                this.Tracer.CurrentStep = this.Tracer.TraceStep(mark, new ActivityProcess(toFinalize.Key, ActivityStatusOptions.Action_Running, null));
 
-                await toFinalize.CompleteAsync(this, new WorkflowEngineTrace(this.Tracer), token);
+                await toFinalize.Value.CompleteAsync(this, new WorkflowEngineTrace(this.Tracer), token);
             }
 
             return this;
         }
 
-        T IEngineScope<TModel>.GetActivityModel<T>(string key)
+        T IEngineScopeDefer<TModel>.GetModel<T>(CacheScopeOptions scope, string key) { return ((IEngineScope<TModel>)this).GetModel<T>(scope, key); }
+        T IEngineScope<TModel>.GetModel<T>(CacheScopeOptions scope, string key)
         {
-            string activityId = this.RunManager.CurrentActivity.Id;
-            return this.Configuration.Cache.Spawn(activityId).Read<T>(key);
+            T toReturn = default(T);
+            switch(scope)
+            {
+                case CacheScopeOptions.Activity:
+                    toReturn = this.WorkflowCache.Spawn(this.RunManager.CurrentActivity.Id).Read<T>(key);
+                    break;
+                case CacheScopeOptions.Global:
+                    toReturn = this.GlobalCache.Read<T>(key);
+                    break;
+                case CacheScopeOptions.Workflow:
+                    toReturn = this.WorkflowCache.Read<T>(key);
+                    break;
+                
+            }
+            
+            return toReturn;
         }
 
-        T IEngineScope<TModel>.GetScopeModel<T>(string key)
-        {
-            string activityId = this.RunManager.CurrentActivity.Id;
-            return this.Configuration.Cache.Read<T>(key);
-        }
 
+        TModel IEngineScopeDefer<TModel>.GetModel() { return ((IEngineScope<TModel>)this).GetModel(); }
         TModel IEngineScope<TModel>.GetModel()
         {
-            return this.Configuration.Cache.Read<TModel>("workflowmodel");
+            return this.WorkflowCache.Read<TModel>("workflowmodel");
         }
 
-        T IEngineComplete.GetModel<T>(string key)
+        TModel IEngineComplete<TModel>.GetModel(string key)
         {
-            return this.Configuration.Cache.Read<T>(key);
+            return this.WorkflowCache.Read<TModel>(key);
         }
 
         IEngineLoader<TModel> IEngineLoader<TModel>.OverrideValidation(ValidationOverride oride)
@@ -240,17 +267,38 @@ namespace Mchnry.Flow
             return this;
         }
 
-        void IEngineScope<TModel>.SetActivityModel<T>(string key, T value)
+        IEngineLoader<TModel> IEngineLoader<TModel>.LoadWorkflow(WorkDefine.Workflow workflow)
         {
-            string activityId = this.RunManager.CurrentActivity.Id;
-            this.Configuration.Cache.Spawn(activityId).Insert<T>(key, value);
+            this.WorkflowManager = new WorkflowManager(workflow, this.Configuration);
+            return this;
         }
 
-        void IEngineScope<TModel>.SetScopeModel<T>(string key, T value)
+        IEngineLoader<TModel> IEngineLoader<TModel>.SetWorkflowDefinitionFactory(IWorkflowDefinitionFactory factory)
         {
-
-            this.Configuration.Cache.Insert<T>(key, value);
+            this.workflowDefinitionFactory = factory;
+            return this;
         }
+
+        void IEngineScopeDefer<TModel>.SetModel<T>(CacheScopeOptions scope, string key, T value) { ((IEngineScope<TModel>)this).SetModel<T>(scope, key, value); }
+        void IEngineScope<TModel>.SetModel<T>(CacheScopeOptions scope, string key, T value)
+        {
+            switch (scope)
+            {
+                case CacheScopeOptions.Workflow:
+                    this.WorkflowCache.Insert<T>(key, value);
+                    break;
+                case CacheScopeOptions.Activity:
+                    this.WorkflowCache.Spawn(this.RunManager.CurrentActivity.Id).Insert<T>(key, value);
+                    break;
+                case CacheScopeOptions.Global:
+                    this.GlobalCache.Insert<T>(key, value);
+                    break;
+            }
+
+  
+        }
+
+
 
         IEngineLoader<TModel> IEngineLoader<TModel>.SetEvaluatorFactory(IRuleEvaluatorFactory factory)
         {
@@ -258,23 +306,38 @@ namespace Mchnry.Flow
             return this;
         }
 
-        IEngineLoader<TModel> IEngineLoader<TModel>.SetModel(TModel model)
-        {
-            this.Configuration.Cache.Insert<TModel>("workflowmodel", model);
-            return this;
-        }
 
+        void IEngineScopeDefer<TModel>.SetModel(TModel value) { ((IEngineScope<TModel>)this).SetModel(value); }
         void IEngineScope<TModel>.SetModel(TModel value)
         {
-            this.Configuration.Cache.Insert<TModel>("workflowmodel", value);
+            this.WorkflowCache.Insert<TModel>("workflowmodel", value);
 
 
 
         }
 
-        IEngineRunner IEngineLoader<TModel>.Start()
+        private void LoadWorkflow(string workflowId)
         {
-           
+            WorkDefine.Workflow wf = null;
+            if (this.WorkflowManager != null)
+            {
+                wf = this.WorkflowManager.WorkFlow;
+            } else if (this.workflowDefinitionFactory != null) 
+            {
+                wf = this.workflowDefinitionFactory.GetWorkflow(workflowId);
+                this.WorkflowManager = new WorkflowManager(wf, this.Configuration);
+            }
+
+
+            this.ValidationContainer = ValidationContainer.CreateValidationContainer(wf.Id);
+            this.WorkflowCache = this.Configuration.Cache.Spawn(wf.Id);
+        }
+
+        IEngineRunner<TModel> IEngineLoader<TModel>.Start(string workflowId, TModel model)
+        {
+            LoadWorkflow(workflowId);
+            ((IEngineScope<TModel>)this).SetModel(model);
+
             return this;
         }
 
@@ -434,8 +497,9 @@ namespace Mchnry.Flow
 
         }
 
-        IEngineLinter<TModel> IEngineLoader<TModel>.Lint()
+        IEngineLinter<TModel> IEngineLoader<TModel>.Lint(string workflowId)
         {
+            LoadWorkflow(workflowId);
             return this;
         }
 
@@ -545,10 +609,69 @@ namespace Mchnry.Flow
             {
                 this.RunManager.Reset();
                 this.CurrentActivityStatus = ActivityStatusOptions.Engine_Loading;
-                this.finalize = new List<IDeferredAction<TModel>>();
-                this.finalizeAlways = new List<IDeferredAction<TModel>>();
+                this.finalize = new Dictionary<string, IDeferredAction<TModel>>();
+                this.finalizeAlways = new Dictionary<string, IDeferredAction<TModel>>();
+                this.subWFCount = 1;
                 this.Tracer = this.Tracer = new EngineStepTracer(new ActivityProcess("CreateEngine", ActivityStatusOptions.Engine_Loading, null));
             }
+        }
+
+
+        async Task IEngineScope<TModel>.RunWorkflowAsync<T>(string workflowId, T model, CancellationToken token)
+        {
+            
+            WorkDefine.Workflow toRun = this.workflowDefinitionFactory.GetWorkflow(workflowId);
+            WorkflowManager mgr = new WorkflowManager(toRun, this.Configuration);
+
+            mgr.RenameWorkflow(string.Format("{0}{1}{2}", toRun.Id, Configuration.Convention.Delimeter, subWFCount));
+            subWFCount++;
+            toRun = mgr.WorkFlow;
+
+            //we need to rename the workflow .. all the main workflow and all activities will have been
+            //named with the workflowid, so we need to replace
+
+
+            var subEngine = Engine<T>.CreateEngine((a) =>
+            {
+                a.Cache = this.Configuration.Cache;
+                a.Convention = this.Configuration.Convention;
+                
+            })
+                .SetActionFactory(this.ImplementationManager.ActionFactory)
+                .SetEvaluatorFactory(this.ImplementationManager.EvaluatorFactory)
+                .LoadWorkflow(toRun)
+                .SetWorkflowDefinitionFactory(this.workflowDefinitionFactory);
+
+            Engine<T> asEngine = (Engine<T>)subEngine;
+            
+            foreach(var v in this.ValidationContainer.Overrides)
+            {
+                subEngine.OverrideValidation(v);
+            }
+
+            var runner = subEngine.Start(toRun.Id, model);
+            var finalizer = await runner.ExecuteAsync(token);
+
+            
+            
+
+            //append all finalize to mine
+            foreach(var f in  asEngine.finalize)
+            {
+                this.finalize.Add(f.Key, new DeferProxy<TModel, T>(f.Value, (IEngineScopeDefer<T>)asEngine));
+            }
+            foreach (var f in asEngine.finalizeAlways)
+            {
+                this.finalize.Add(f.Key, new DeferProxy<TModel, T>(f.Value, (IEngineScopeDefer<T>)asEngine));
+            }
+            //append validations to mine
+            foreach (var v in asEngine.ValidationContainer.Validations)
+            {
+                this.AddValidation(v);
+            }
+           
+
+
         }
     }
 

@@ -24,8 +24,8 @@ namespace Test.Logic
             Mock<RunManager> mkRunMgr = new Mock<RunManager>();
             Mock<ImplementationManager<string>> mkImplMgr = new Mock<ImplementationManager<string>>();
             mkRunMgr.Setup(g => g.GetResult(It.IsAny<LogicDefine.Rule>())).Returns(true);
-            mkImplMgr.Setup(g => g.GetEvaluator(It.IsAny<string>())).Returns(trueEvaluator);
-            Mock<Engine<string>> mkEngine = new Mock<Engine<string>>(new WorkDefine.Workflow());
+            mkImplMgr.Setup(g => g.GetEvaluator(It.IsAny<LogicDefine.Evaluator>())).Returns(trueEvaluator);
+            Mock<Engine<string>> mkEngine = new Mock<Engine<string>>(new WorkDefine.Workflow("test"));
             mkEngine.Setup(g => g.Tracer).Returns(mkTracer.Object);
             mkEngine.Setup(g => g.ImplementationManager).Returns(mkImplMgr.Object);
             mkEngine.Setup(g => g.RunManager).Returns(mkRunMgr.Object);
@@ -51,8 +51,8 @@ namespace Test.Logic
             Mock<ImplementationManager<string>> mkImplMgr = new Mock<ImplementationManager<string>>();
             bool? nullBool = null;
             mkRunMgr.Setup(g => g.GetResult(It.IsAny<LogicDefine.Rule>())).Returns(nullBool);
-            mkImplMgr.Setup(g => g.GetEvaluator(It.IsAny<string>())).Returns(trueEvaluator);
-            Mock<Engine<string>> mkEngine = new Mock<Engine<string>>(new WorkDefine.Workflow());
+            mkImplMgr.Setup(g => g.GetEvaluator(It.IsAny<LogicDefine.Evaluator>())).Returns(trueEvaluator);
+            Mock<Engine<string>> mkEngine = new Mock<Engine<string>>(new WorkDefine.Workflow("test"));
             mkEngine.Setup(g => g.Tracer).Returns(mkTracer.Object);
             mkEngine.Setup(g => g.ImplementationManager).Returns(mkImplMgr.Object);
             mkEngine.Setup(g => g.RunManager).Returns(mkRunMgr.Object);
@@ -79,8 +79,8 @@ namespace Test.Logic
             
             //indicates that it was evaluated previously
             mkRunMgr.Setup(g => g.GetResult(It.IsAny<LogicDefine.Rule>())).Returns(true);
-            mkImplMgr.Setup(g => g.GetEvaluator(It.IsAny<string>())).Returns(trueEvaluator);
-            Mock<Engine<string>> mkEngine = new Mock<Engine<string>>(new WorkDefine.Workflow());
+            mkImplMgr.Setup(g => g.GetEvaluator(It.IsAny<LogicDefine.Evaluator>())).Returns(trueEvaluator);
+            Mock<Engine<string>> mkEngine = new Mock<Engine<string>>(new WorkDefine.Workflow("test"));
             mkEngine.Setup(g => g.Tracer).Returns(mkTracer.Object);
             mkEngine.Setup(g => g.ImplementationManager).Returns(mkImplMgr.Object);
             mkEngine.Setup(g => g.RunManager).Returns(mkRunMgr.Object);

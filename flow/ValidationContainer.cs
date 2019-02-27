@@ -14,7 +14,15 @@ namespace Mchnry.Flow
         [JsonProperty]
         internal List<ValidationOverride> MyOverrides { get; set; } = new List<ValidationOverride>();
 
-        public ValidationContainer() { }
+        internal string RootScope { get; set; }
+
+        public static ValidationContainer CreateValidationContainer(string scope)
+        {
+            return new ValidationContainer() {
+                RootScope = scope, scopeId = scope
+            };
+        }
+        private ValidationContainer() { }
 
         public bool ResolveValidations()
         {
@@ -85,15 +93,17 @@ namespace Mchnry.Flow
         }
 
 
-        public IValidationContainer Scope(string scopeId)
+        internal IValidationContainer Scope(string scopeId)
         {
-            return new ValidationContainer()
-            {
-                scopeId = scopeId,
-                MyOverrides = this.MyOverrides,
-                MyValidations = this.MyValidations
-            };
+            this.scopeId = this.scopeId + "." + scopeId;
+            return this;
         }
+        internal ValidationContainer ScopeToRoot()
+        {
+            this.scopeId = this.RootScope;
+            return this;
+        }
+
 
         private string scopeId { get; set; } = string.Empty;
         string IValidationContainer.ScopeId { get => this.scopeId; }

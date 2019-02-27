@@ -4,16 +4,48 @@ using System.Text;
 using System.Linq;
 using WorkDefine = Mchnry.Flow.Work.Define;
 using LogicDefine = Mchnry.Flow.Logic.Define;
+using Mchnry.Flow.Configuration;
 
 namespace Mchnry.Flow
 {
     internal class WorkflowManager
     {
+        private readonly Configuration.Config config;
+
         internal WorkDefine.Workflow WorkFlow { get; set; }
 
-        public WorkflowManager(WorkDefine.Workflow workFlow)
+        public WorkflowManager(WorkDefine.Workflow workFlow, Configuration.Config config)
         {
             this.WorkFlow = workFlow;
+            this.config = config;
+        }
+
+        internal virtual void RenameWorkflow(string newName)
+        {
+            string orig = WorkFlow.Id;
+            string mainActivity = this.RootActivityId;
+
+            string newId = newName + this.config.Convention.Delimeter + "Main";
+            this.WorkFlow.Id = newName;
+
+            this.WorkFlow.Equations.ForEach(a =>
+            {
+                a.Id = a.Id.Replace(mainActivity, newId);
+            });
+
+            this.WorkFlow.Activities.ForEach(a =>
+            {
+                a.Id = a.Id.Replace(mainActivity, newId);
+                if (a.Reactions != null)
+                {
+                    a.Reactions.ForEach(r =>
+                    {
+                        if (!string.IsNullOrEmpty(r.Logic)) r.Logic = r.Logic.Replace(mainActivity, newId);
+                        r.Work = r.Work.Replace(mainActivity, newId);
+                    });
+                }
+            });
+
         }
 
         public virtual WorkDefine.Activity GetActivity(string id)
@@ -71,42 +103,12 @@ namespace Mchnry.Flow
             }
         }
 
-        public virtual List<String> GetRootActivities()
+        public virtual String RootActivityId 
         {
-            Dictionary<string, int> activityRefs = new Dictionary<string, int>();
-
-            Action<string> findRefs = null;
-            findRefs = (a) =>
-            {
-                if (!activityRefs.ContainsKey(a)) { activityRefs.Add(a, 0); }
-                else
-                {
-                    activityRefs[a] += 1;
-                }
-                WorkDefine.Activity reffed = this.GetActivity(a);
-                if (reffed != null)
-                {
-                    if (reffed.Reactions != null && reffed.Reactions.Count() > 0)
-                    {
-                        reffed.Reactions.ForEach(r =>
-                        {
-                            WorkDefine.ActionRef workRef = r.Work;
-                            if (this.GetActivity(workRef.Id) != null)
-                            {
-                                findRefs(workRef.Id);
-                            }
-                        });
-                    }
-                }
-            };
-            this.WorkFlow.Activities.ForEach(g =>
-            {
-                findRefs(g.Id);
-            });
-
-            List<String> rootActivities = (from rootActivity in activityRefs where rootActivity.Value == 0 select rootActivity.Key).ToList();
-            return rootActivities;
-
+            get {
+                string toReturn = this.WorkFlow.Id + this.config.Convention.Delimeter + "Main";
+                return toReturn;
+            }
         }
     }
 }

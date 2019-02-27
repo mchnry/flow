@@ -8,10 +8,12 @@ namespace Mchnry.Flow.Work.Define
     public sealed class Workflow
     {
 
-        public Workflow()
+        public Workflow(string id)
         {
+            this.Id = id;
         }
 
+        public string Id { get; set; }
         public string LintHash { get; set; }
 
         public List<Evaluator> Evaluators { get; set; } = new List<Evaluator>();

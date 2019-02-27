@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Mchnry.Flow
 {
-    public interface IEngineRunner
+    public interface IEngineRunner<TModel>
     {
-        Task<IEngineComplete> ExecuteAutoFinalizeAsync(string activityId, CancellationToken token);
-        Task<IEngineFinalize> ExecuteAsync(string activityId, CancellationToken token);
+        Task<IEngineComplete<TModel>> ExecuteAutoFinalizeAsync(CancellationToken token);
+        Task<IEngineFinalize<TModel>> ExecuteAsync(CancellationToken token);
     }
 }

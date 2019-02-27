@@ -32,8 +32,10 @@ namespace Test.Lint
                 new Define.Equation() { Id = "eq1", Condition = Operand.And, First = "ev1", Second = "eq1.1" }
             };
 
-            IEngineLoader<string> e = Mchnry.Flow.Engine<string>.CreateEngine(new Mchnry.Flow.Work.Define.Workflow() { Equations = eqs, Evaluators = evals });
-            IEngineLinter<string> linter = e.Lint();
+            IEngineLoader<string> e = Mchnry.Flow.Engine<string>.CreateEngine();
+            e.LoadWorkflow(new Mchnry.Flow.Work.Define.Workflow("test") { Equations = eqs, Evaluators = evals });
+
+            IEngineLinter<string> linter = e.Lint("test");
             await linter.LintAsync((l) => { }, null, new System.Threading.CancellationToken());
 
         }

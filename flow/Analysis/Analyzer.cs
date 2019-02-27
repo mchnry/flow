@@ -68,9 +68,9 @@ namespace Mchnry.Flow.Analysis
             }
 
             string actionConvention = string.Format("{0}{1}", this.configuration.Convention.GetPrefix(Configuration.NamePrefixOptions.Action), this.configuration.Convention.Delimeter);
-            List<String> rootActivities = this.workflowManager.GetRootActivities();
+            string root = this.workflowManager.RootActivityId;
             //any case where no action is run (exclude placeholder)
-            foreach (ActivityTest at in this.surfaceTests.Where(t => rootActivities.Contains(t.ActivityId)))
+            foreach (ActivityTest at in this.surfaceTests.Where(t => t.ActivityId == root))
             {
                 
                 foreach (Case testCase in at.TestCases)

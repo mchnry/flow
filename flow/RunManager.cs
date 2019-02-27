@@ -13,9 +13,18 @@ namespace Mchnry.Flow
         private Dictionary<string, bool?> results = new Dictionary<string, bool?>();
         internal virtual LogicDefine.Rule CurrentRuleDefinition { get; set; } = null;
 
+        internal virtual WorkDefine.ActionRef CurrentAction { get; set; }
         internal virtual WorkDefine.Activity CurrentActivity { get; set; }
         //current status of running engine
         internal virtual EngineStatusOptions EngineStatus { get; set; } = EngineStatusOptions.NotStarted;
+        internal Configuration.Config config;
+
+        internal Dictionary<string, int> deferrals = new Dictionary<string, int>();
+
+        internal RunManager(Configuration.Config config)
+        {
+            this.config = config;
+        }
 
         internal virtual bool? GetResult(LogicDefine.Rule rule)
         {
@@ -45,8 +54,28 @@ namespace Mchnry.Flow
         internal virtual void Reset()
         {
             this.EngineStatus = EngineStatusOptions.NotStarted;
+            this.CurrentAction = null;
+            this.CurrentRuleDefinition = null;
             this.CurrentActivity = null;
             this.results = new Dictionary<string, bool?>();
+        }
+
+        internal string GetDeferralId()
+        {
+            string key = this.CurrentAction.Id;
+            int cnt = 1;
+            if (this.deferrals.ContainsKey(key))
+            {
+                cnt = this.deferrals[key];
+                cnt++;
+                this.deferrals[key] = cnt;
+            } else
+            {
+                this.deferrals.Add(key, cnt);
+            }
+
+            return string.Format("{0}{1}{2}", key, this.config.Convention.Delimeter, cnt);
+
         }
     }
 }

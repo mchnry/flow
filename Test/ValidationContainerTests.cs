@@ -15,11 +15,11 @@
         {
             //there's not really anything i can do with a container..
             //i need the scope
-            ValidationContainer toTest = new ValidationContainer();
+            ValidationContainer toTest = ValidationContainer.CreateValidationContainer("test");
             IValidationContainer scoped = toTest.Scope("abc");
 
             scoped.AddValidation(new Validation("test", ValidationSeverity.Confirm, "hello"));
-            Assert.Contains(toTest.Validations, t => t.Key.Equals("abc.test"));
+            Assert.Contains(toTest.Validations, t => t.Key.Equals("test.abc.test"));
 
         }
 
