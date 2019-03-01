@@ -11,4 +11,12 @@ namespace Mchnry.Flow.Work
         WorkDefine.Workflow GetWorkflow(string workflowId);
 
     }
+
+    internal class NoWorkflowDefinitionFactory : IWorkflowDefinitionFactory
+    {
+        WorkDefine.Workflow IWorkflowDefinitionFactory.GetWorkflow(string workflowId)
+        {
+            return default(WorkDefine.Workflow);
+        }
+    }
 }

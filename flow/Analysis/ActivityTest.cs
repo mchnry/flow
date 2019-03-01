@@ -9,11 +9,13 @@ namespace Mchnry.Flow.Analysis
     {
         public ActivityTest(string activityId)
         {
-            this.ActivityId = activityId;
+            this.ActivityId = activityId ?? throw new ArgumentNullException(activityId);
+
         }
 
         public List<Case> TestCases { get; set; }
 
         public string ActivityId { get; internal set; }
+   
     }
 }

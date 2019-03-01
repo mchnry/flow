@@ -25,7 +25,7 @@ namespace Sample
     {
         async Task<bool> IAction<Bar>.CompleteAsync(IEngineScope<Bar> scope, WorkflowEngineTrace trace, CancellationToken token)
         {
-            Console.WriteLine("foo");
+            Console.WriteLine(scope.CurrentActivity.Id);
             return await Task.FromResult<bool>(true);
         }
     }
@@ -122,7 +122,7 @@ namespace Sample
                             If => If.And(
                                 First => First.True("aistrue"), Second => Second.True("bistrue")
                             ),
-                            Then => Then.Do("runAnotherWorkflow")
+                            Then => Then.Do("runAnotherWorkflow").Do("runAnotherWorkflow")
                             )
                                 
                     );
@@ -161,7 +161,7 @@ namespace Sample
             var complete = runner.ExecuteAutoFinalizeAsync(new CancellationToken());
 
 
-
+            Console.ReadLine();
 
 
         }

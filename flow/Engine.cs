@@ -21,7 +21,7 @@ namespace Mchnry.Flow
         internal Config Configuration;
         internal bool Sanitized = false;
 
-        internal IWorkflowDefinitionFactory workflowDefinitionFactory;
+        
 
         private StepTracer<LintTrace> lintTracer = default(StepTracer<LintTrace>);
         internal virtual EngineStepTracer Tracer { get; set; }
@@ -111,7 +111,7 @@ namespace Mchnry.Flow
 
         //store all validations created by validators/evaluators
         internal virtual ValidationContainer ValidationContainer { get; set; } 
-        IValidationContainer IEngineComplete<TModel>.Validations => this.ValidationContainer;
+        IValidationContainer IEngineComplete<TModel>.Validations => this.ValidationContainer.ScopeToRoot();
 
 
         internal void AddValidation(Validation toAdd)
@@ -136,7 +136,7 @@ namespace Mchnry.Flow
             }
             else
             {
-                ((IValidationContainer)this.ValidationContainer).AddValidation(toAdd);
+                ((IValidationContainer)this.ValidationContainer.ScopeToRoot()).AddValidation(toAdd);
             }
 
         }
@@ -275,7 +275,7 @@ namespace Mchnry.Flow
 
         IEngineLoader<TModel> IEngineLoader<TModel>.SetWorkflowDefinitionFactory(IWorkflowDefinitionFactory factory)
         {
-            this.workflowDefinitionFactory = factory;
+            ((ImplementationManager<TModel>)this.ImplementationManager).DefinitionFactory = factory;
             return this;
         }
 
@@ -322,9 +322,9 @@ namespace Mchnry.Flow
             if (this.WorkflowManager != null)
             {
                 wf = this.WorkflowManager.WorkFlow;
-            } else if (this.workflowDefinitionFactory != null) 
+            } else 
             {
-                wf = this.workflowDefinitionFactory.GetWorkflow(workflowId);
+                wf = this.ImplementationManager.GetWorkflow(workflowId);
                 this.WorkflowManager = new WorkflowManager(wf, this.Configuration);
             }
 
@@ -620,7 +620,7 @@ namespace Mchnry.Flow
         async Task IEngineScope<TModel>.RunWorkflowAsync<T>(string workflowId, T model, CancellationToken token)
         {
             
-            WorkDefine.Workflow toRun = this.workflowDefinitionFactory.GetWorkflow(workflowId);
+            WorkDefine.Workflow toRun = this.ImplementationManager.GetWorkflow(workflowId);
             WorkflowManager mgr = new WorkflowManager(toRun, this.Configuration);
 
             mgr.RenameWorkflow(string.Format("{0}{1}{2}", toRun.Id, Configuration.Convention.Delimeter, subWFCount));
@@ -640,7 +640,7 @@ namespace Mchnry.Flow
                 .SetActionFactory(this.ImplementationManager.ActionFactory)
                 .SetEvaluatorFactory(this.ImplementationManager.EvaluatorFactory)
                 .LoadWorkflow(toRun)
-                .SetWorkflowDefinitionFactory(this.workflowDefinitionFactory);
+                .SetWorkflowDefinitionFactory(this.ImplementationManager.DefinitionFactory);
 
             Engine<T> asEngine = (Engine<T>)subEngine;
             

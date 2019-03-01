@@ -18,8 +18,12 @@ namespace Mchnry.Flow
 
         IAction<TModel> GetAction(WorkDefine.ActionDefinition id);
         IRuleEvaluator<TModel> GetEvaluator(LogicDefine.Evaluator id);
+        WorkDefine.Workflow GetWorkflow(string id);
+
         IActionFactory ActionFactory { get; }
+        IWorkflowDefinitionFactory DefinitionFactory { get; }
         IRuleEvaluatorFactory EvaluatorFactory { get; }
+
     }
     internal class ImplementationManager<TModel> : IImplementationManager<TModel>
     {
@@ -32,12 +36,16 @@ namespace Mchnry.Flow
 
         public IActionFactory ActionFactory { get; set; }
         public IRuleEvaluatorFactory EvaluatorFactory { get; set; }
+        public IWorkflowDefinitionFactory DefinitionFactory { get; set; }
+
         public Config Configuration { get; }
 
         internal ImplementationManager()
         {
             this.ActionFactory = new NoActionFactory();
             this.EvaluatorFactory = new NoRuleEvaluatorFactory();
+            this.DefinitionFactory = new NoWorkflowDefinitionFactory();
+
             this.Configuration = new Config();
 
             IRuleEvaluator<TModel> trueEvaluator = new AlwaysTrueEvaluator<TModel>();
@@ -50,11 +58,11 @@ namespace Mchnry.Flow
             this.Configuration = configuration;
         }
 
-        internal ImplementationManager(IActionFactory actionFactory, IRuleEvaluatorFactory evaluatorFactory, Configuration.Config configuration) : this(configuration)
+        internal ImplementationManager(IActionFactory actionFactory, IRuleEvaluatorFactory evaluatorFactory, IWorkflowDefinitionFactory definitionFactory, Configuration.Config configuration) : this(configuration)
         {
             this.ActionFactory = actionFactory;
             this.EvaluatorFactory = evaluatorFactory;
-
+            this.DefinitionFactory = definitionFactory;
 
         }
 
@@ -108,6 +116,11 @@ namespace Mchnry.Flow
                 }
             }
             return toReturn;
+        }
+
+        public virtual WorkDefine.Workflow GetWorkflow(string id)
+        {
+            return this.DefinitionFactory.GetWorkflow(id);
         }
 
         public virtual IRuleEvaluator<TModel> GetEvaluator(LogicDefine.Evaluator def)
@@ -180,10 +193,13 @@ namespace Mchnry.Flow
     {
         internal LogicTestEvaluatorFactory ef { get; }
         internal LogicTestActionFactory af { get; }
+        internal LogicTestDefintionFactory df { get; }
 
         IActionFactory IImplementationManager<TModel>.ActionFactory => null;
 
         IRuleEvaluatorFactory IImplementationManager<TModel>.EvaluatorFactory => null;
+        IWorkflowDefinitionFactory IImplementationManager<TModel>.DefinitionFactory => null;
+
 
         private readonly WorkDefine.Workflow workFlow;
         private readonly Config configuration;
@@ -194,6 +210,7 @@ namespace Mchnry.Flow
             this.configuration = configuration;
             this.ef = new LogicTestEvaluatorFactory(testCase, this.configuration);
             this.af = new LogicTestActionFactory();
+            this.df = new LogicTestDefintionFactory(this.configuration);
 
         }
 
@@ -209,15 +226,24 @@ namespace Mchnry.Flow
 
             return this.ef.GetRuleEvaluator<TModel>(def);
         }
-
-        IAction<TModel> IImplementationManager<TModel>.GetAction(WorkDefine.ActionDefinition def)
+        public WorkDefine.Workflow GetWorkflow(string id)
         {
-            throw new NotImplementedException();
+            return this.df.GetWorkflow(id);
         }
 
-        IRuleEvaluator<TModel> IImplementationManager<TModel>.GetEvaluator(LogicDefine.Evaluator def)
-        {
-            throw new NotImplementedException();
-        }
+        //IAction<TModel> IImplementationManager<TModel>.GetAction(WorkDefine.ActionDefinition def)
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        //IRuleEvaluator<TModel> IImplementationManager<TModel>.GetEvaluator(LogicDefine.Evaluator def)
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        //WorkDefine.Workflow IImplementationManager<TModel>.GetWorkflow(string id)
+        //{
+        //    throw new NotImplementedException();
+        //}
     }
 }
