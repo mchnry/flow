@@ -8,7 +8,16 @@ using WorkDefine = Mchnry.Flow.Work.Define;
 
 namespace Mchnry.Flow.Analysis
 {
-    public sealed class Sanitizer
+
+    /// <summary>
+    /// Utility used to Sanitize a workflow definition
+    /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>This is used to </item>
+    /// </list>
+    /// </remarks>
+    internal sealed class Sanitizer
     {
 
         StepTracer<LintTrace> tracer;
@@ -40,17 +49,6 @@ namespace Mchnry.Flow.Analysis
             Action<WorkDefine.Activity, bool> LoadReactions = null;
             LoadReactions = (d, isroot) =>
             {
-                //if (d.Action == null) d.Action = "*placeHolder";
-
-                //WorkDefine.ActionDefinition match = workFlow.Actions.FirstOrDefault(z => z.Id == d.Action.Id);
-                //if (null == match)
-                //{
-                //    workFlow.Actions.Add(new WorkDefine.ActionDefinition()
-                //    {
-                //        Id = d.Action.Id,
-                //        Description = ""
-                //    });
-                //}
 
                 if (d.Reactions != null && d.Reactions.Count > 0)
                 {
@@ -73,22 +71,6 @@ namespace Mchnry.Flow.Analysis
                                     Description = ""
                                 });
 
-                                //if (isroot)
-                                //{
-                                //    string newId = ConventionHelper.ChangePrefix(NamePrefixOptions.Action, NamePrefixOptions.Activity, asActionRef.Id, this.config.Convention);
-                                //    if (workFlow.Activities.Count(g => g.Id == newId) == 0)
-                                //    {
-                                //        WorkDefine.Activity toAdd = new WorkDefine.Activity()
-                                //        {
-                                //            Action = asActionRef,
-
-                                //            Id = newId,
-                                //            Reactions = null
-                                //        };
-                                //        workFlow.Activities.Add(toAdd);
-                                //    }
-                                //    r.Work = newId;
-                                //}
                             }
 
 
@@ -148,17 +130,6 @@ namespace Mchnry.Flow.Analysis
                 workFlow.Equations.Add(trueEqDef);
             }
 
-            //List<string> lefts = (from e in workFlow.Equations
-            //                      where e.First != null
-            //                      select e.First.Id).ToList();
-
-            //List<string> rights = (from e in workFlow.Equations
-            //                       where null != e.Second
-            //                       select e.Second.Id).ToList();
-
-            //List<string> roots = (from e in workFlow.Equations
-            //                      where !lefts.Contains(e.Id) && !rights.Contains(e.Id)
-            //                      select e.Id).ToList();
 
 
             //Lint.... make sure we have everything we need first.
