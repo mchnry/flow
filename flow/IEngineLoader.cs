@@ -26,8 +26,8 @@ namespace Mchnry.Flow
         IEngineLoader<TModel> AddAction(string id, Func<IEngineScope<TModel>, WorkflowEngineTrace, CancellationToken, Task<bool>> action);
 
 
-             //Task<bool> CompleteAsync(IEngineScope<TModel> scope, WorkflowEngineTrace trace, CancellationToken token);
-
+        //Task<bool> CompleteAsync(IEngineScope<TModel> scope, WorkflowEngineTrace trace, CancellationToken token);
+        IEngineLoader<TModel> SetGlobalModel<T>(string key, T model);
         IEngineRunner<TModel> Start(string workflowId, TModel model);
         IEngineLinter<TModel> Lint(string workflowId);
         

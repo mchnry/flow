@@ -45,8 +45,8 @@ namespace Mchnry.Flow
         void SetModel(TModel value);
         T GetModel<T>(CacheScopeOptions scope, string key);
         void SetModel<T>(CacheScopeOptions scope, string key, T value);
-
         
+
         Logic.Define.Rule CurrentRuleDefinition { get; }
         Work.Define.Activity CurrentActivity { get; }
 

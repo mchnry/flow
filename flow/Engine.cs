@@ -59,7 +59,7 @@ namespace Mchnry.Flow
             this.Tracer = new EngineStepTracer(new ActivityProcess("CreateEngine", ActivityStatusOptions.Engine_Loading, null));
             this.ImplementationManager = new ImplementationManager<TModel>(this.Configuration);
 
-            this.RunManager = new RunManager(this.Configuration);
+          
 
 
             this.GlobalCache = config.Cache;
@@ -279,6 +279,8 @@ namespace Mchnry.Flow
             return this;
         }
 
+
+
         void IEngineScopeDefer<TModel>.SetModel<T>(CacheScopeOptions scope, string key, T value) { ((IEngineScope<TModel>)this).SetModel<T>(scope, key, value); }
         void IEngineScope<TModel>.SetModel<T>(CacheScopeOptions scope, string key, T value)
         {
@@ -326,9 +328,10 @@ namespace Mchnry.Flow
             {
                 wf = this.ImplementationManager.GetWorkflow(workflowId);
                 this.WorkflowManager = new WorkflowManager(wf, this.Configuration);
+
             }
 
-
+            this.RunManager = new RunManager(this.Configuration, wf.Id);
             this.ValidationContainer = ValidationContainer.CreateValidationContainer(wf.Id);
             this.WorkflowCache = this.Configuration.Cache.Spawn(wf.Id);
         }
@@ -580,6 +583,8 @@ namespace Mchnry.Flow
 
         public WorkDefine.Workflow Workflow { get => this.WorkflowManager.WorkFlow; }
 
+        WorkDefine.Workflow IEngineLoader<TModel>.Workflow => throw new NotImplementedException();
+
         internal void Sanitize()
         {
             StepTracer<LintTrace> lintTrace = new StepTracer<LintTrace>();
@@ -673,6 +678,14 @@ namespace Mchnry.Flow
 
 
         }
+
+        IEngineLoader<TModel> IEngineLoader<TModel>.SetGlobalModel<T>(string key, T model)
+        {
+            ((IEngineScope<TModel>)this).SetModel(CacheScopeOptions.Global, key, model);
+            return this;
+        }
+
+
     }
 
 
