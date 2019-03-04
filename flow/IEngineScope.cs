@@ -48,6 +48,7 @@ namespace Mchnry.Flow
         
 
         Logic.Define.Rule CurrentRuleDefinition { get; }
+        Work.Define.ActionRef CurrentAction { get; }
         Work.Define.Activity CurrentActivity { get; }
 
 
