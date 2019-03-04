@@ -8,6 +8,7 @@ namespace Mchnry.Flow
 {
     public interface IEngineRunner<TModel>
     {
+        
         Task<IEngineComplete<TModel>> ExecuteAutoFinalizeAsync(CancellationToken token);
         Task<IEngineFinalize<TModel>> ExecuteAsync(CancellationToken token);
     }

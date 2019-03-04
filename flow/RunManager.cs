@@ -18,12 +18,13 @@ namespace Mchnry.Flow
         //current status of running engine
         internal virtual EngineStatusOptions EngineStatus { get; set; } = EngineStatusOptions.NotStarted;
         internal Configuration.Config config;
-
+        private readonly string workflowId;
         internal Dictionary<string, int> deferrals = new Dictionary<string, int>();
 
-        internal RunManager(Configuration.Config config)
+        internal RunManager(Configuration.Config config, string workflowId)
         {
             this.config = config;
+            this.workflowId = workflowId;
         }
 
         internal virtual bool? GetResult(LogicDefine.Rule rule)
@@ -74,7 +75,7 @@ namespace Mchnry.Flow
                 this.deferrals.Add(key, cnt);
             }
 
-            return string.Format("{0}{1}{2}", key, this.config.Convention.Delimeter, cnt);
+            return string.Format("{0}{1}{2}{3}{4}", key, this.config.Convention.Delimeter, this.workflowId, this.config.Convention.Delimeter, cnt);
 
         }
     }
