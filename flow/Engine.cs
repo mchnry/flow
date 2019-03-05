@@ -96,7 +96,9 @@ namespace Mchnry.Flow
 
 
         LogicDefine.Rule IEngineScope<TModel>.CurrentRuleDefinition => this.RunManager.CurrentRuleDefinition;
-        
+
+        WorkDefine.ActionRef IEngineScope<TModel>.CurrentAction => this.RunManager.CurrentAction;
+
         WorkDefine.Activity IEngineScope<TModel>.CurrentActivity => this.RunManager.CurrentActivity;
 
 
