@@ -1,4 +1,5 @@
-﻿using Mchnry.Flow;
+﻿using Mchnry.Core.JWT;
+using Mchnry.Flow;
 using Mchnry.Flow.Diagnostics;
 using Mchnry.Flow.Logic;
 using Mchnry.Flow.Work;
@@ -152,17 +153,29 @@ namespace Sample
         public static async Task Main(string[] args)
         {
 
-            var builder = Engine<Foo>.CreateEngine();
-            var runner = builder.SetActionFactory(new ActionFactory())
-                .SetEvaluatorFactory(new EvaluatorFactory())
-                .SetWorkflowDefinitionFactory(new WorkflowDefinitionFactory())
-                .Start("first", new Foo());
+            //var builder = Engine<Foo>.CreateEngine();
+            //var runner = builder.SetActionFactory(new ActionFactory())
+            //    .SetEvaluatorFactory(new EvaluatorFactory())
+            //    .SetWorkflowDefinitionFactory(new WorkflowDefinitionFactory())
+            //    .Start("first", new Foo());
 
-            var complete = runner.ExecuteAutoFinalizeAsync(new CancellationToken());
+            //var complete = runner.ExecuteAutoFinalizeAsync(new CancellationToken());
 
 
-            Console.ReadLine();
+            //Console.ReadLine();
 
+            RSAProv prov = new RSAProv(System.Security.Cryptography.X509Certificates.X509FindType.FindByThumbprint, "5d6c96212ec044b31eff0f563644ece2bc968b3b");
+            var cert = prov.GetKey();
+
+            JWTHelper helper = new Mchnry.Core.JWT.JWTHelper();
+            var jwt = helper.Encode<ApiHeader, ApiToken>(new jwt<ApiHeader, ApiToken>()
+            {
+                Header = new ApiHeader() { Algorithm = "HS384", exp = helper.DateToInt(TimeSpan.FromMinutes(1))[1], TokenName = "tkn" },
+                Token = new ApiToken() { exp = helper.DateToInt(TimeSpan.FromMinutes(1))[1], iat = helper.DateToInt(TimeSpan.MinValue)[0], Subject = "jamie", JTI = "asdfasdf" }
+            }, cert);
+
+            bool expired;
+            var decoded = helper.Decode<ApiHeader, ApiToken>(jwt, cert, out expired);
 
         }
 
