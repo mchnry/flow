@@ -8,6 +8,12 @@ namespace Mchnry.Flow.Logic
 {
     internal class AlwaysTrueEvaluator<TModel> : IRuleEvaluator<TModel>
     {
+        public Evaluator Definition => new Evaluator()
+        {
+            Id = "true",
+            Description = "Always Returns True"
+        };
+
         public async Task EvaluateAsync(IEngineScope<TModel> scope, LogicEngineTrace trace, IRuleResult status, CancellationToken token)
         {
             trace.TraceStep("Always True");

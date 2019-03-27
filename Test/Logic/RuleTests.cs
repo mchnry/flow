@@ -21,7 +21,7 @@ namespace Test.Logic
             AlwaysTrueEvaluator<string> trueEvaluator = new AlwaysTrueEvaluator<string>();
             Mock<EngineStepTracer> mkTracer = new Mock<EngineStepTracer>(new ActivityProcess());
             
-            Mock<RunManager> mkRunMgr = new Mock<RunManager>(new Mchnry.Flow.Configuration.Config());
+            Mock<RunManager> mkRunMgr = new Mock<RunManager>(new Mchnry.Flow.Configuration.Config(), "test");
             Mock<ImplementationManager<string>> mkImplMgr = new Mock<ImplementationManager<string>>();
             mkRunMgr.Setup(g => g.GetResult(It.IsAny<LogicDefine.Rule>())).Returns(true);
             mkImplMgr.Setup(g => g.GetEvaluator(It.IsAny<LogicDefine.Evaluator>())).Returns(trueEvaluator);
@@ -48,7 +48,7 @@ namespace Test.Logic
             AlwaysTrueEvaluator<string> trueEvaluator = new AlwaysTrueEvaluator<string>();
             Mock<EngineStepTracer> mkTracer = new Mock<EngineStepTracer>(new ActivityProcess());
 
-            Mock<RunManager> mkRunMgr = new Mock<RunManager>(new Mchnry.Flow.Configuration.Config());
+            Mock<RunManager> mkRunMgr = new Mock<RunManager>(new Mchnry.Flow.Configuration.Config(), "test");
             Mock<ImplementationManager<string>> mkImplMgr = new Mock<ImplementationManager<string>>();
             bool? nullBool = null;
             mkRunMgr.Setup(g => g.GetResult(It.IsAny<LogicDefine.Rule>())).Returns(nullBool);
@@ -76,7 +76,7 @@ namespace Test.Logic
             AlwaysTrueEvaluator<string> trueEvaluator = new AlwaysTrueEvaluator<string>();
             Mock<EngineStepTracer> mkTracer = new Mock<EngineStepTracer>(new ActivityProcess());
 
-            Mock<RunManager> mkRunMgr = new Mock<RunManager>(new Mchnry.Flow.Configuration.Config());
+            Mock<RunManager> mkRunMgr = new Mock<RunManager>(new Mchnry.Flow.Configuration.Config(), "test");
             Mock<ImplementationManager<string>> mkImplMgr = new Mock<ImplementationManager<string>>();
             
             //indicates that it was evaluated previously

@@ -15,15 +15,15 @@ namespace Mchnry.Flow
 
         IEngineLoader<TModel> OverrideValidation(ValidationOverride oride);
 
-        IEngineLoader<TModel> LoadWorkflow(WorkDefine.Workflow workflow);
+        //IEngineLoader<TModel> LoadWorkflow(WorkDefine.Workflow workflow);
   
 
         IEngineLoader<TModel> SetWorkflowDefinitionFactory(IWorkflowDefinitionFactory factory);
         IEngineLoader<TModel> SetEvaluatorFactory(IRuleEvaluatorFactory factory);
         IEngineLoader<TModel> SetActionFactory(IActionFactory factory);
 
-        IEngineLoader<TModel> AddEvaluator(string id, Func<IEngineScope<TModel>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluator);
-        IEngineLoader<TModel> AddAction(string id, Func<IEngineScope<TModel>, WorkflowEngineTrace, CancellationToken, Task<bool>> action);
+        //IEngineLoader<TModel> AddEvaluator(string id, Func<IEngineScope<TModel>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluator);
+        //IEngineLoader<TModel> AddAction(string id, Func<IEngineScope<TModel>, WorkflowEngineTrace, CancellationToken, Task<bool>> action);
 
 
         //Task<bool> CompleteAsync(IEngineScope<TModel> scope, WorkflowEngineTrace trace, CancellationToken token);

@@ -9,15 +9,16 @@ namespace Mchnry.Flow.Work.Define
 {
     internal class FakeAction<TModel> : IAction<TModel>
     {
-        private readonly ActionDefinition definition;
-
         public FakeAction(ActionDefinition definition)
         {
-            this.definition = definition;
+            this.Definition = definition;
         }
+
+        public ActionDefinition Definition { get; private set; }
+
         public Task<bool> CompleteAsync(IEngineScope<TModel> scope, WorkflowEngineTrace trace, CancellationToken token)
         {
-            trace.TraceStep(definition.Id);
+            trace.TraceStep(Definition.Id);
             return Task.FromResult<bool>(true);
         }
     }

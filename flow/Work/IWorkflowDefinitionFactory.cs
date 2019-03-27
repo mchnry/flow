@@ -8,15 +8,15 @@ namespace Mchnry.Flow.Work
     public interface IWorkflowDefinitionFactory
     {
 
-        WorkDefine.Workflow GetWorkflow(string workflowId);
+        IBuilderWorkflow<T> GetWorkflow<T>(string workflowId);
 
     }
 
-    internal class NoWorkflowDefinitionFactory : IWorkflowDefinitionFactory
+    internal class NoWorkflowDefinitionFactory: IWorkflowDefinitionFactory
     {
-        WorkDefine.Workflow IWorkflowDefinitionFactory.GetWorkflow(string workflowId)
+        IBuilderWorkflow<T> IWorkflowDefinitionFactory.GetWorkflow<T>(string workflowId)
         {
-            return default(WorkDefine.Workflow);
+            return new Builder<T>(workflowId);
         }
     }
 }

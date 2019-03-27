@@ -1,4 +1,5 @@
 ﻿using Mchnry.Flow.Diagnostics;
+using Mchnry.Flow.Logic.Define;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -15,6 +16,12 @@ namespace Mchnry.Flow.Logic
         }
 
         public bool Expected { get; }
+
+        public Evaluator Definition => new Evaluator()
+        {
+            Id = "preset",
+            Description = "Preset rule evaluator for testing"
+        };
 
         public async Task EvaluateAsync(IEngineScope<TModel> scope, LogicEngineTrace trace, IRuleResult result, CancellationToken token)
         {

@@ -7,17 +7,17 @@ using Mchnry.Flow.Diagnostics;
 
 namespace Mchnry.Flow.Work
 {
-    internal class DynamicAction<TModel> : IAction<TModel>
-    {
-        private Func<IEngineScope<TModel>, WorkflowEngineTrace, CancellationToken, Task<bool>> action;
+    //internal class DynamicAction<TModel> : IAction<TModel>
+    //{
+    //    private Func<IEngineScope<TModel>, WorkflowEngineTrace, CancellationToken, Task<bool>> action;
 
-        public DynamicAction(Func<IEngineScope<TModel>, WorkflowEngineTrace, CancellationToken, Task<bool>> action) {
-            this.action = action;
-        }
+    //    public DynamicAction(Func<IEngineScope<TModel>, WorkflowEngineTrace, CancellationToken, Task<bool>> action) {
+    //        this.action = action;
+    //    }
         
-        public async Task<bool> CompleteAsync(IEngineScope<TModel> scope, WorkflowEngineTrace trace, CancellationToken token)
-        {
-            return await this.action(scope, trace, token);
-        }
-    }
+    //    public async Task<bool> CompleteAsync(IEngineScope<TModel> scope, WorkflowEngineTrace trace, CancellationToken token)
+    //    {
+    //        return await this.action(scope, trace, token);
+    //    }
+    //}
 }

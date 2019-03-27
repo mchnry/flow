@@ -14,18 +14,26 @@ namespace Mchnry.Flow
         {
             this.config = config;
         }
-        public Workflow GetWorkflow(string workflowId)
+        public IBuilderWorkflow<T> GetWorkflow<T>(string workflowId)
         {
-            Workflow toReturn = Builder.CreateBuilder(workflowId, c =>
+
+            ActionDefinition def = new ActionDefinition()
+            {
+                Id = string.Format("{0}{1}{2}", workflowId, this.config.Convention.Delimeter, "fake"),
+                Description = "Fake Action"
+            };
+
+            return Builder<T>.CreateBuilder(workflowId, c =>
             {
                 c.Cache = this.config.Cache;
                 c.Convention = this.config.Convention;
 
             }).Build(Todo => Todo
-                .Do(string.Format("{0}{1}{2}", workflowId, this.config.Convention.Delimeter, "fake"))
+                .Do(b => b.Do(new FakeAction<T>(def)))
+                
             );
 
-            return toReturn;
+            
                 
                 
         }

@@ -5,43 +5,149 @@ using WorkDefine = Mchnry.Flow.Work.Define;
 using LogicDefine = Mchnry.Flow.Logic.Define;
 using Mchnry.Flow.Configuration;
 using System.Linq;
+using Mchnry.Flow.Work;
+using Mchnry.Flow.Logic;
 
 namespace Mchnry.Flow
 {
 
 
 
-    public interface IActivityBuilder
+    public interface IActivityBuilder<T>
     {
-        IActivityBuilder Do(WorkDefine.ActionRef action);
-        IElseActivityBuilder IfThenDo(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then);
+        IActivityBuilder<T> Do(Action<IActionBuilder<T>> builder);
+        IElseActivityBuilder<T> IfThenDo(Action<IExpressionBuilder<T>> If, Action<IActivityBuilder<T>> Then);
 
     }
-    public interface IElseActivityBuilder
+    public interface IElseActivityBuilder<T>
     {
-        IActivityBuilder Do(WorkDefine.ActionRef action);
-        IElseActivityBuilder IfThenDo(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then);
-        IActivityBuilder Else(Action<IActivityBuilder> Then);
-
-    }
-
-    public interface IBuilder
-    {
-        WorkDefine.Workflow Build(Action<IActivityBuilder> Activity);
-    }
-
-    public interface IExpressionBuilder
-    {
-        void True(LogicDefine.Rule evaluatorId);
-
-
-        void And(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second);
-        void Or(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second);
+        IActivityBuilder<T> Do(Action<IActionBuilder<T>> builder);
+        IElseActivityBuilder<T> IfThenDo(Action<IExpressionBuilder<T>> If, Action<IActivityBuilder<T>> Then);
+        IActivityBuilder<T> Else(Action<IActivityBuilder<T>> Then);
 
     }
 
-    public class Builder : IBuilder, IExpressionBuilder, IActivityBuilder, IElseActivityBuilder
+    public interface IActionContextBuilder
     {
+        void WithContext(string context);
+    }
+    public interface IActionBuilder<T>
+    {
+        IActionContextBuilder DoWithContext(Mchnry.Flow.Work.IAction<T> action);
+        void Do(Mchnry.Flow.Work.IAction<T> action);
+
+    }
+
+    public class ActionBuilder<T> : IActionBuilder<T>, IActionContextBuilder
+    {
+
+        internal IAction<T> action { get; set; }
+        internal WorkDefine.ActionRef actionRef { get; set; }
+
+        IActionContextBuilder IActionBuilder<T>.DoWithContext(IAction<T> action)
+        {
+            ((IActionBuilder<T>)this).Do(action);
+            return this;
+        }
+        void IActionBuilder<T>.Do(IAction<T> action)
+        {
+            this.action = action;
+            this.actionRef = new WorkDefine.ActionRef() { Id = action.Definition.Id };
+            
+        }
+        void IActionContextBuilder.WithContext(string context)
+        {
+            this.actionRef.Context = context;
+        }
+    }
+
+    public interface IRuleConditionBuilder
+    {
+        void IsTrue();
+        void IsFalse();
+        void Is(bool condition);
+
+    }
+
+    public interface IRuleContextBuilder
+    {
+        IRuleConditionBuilder WithContext(string context);
+    }
+    public interface IRuleBuilder<T>
+    {
+        IRuleConditionBuilder Eval(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator);
+        IRuleContextBuilder EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator);
+
+    }
+
+    public class RuleBuilder<T> : IRuleBuilder<T>, IRuleContextBuilder, IRuleConditionBuilder
+    {
+
+        internal LogicDefine.Rule rule { get; set; }
+        internal Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator { get; set; }
+
+        public IRuleConditionBuilder Eval(IRuleEvaluator<T> evaluator)
+        {
+            this.evaluator = evaluator;
+            this.rule = new LogicDefine.Rule() { Id = this.evaluator.Definition.Id };
+            return this;
+        }
+
+        public IRuleContextBuilder EvalWithContext(IRuleEvaluator<T> evaluator)
+        {
+            ((IRuleBuilder<T>)this).Eval(evaluator);
+            return this;
+        }
+
+        void IRuleConditionBuilder.Is(bool condition)
+        {
+            this.rule.TrueCondition = condition;
+        }
+
+        void IRuleConditionBuilder.IsFalse()
+        {
+            this.rule.TrueCondition = false;
+        }
+
+        void IRuleConditionBuilder.IsTrue()
+        {
+            this.rule.TrueCondition = true;
+        }
+
+        IRuleConditionBuilder IRuleContextBuilder.WithContext(string context)
+        {
+            this.rule.Context = context;
+            return this;
+        }
+    }
+
+    public interface IBuilder<T>
+    {
+        IBuilderWorkflow<T> Build(Action<IActivityBuilder<T>> Activity);
+    }
+
+    public interface IBuilderWorkflow<T>
+    {
+        WorkDefine.Workflow Workflow { get; }
+    }
+
+    public interface IExpressionBuilder<T>
+    {
+        void True(Action<IRuleBuilder<T>> builder);
+
+
+        void And(Action<IExpressionBuilder<T>> first, Action<IExpressionBuilder<T>> second);
+        void Or(Action<IExpressionBuilder<T>> first, Action<IExpressionBuilder<T>> second);
+
+    }
+
+    public class Builder<T> : IBuilder<T>, IBuilderWorkflow<T>, IExpressionBuilder<T>, IActivityBuilder<T>, IElseActivityBuilder<T>
+    {
+
+        internal Dictionary<string, IRuleEvaluator<T>> evaluators = new Dictionary<string, IRuleEvaluator<T>>();
+        internal Dictionary<string, IAction<T>> actions = new Dictionary<string, IAction<T>>();
+
+          
 
         internal WorkflowManager workflowManager;
 
@@ -53,14 +159,14 @@ namespace Mchnry.Flow
         internal string WorkflowId;
         internal string LastEquationid;
 
-        public static IBuilder CreateBuilder(string workflowId)
+        public static IBuilder<T> CreateBuilder(string workflowId)
         {
-            return new Builder(workflowId);
+            return new Builder<T>(workflowId);
         }
 
-        public static IBuilder CreateBuilder(string workflowId, Action<Configuration.Config> configure)
+        public static IBuilder<T> CreateBuilder(string workflowId, Action<Configuration.Config> configure)
         {
-            return new Builder(workflowId, configure);
+            return new Builder<T>(workflowId, configure);
         }
 
         internal Builder(string workflowId): this(workflowId, null)
@@ -83,14 +189,25 @@ namespace Mchnry.Flow
         }
 
 
-        private void Do(WorkDefine.ActionRef ToDo)
+        private void Do(Action<ActionBuilder<T>> builder)
         {
+            ActionBuilder<T> builderRef = new ActionBuilder<T>();
+            builder.Invoke(builderRef);
+
+            WorkDefine.ActionRef ToDo = builderRef.actionRef;
+            
             ToDo.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Action, ToDo.Id, this.config.Convention);
             this.workflowManager.AddAction(new WorkDefine.ActionDefinition() { Id = ToDo.Id, Description = "Builder" });
+
+            if (!this.actions.ContainsKey(ToDo.Id))
+            {
+                this.actions.Add(ToDo.Id, builderRef.action);
+            }
+
             this.created = ToDo;
         }
 
-        WorkDefine.Workflow IBuilder.Build(Action<IActivityBuilder> First)
+        IBuilderWorkflow<T> IBuilder<T>.Build(Action<IActivityBuilder<T>> First)
         {
 
             string workflowId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, this.workflowManager.WorkFlow.Id, this.config.Convention);
@@ -107,11 +224,18 @@ namespace Mchnry.Flow
 
             First(this);
 
-            return this.workflowManager.WorkFlow;
+            return this;
+
         }
 
-        IActivityBuilder IElseActivityBuilder.Do(WorkDefine.ActionRef action) { return ((IActivityBuilder)this).Do(action); }
-        IActivityBuilder IActivityBuilder.Do(WorkDefine.ActionRef action)
+        WorkDefine.Workflow IBuilderWorkflow<T>.Workflow {
+            get {
+                return this.workflowManager.WorkFlow;
+            }
+        }
+
+        IActivityBuilder<T> IElseActivityBuilder<T>.Do(Action<IActionBuilder<T>> builder) { return ((IActivityBuilder<T>)this).Do(builder); }
+        IActivityBuilder<T> IActivityBuilder<T>.Do(Action<IActionBuilder<T>> builder)
         {
 
             WorkDefine.Activity parent = default(WorkDefine.Activity);
@@ -120,15 +244,15 @@ namespace Mchnry.Flow
             parent = this.activityStack.Peek();
 
 
-            this.Do(action);
+            this.Do(builder);
             parent.Reactions.Add(new WorkDefine.Reaction() { Work = this.created.ToString() });
 
             return this;
 
         }
 
-        IElseActivityBuilder IElseActivityBuilder.IfThenDo(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then) { return ((IActivityBuilder)this).IfThenDo(If, Then); }
-        IElseActivityBuilder IActivityBuilder.IfThenDo(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then)
+        IElseActivityBuilder<T> IElseActivityBuilder<T>.IfThenDo(Action<IExpressionBuilder<T>> If, Action<IActivityBuilder<T>> Then) { return ((IActivityBuilder<T>)this).IfThenDo(If, Then); }
+        IElseActivityBuilder<T> IActivityBuilder<T>.IfThenDo(Action<IExpressionBuilder<T>> If, Action<IActivityBuilder<T>> Then)
         {
             WorkDefine.Activity parent = this.activityStack.Peek();
 
@@ -161,7 +285,7 @@ namespace Mchnry.Flow
             return this;
         }
 
-        IActivityBuilder IElseActivityBuilder.Else(Action<IActivityBuilder> Then)
+        IActivityBuilder<T> IElseActivityBuilder<T>.Else(Action<IActivityBuilder<T>> Then)
         {
             WorkDefine.Activity parent = this.activityStack.Peek();
 
@@ -195,7 +319,7 @@ namespace Mchnry.Flow
         }
 
 
-        void IExpressionBuilder.And(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second)
+        void IExpressionBuilder<T>.And(Action<IExpressionBuilder<T>> first, Action<IExpressionBuilder<T>> second)
         {
 
             string equationId = string.Empty;
@@ -238,7 +362,7 @@ namespace Mchnry.Flow
     
         }
 
-        void IExpressionBuilder.Or(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second)
+        void IExpressionBuilder<T>.Or(Action<IExpressionBuilder<T>> first, Action<IExpressionBuilder<T>> second)
         {
             string equationId = string.Empty;
             //we are in a sub equation
@@ -276,12 +400,24 @@ namespace Mchnry.Flow
             toAdd.Second = secondId;
         }
 
-        void IExpressionBuilder.True(LogicDefine.Rule evaluatorId)
+        void IExpressionBuilder<T>.True(Action<IRuleBuilder<T>> builder)
         {
+
+            RuleBuilder<T> builderRef = new RuleBuilder<T>();
+            builder.Invoke(builderRef);
+
+            LogicDefine.Rule evaluatorId = builderRef.rule;
+
+           
 
             evaluatorId.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Evaluator, evaluatorId.Id, this.config.Convention);
             this.workflowManager.AddEvaluator(new LogicDefine.Evaluator() { Id = evaluatorId.Id, Description = "Builder" });
             bool isRoot = this.epxressionStack.Count == 0;
+
+            if (!this.evaluators.ContainsKey(evaluatorId.Id))
+            {
+                this.evaluators.Add(evaluatorId.Id, builderRef.evaluator);
+            }
 
             if (isRoot)
             {

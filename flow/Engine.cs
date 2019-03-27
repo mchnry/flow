@@ -37,7 +37,6 @@ namespace Mchnry.Flow
 
         private ICacheManager GlobalCache;
         private ICacheManager WorkflowCache;
-        private int subWFCount = 1;
         private string workflowId;
 
         /// <summary>
@@ -265,15 +264,15 @@ namespace Mchnry.Flow
 
         IEngineLoader<TModel> IEngineLoader<TModel>.SetActionFactory(IActionFactory factory)
         {
-            ((ImplementationManager<TModel>)this.ImplementationManager).ActionFactory = factory;
+            ((ImplementationManager<TModel>)this.ImplementationManager).ActionFactory.proxy = factory;
             return this;
         }
 
-        IEngineLoader<TModel> IEngineLoader<TModel>.LoadWorkflow(WorkDefine.Workflow workflow)
-        {
-            this.WorkflowManager = new WorkflowManager(workflow, this.Configuration);
-            return this;
-        }
+        //IEngineLoader<TModel> IEngineLoader<TModel>.LoadWorkflow(WorkDefine.Workflow workflow)
+        //{
+        //    this.WorkflowManager = new WorkflowManager(workflow, this.Configuration);
+        //    return this;
+        //}
 
         IEngineLoader<TModel> IEngineLoader<TModel>.SetWorkflowDefinitionFactory(IWorkflowDefinitionFactory factory)
         {
@@ -306,7 +305,7 @@ namespace Mchnry.Flow
 
         IEngineLoader<TModel> IEngineLoader<TModel>.SetEvaluatorFactory(IRuleEvaluatorFactory factory)
         {
-            ((ImplementationManager<TModel>)this.ImplementationManager).EvaluatorFactory = factory;
+            ((ImplementationManager<TModel>)this.ImplementationManager).EvaluatorFactory.proxy = factory;
             return this;
         }
 
@@ -364,18 +363,18 @@ namespace Mchnry.Flow
 
         }
 
-        IEngineLoader<TModel> IEngineLoader<TModel>.AddEvaluator(string id, Func<IEngineScope<TModel>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluator)
-        {
-            id = ConventionHelper.ApplyConvention(NamePrefixOptions.Evaluator, id, this.Configuration.Convention);
-            ((ImplementationManager<TModel>)this.ImplementationManager).AddEvaluator(id, evaluator);
-            return this;
-        }
-        IEngineLoader<TModel> IEngineLoader<TModel>.AddAction(string id, Func<IEngineScope<TModel>, WorkflowEngineTrace, CancellationToken, Task<bool>> action)
-        {
-            id = ConventionHelper.ApplyConvention(NamePrefixOptions.Action, id, this.Configuration.Convention);
-            ((ImplementationManager<TModel>)this.ImplementationManager).AddAction(id, action);
-            return this;
-        }
+        //IEngineLoader<TModel> IEngineLoader<TModel>.AddEvaluator(string id, Func<IEngineScope<TModel>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluator)
+        //{
+        //    id = ConventionHelper.ApplyConvention(NamePrefixOptions.Evaluator, id, this.Configuration.Convention);
+        //    ((ImplementationManager<TModel>)this.ImplementationManager).AddEvaluator(id, evaluator);
+        //    return this;
+        //}
+        //IEngineLoader<TModel> IEngineLoader<TModel>.AddAction(string id, Func<IEngineScope<TModel>, WorkflowEngineTrace, CancellationToken, Task<bool>> action)
+        //{
+        //    id = ConventionHelper.ApplyConvention(NamePrefixOptions.Action, id, this.Configuration.Convention);
+        //    ((ImplementationManager<TModel>)this.ImplementationManager).AddAction(id, action);
+        //    return this;
+        //}
 
 
 
@@ -585,7 +584,7 @@ namespace Mchnry.Flow
 
         public WorkDefine.Workflow Workflow { get => this.WorkflowManager.WorkFlow; }
 
-        WorkDefine.Workflow IEngineLoader<TModel>.Workflow => throw new NotImplementedException();
+        WorkDefine.Workflow IEngineLoader<TModel>.Workflow => this.WorkflowManager.WorkFlow;
 
         internal void Sanitize()
         {
@@ -618,7 +617,7 @@ namespace Mchnry.Flow
                 this.CurrentActivityStatus = ActivityStatusOptions.Engine_Loading;
                 this.finalize = new Dictionary<string, IDeferredAction<TModel>>();
                 this.finalizeAlways = new Dictionary<string, IDeferredAction<TModel>>();
-                this.subWFCount = 1;
+                this.Configuration.Ordinal = 0;
                 this.Tracer = this.Tracer = new EngineStepTracer(new ActivityProcess("CreateEngine", ActivityStatusOptions.Engine_Loading, null));
             }
         }
@@ -626,13 +625,16 @@ namespace Mchnry.Flow
 
         async Task IEngineScope<TModel>.RunWorkflowAsync<T>(string workflowId, T model, CancellationToken token)
         {
-            
-            WorkDefine.Workflow toRun = this.ImplementationManager.GetWorkflow(workflowId);
-            WorkflowManager mgr = new WorkflowManager(toRun, this.Configuration);
+            //ImplementationManager<T> subMgr = new ImplementationManager<T>( this.ImplementationManager.DefinitionFactory, this.Configuration);
+            //subMgr.SetActionFactoryProxy(this.ImplementationManager.ActionFactory.proxy);
+            //subMgr.SetEvaluatorFactoryProxy(this.ImplementationManager.EvaluatorFactory.proxy);
 
-            mgr.RenameWorkflow(string.Format("{0}{1}{2}", toRun.Id, Configuration.Convention.Delimeter, subWFCount));
-            subWFCount++;
-            toRun = mgr.WorkFlow;
+            //WorkDefine.Workflow toRun = subMgr.GetWorkflow(workflowId);
+            //WorkflowManager mgr = new WorkflowManager(toRun, this.Configuration);
+
+            //mgr.RenameWorkflow(string.Format("{0}{1}{2}", toRun.Id, Configuration.Convention.Delimeter, subWFCount));
+            //subWFCount++;
+            //toRun = mgr.WorkFlow;
 
             //we need to rename the workflow .. all the main workflow and all activities will have been
             //named with the workflowid, so we need to replace
@@ -642,11 +644,11 @@ namespace Mchnry.Flow
             {
                 a.Cache = this.Configuration.Cache;
                 a.Convention = this.Configuration.Convention;
+                a.Ordinal = this.Configuration.Ordinal + 1;
                 
             })
-                .SetActionFactory(this.ImplementationManager.ActionFactory)
-                .SetEvaluatorFactory(this.ImplementationManager.EvaluatorFactory)
-                .LoadWorkflow(toRun)
+                .SetActionFactory(this.ImplementationManager.ActionFactory.proxy)
+                .SetEvaluatorFactory(this.ImplementationManager.EvaluatorFactory.proxy)
                 .SetWorkflowDefinitionFactory(this.ImplementationManager.DefinitionFactory);
 
             Engine<T> asEngine = (Engine<T>)subEngine;
@@ -656,7 +658,7 @@ namespace Mchnry.Flow
                 subEngine.OverrideValidation(v);
             }
 
-            var runner = subEngine.Start(toRun.Id, model);
+            var runner = subEngine.Start(workflowId, model);
             var finalizer = await runner.ExecuteAsync(token);
 
             
@@ -665,11 +667,11 @@ namespace Mchnry.Flow
             //append all finalize to mine
             foreach(var f in  asEngine.finalize)
             {
-                this.finalize.Add(f.Key, new DeferProxy<TModel, T>(f.Value, (IEngineScopeDefer<T>)asEngine));
+                this.finalize.Add(f.Key, new DeferProxy<TModel, T>(f.Value, asEngine));
             }
             foreach (var f in asEngine.finalizeAlways)
             {
-                this.finalize.Add(f.Key, new DeferProxy<TModel, T>(f.Value, (IEngineScopeDefer<T>)asEngine));
+                this.finalize.Add(f.Key, new DeferProxy<TModel, T>(f.Value, asEngine));
             }
             //append validations to mine
             foreach (var v in asEngine.ValidationContainer.Validations)

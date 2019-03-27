@@ -13,5 +13,7 @@ namespace Mchnry.Flow.Configuration
 
         public ICacheManager Cache { get; set; } = new MemoryCacheManager();
 
+        internal int Ordinal { get; set; } = 0;
+
     }
 }
