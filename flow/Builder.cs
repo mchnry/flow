@@ -27,37 +27,30 @@ namespace Mchnry.Flow
 
     }
 
-    public interface IActionContextBuilder
-    {
-        void WithContext(string context);
-    }
+
     public interface IActionBuilder<T>
     {
-        IActionContextBuilder DoWithContext(Mchnry.Flow.Work.IAction<T> action);
+        void DoWithContext(Mchnry.Flow.Work.IAction<T> action, string context);
         void Do(Mchnry.Flow.Work.IAction<T> action);
 
     }
 
-    public class ActionBuilder<T> : IActionBuilder<T>, IActionContextBuilder
+    public class ActionBuilder<T> : IActionBuilder<T>
     {
 
         internal IAction<T> action { get; set; }
         internal WorkDefine.ActionRef actionRef { get; set; }
 
-        IActionContextBuilder IActionBuilder<T>.DoWithContext(IAction<T> action)
+        void IActionBuilder<T>.DoWithContext(IAction<T> action, string context)
         {
             ((IActionBuilder<T>)this).Do(action);
-            return this;
+            this.actionRef.Context = context;
         }
         void IActionBuilder<T>.Do(IAction<T> action)
         {
             this.action = action;
             this.actionRef = new WorkDefine.ActionRef() { Id = action.Definition.Id };
             
-        }
-        void IActionContextBuilder.WithContext(string context)
-        {
-            this.actionRef.Context = context;
         }
     }
 
@@ -69,18 +62,15 @@ namespace Mchnry.Flow
 
     }
 
-    public interface IRuleContextBuilder
-    {
-        IRuleConditionBuilder WithContext(string context);
-    }
+
     public interface IRuleBuilder<T>
     {
         IRuleConditionBuilder Eval(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator);
-        IRuleContextBuilder EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator);
+        IRuleConditionBuilder EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator, string context);
 
     }
 
-    public class RuleBuilder<T> : IRuleBuilder<T>, IRuleContextBuilder, IRuleConditionBuilder
+    public class RuleBuilder<T> : IRuleBuilder<T>, IRuleConditionBuilder
     {
 
         internal LogicDefine.Rule rule { get; set; }
@@ -89,13 +79,13 @@ namespace Mchnry.Flow
         public IRuleConditionBuilder Eval(IRuleEvaluator<T> evaluator)
         {
             this.evaluator = evaluator;
-            this.rule = new LogicDefine.Rule() { Id = this.evaluator.Definition.Id };
+            this.rule = new LogicDefine.Rule() { Id = this.evaluator.Definition.Id, TrueCondition = true };
             return this;
         }
-
-        public IRuleContextBuilder EvalWithContext(IRuleEvaluator<T> evaluator)
+        public IRuleConditionBuilder EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator, string context)
         {
-            ((IRuleBuilder<T>)this).Eval(evaluator);
+            this.Eval(evaluator);
+            this.rule.Context = context;
             return this;
         }
 
@@ -114,11 +104,6 @@ namespace Mchnry.Flow
             this.rule.TrueCondition = true;
         }
 
-        IRuleConditionBuilder IRuleContextBuilder.WithContext(string context)
-        {
-            this.rule.Context = context;
-            return this;
-        }
     }
 
     public interface IBuilder<T>
