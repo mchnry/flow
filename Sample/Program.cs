@@ -157,7 +157,7 @@ namespace Sample
             switch (workflowId)
             {
                 case "first":
-                    toReturn = (Builder<T>)Builder<Foo>.CreateBuilder("first").Build(ToDo => ToDo
+                    toReturn = (Builder<T>)Builder<Foo>.CreateBuilder("first").BuildFluent(ToDo => ToDo
                         .IfThenDo(
                             If => If.And(
                                 First => First.True((b) => b.Eval(new AIsTrueEvaluator()).IsTrue()), Second => Second.True((b) => b.Eval(new BIsTrueEvaluator()).IsTrue())
@@ -167,7 +167,7 @@ namespace Sample
                     );
                     break;
                 case "second":
-                    toReturn = (Builder<T>)Builder<Bar>.CreateBuilder("second").Build(ToDo => ToDo
+                    toReturn = (Builder<T>)Builder<Bar>.CreateBuilder("second").BuildFluent(ToDo => ToDo
                         .IfThenDo(
                             If => If.And(
                                 First => First.True((a) => a.Eval(new CIsTrueEvaluator()).IsTrue()), Second => Second.True((a) => a.Eval(new DIsTrueEvaluator()).IsTrue())

@@ -28,7 +28,7 @@ namespace Mchnry.Flow
                 c.Cache = this.config.Cache;
                 c.Convention = this.config.Convention;
 
-            }).Build(Todo => Todo
+            }).BuildFluent(Todo => Todo
                 .Do(b => b.Do(new FakeAction<T>(def)))
                 
             );

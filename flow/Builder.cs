@@ -11,22 +11,31 @@ using Mchnry.Flow.Logic;
 namespace Mchnry.Flow
 {
 
+    #region Fluent
 
-
-    public interface IActivityBuilder<T>
+    public interface IFluentActivityBuilder<T>
     {
-        IActivityBuilder<T> Do(Action<IActionBuilder<T>> builder);
-        IElseActivityBuilder<T> IfThenDo(Action<IExpressionBuilder<T>> If, Action<IActivityBuilder<T>> Then);
+        IFluentActivityBuilder<T> Do(Action<IActionBuilder<T>> builder);
+        IFluentActivityBuilder<T> DoNothing();
+
+        IFluentElseActivityBuilder<T> IfThenDo(Action<IFluentExpressionBuilder<T>> If, Action<IFluentActivityBuilder<T>> Then);
 
     }
-    public interface IElseActivityBuilder<T>
+    public interface IFluentElseActivityBuilder<T>
     {
-        IActivityBuilder<T> Do(Action<IActionBuilder<T>> builder);
-        IElseActivityBuilder<T> IfThenDo(Action<IExpressionBuilder<T>> If, Action<IActivityBuilder<T>> Then);
-        IActivityBuilder<T> Else(Action<IActivityBuilder<T>> Then);
+        IFluentActivityBuilder<T> Do(Action<IActionBuilder<T>> builder);
+        IFluentElseActivityBuilder<T> IfThenDo(Action<IFluentExpressionBuilder<T>> If, Action<IFluentActivityBuilder<T>> Then);
+        IFluentActivityBuilder<T> Else(Action<IFluentActivityBuilder<T>> Then);
 
     }
 
+    public interface IFluentExpressionBuilder<T>
+    {
+        void True(Action<IRuleBuilder<T>> builder);
+        void And(Action<IFluentExpressionBuilder<T>> first, Action<IFluentExpressionBuilder<T>> second);
+        void Or(Action<IFluentExpressionBuilder<T>> first, Action<IFluentExpressionBuilder<T>> second);
+
+    }
 
     public interface IActionBuilder<T>
     {
@@ -50,7 +59,7 @@ namespace Mchnry.Flow
         {
             this.action = action;
             this.actionRef = new WorkDefine.ActionRef() { Id = action.Definition.Id };
-            
+
         }
     }
 
@@ -106,9 +115,43 @@ namespace Mchnry.Flow
 
     }
 
+    #endregion
+
+    #region Not Fluent
+
+    public interface IActivityBuilder
+    {
+        IActivityBuilder Do(WorkDefine.ActionRef action);
+        IActivityBuilder DoNothing();
+
+        IElseActivityBuilder IfThenDo(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then);
+
+    }
+    public interface IElseActivityBuilder
+    {
+        IActivityBuilder Do(WorkDefine.ActionRef action);
+        IElseActivityBuilder IfThenDo(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then);
+        IActivityBuilder Else(Action<IActivityBuilder> Then);
+
+    }
+
+    public interface IExpressionBuilder
+    {
+        void True(LogicDefine.Rule evaluatorId);
+
+
+        void And(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second);
+        void Or(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second);
+
+    }
+
+    #endregion
+
+
     public interface IBuilder<T>
     {
-        IBuilderWorkflow<T> Build(Action<IActivityBuilder<T>> Activity);
+        IBuilderWorkflow<T> BuildFluent(Action<IFluentActivityBuilder<T>> Activity);
+        IBuilderWorkflow<T> Build(Action<IActivityBuilder> Activity);
     }
 
     public interface IBuilderWorkflow<T>
@@ -116,17 +159,17 @@ namespace Mchnry.Flow
         WorkDefine.Workflow Workflow { get; }
     }
 
-    public interface IExpressionBuilder<T>
-    {
-        void True(Action<IRuleBuilder<T>> builder);
 
 
-        void And(Action<IExpressionBuilder<T>> first, Action<IExpressionBuilder<T>> second);
-        void Or(Action<IExpressionBuilder<T>> first, Action<IExpressionBuilder<T>> second);
-
-    }
-
-    public class Builder<T> : IBuilder<T>, IBuilderWorkflow<T>, IExpressionBuilder<T>, IActivityBuilder<T>, IElseActivityBuilder<T>
+    public class Builder<T> : 
+        IBuilder<T>, 
+        IBuilderWorkflow<T>, 
+        IFluentExpressionBuilder<T>, 
+        IFluentActivityBuilder<T>, 
+        IFluentElseActivityBuilder<T>, 
+        IExpressionBuilder, 
+        IActivityBuilder, 
+        IElseActivityBuilder
     {
 
         internal Dictionary<string, IRuleEvaluator<T>> evaluators = new Dictionary<string, IRuleEvaluator<T>>();
@@ -173,8 +216,7 @@ namespace Mchnry.Flow
             this.workflowManager = new WorkflowManager(workflow, this.config);
         }
 
-
-        private void Do(Action<ActionBuilder<T>> builder)
+        private void  Do(Action<IActionBuilder<T>> builder)
         {
             ActionBuilder<T> builderRef = new ActionBuilder<T>();
             builder.Invoke(builderRef);
@@ -182,7 +224,7 @@ namespace Mchnry.Flow
             WorkDefine.ActionRef ToDo = builderRef.actionRef;
             
             ToDo.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Action, ToDo.Id, this.config.Convention);
-            this.workflowManager.AddAction(new WorkDefine.ActionDefinition() { Id = ToDo.Id, Description = "Builder" });
+            this.workflowManager.AddAction(new WorkDefine.ActionDefinition() { Id = ToDo.Id, Description = builderRef.action.Definition.Description });
 
             if (!this.actions.ContainsKey(ToDo.Id))
             {
@@ -192,9 +234,28 @@ namespace Mchnry.Flow
             this.created = ToDo;
         }
 
-        IBuilderWorkflow<T> IBuilder<T>.Build(Action<IActivityBuilder<T>> First)
+        private void Do(WorkDefine.ActionRef ToDo)
+        {
+            ToDo.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Action, ToDo.Id, this.config.Convention);
+            this.workflowManager.AddAction(new WorkDefine.ActionDefinition() { Id = ToDo.Id, Description = "Builder" });
+            this.created = ToDo;
+        }
+
+        IActivityBuilder IActivityBuilder.DoNothing()
+        {
+            return ((IActivityBuilder)this).Do("noaction");
+        }
+        IFluentActivityBuilder<T> IFluentActivityBuilder<T>.DoNothing()
         {
 
+            return ((IFluentActivityBuilder<T>)this).Do(z => z.Do(new NoAction<T>()));
+
+
+        }
+
+
+        private void Build()
+        {
             string workflowId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, this.workflowManager.WorkFlow.Id, this.config.Convention);
             workflowId = workflowId + this.config.Convention.Delimeter + "Main";
 
@@ -206,6 +267,19 @@ namespace Mchnry.Flow
             this.activityStack.Push(parent);
             this.workflowManager.AddActivity(parent);
             this.subActivities.Add(parent.Id, 0);
+        }
+        IBuilderWorkflow<T> IBuilder<T>.Build(Action<IActivityBuilder> First)
+        {
+            this.Build();
+
+            First(this);
+
+            return this;
+        }
+        IBuilderWorkflow<T> IBuilder<T>.BuildFluent(Action<IFluentActivityBuilder<T>> First)
+        {
+
+            this.Build();
 
             First(this);
 
@@ -219,8 +293,8 @@ namespace Mchnry.Flow
             }
         }
 
-        IActivityBuilder<T> IElseActivityBuilder<T>.Do(Action<IActionBuilder<T>> builder) { return ((IActivityBuilder<T>)this).Do(builder); }
-        IActivityBuilder<T> IActivityBuilder<T>.Do(Action<IActionBuilder<T>> builder)
+        IFluentActivityBuilder<T> IFluentElseActivityBuilder<T>.Do(Action<IActionBuilder<T>> builder) { return ((IFluentActivityBuilder<T>)this).Do(builder); }
+        IFluentActivityBuilder<T> IFluentActivityBuilder<T>.Do(Action<IActionBuilder<T>> builder)
         {
 
             WorkDefine.Activity parent = default(WorkDefine.Activity);
@@ -236,8 +310,25 @@ namespace Mchnry.Flow
 
         }
 
-        IElseActivityBuilder<T> IElseActivityBuilder<T>.IfThenDo(Action<IExpressionBuilder<T>> If, Action<IActivityBuilder<T>> Then) { return ((IActivityBuilder<T>)this).IfThenDo(If, Then); }
-        IElseActivityBuilder<T> IActivityBuilder<T>.IfThenDo(Action<IExpressionBuilder<T>> If, Action<IActivityBuilder<T>> Then)
+        IActivityBuilder IElseActivityBuilder.Do(WorkDefine.ActionRef action) { return ((IActivityBuilder)this).Do(action); }
+        IActivityBuilder IActivityBuilder.Do(WorkDefine.ActionRef action)
+        {
+
+            WorkDefine.Activity parent = default(WorkDefine.Activity);
+            //get the parent, add this as a reaction
+
+            parent = this.activityStack.Peek();
+
+
+            this.Do(action);
+            parent.Reactions.Add(new WorkDefine.Reaction() { Work = this.created.ToString() });
+
+            return this;
+
+        }
+
+        IFluentElseActivityBuilder<T> IFluentElseActivityBuilder<T>.IfThenDo(Action<IFluentExpressionBuilder<T>> If, Action<IFluentActivityBuilder<T>> Then) { return ((IFluentActivityBuilder<T>)this).IfThenDo(If, Then); }
+        IFluentElseActivityBuilder<T> IFluentActivityBuilder<T>.IfThenDo(Action<IFluentExpressionBuilder<T>> If, Action<IFluentActivityBuilder<T>> Then)
         {
             WorkDefine.Activity parent = this.activityStack.Peek();
 
@@ -270,7 +361,41 @@ namespace Mchnry.Flow
             return this;
         }
 
-        IActivityBuilder<T> IElseActivityBuilder<T>.Else(Action<IActivityBuilder<T>> Then)
+        IElseActivityBuilder IElseActivityBuilder.IfThenDo(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then) { return ((IActivityBuilder)this).IfThenDo(If, Then); }
+        IElseActivityBuilder IActivityBuilder.IfThenDo(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then)
+        {
+            WorkDefine.Activity parent = this.activityStack.Peek();
+
+            int subCount = this.subActivities[parent.Id];
+            subCount++;
+            this.subActivities[parent.Id] = subCount;
+
+            string activityId = string.Format("{0}{1}{2}", parent.Id, this.config.Convention.Delimeter, subCount);
+            WorkDefine.Activity toBuild = new WorkDefine.Activity()
+            {
+                Id = activityId,
+                Reactions = new List<WorkDefine.Reaction>() { }
+            };
+
+
+
+            this.subActivities.Add(activityId, 0);
+            activityStack.Push(toBuild);
+            this.workflowManager.AddActivity(toBuild);
+
+            If(this);
+            Then(this);
+
+            LastEquationid = this.epxressionStack.Pop().RuleIdWithContext;
+
+            parent.Reactions.Add(new WorkDefine.Reaction() { Logic = LastEquationid, Work = toBuild.Id });
+
+            this.activityStack.Pop();
+
+            return this;
+        }
+
+        IFluentActivityBuilder<T> IFluentElseActivityBuilder<T>.Else(Action<IFluentActivityBuilder<T>> Then)
         {
             WorkDefine.Activity parent = this.activityStack.Peek();
 
@@ -303,8 +428,40 @@ namespace Mchnry.Flow
             return this;
         }
 
+        IActivityBuilder IElseActivityBuilder.Else(Action<IActivityBuilder> Then)
+        {
+            WorkDefine.Activity parent = this.activityStack.Peek();
 
-        void IExpressionBuilder<T>.And(Action<IExpressionBuilder<T>> first, Action<IExpressionBuilder<T>> second)
+            int subCount = this.subActivities[parent.Id];
+            subCount++;
+            this.subActivities[parent.Id] = subCount;
+
+            string activityId = string.Format("{0}{1}{2}", parent.Id, this.config.Convention.Delimeter, subCount);
+            WorkDefine.Activity toBuild = new WorkDefine.Activity()
+            {
+                Id = activityId,
+                Reactions = new List<WorkDefine.Reaction>() { }
+            };
+
+
+
+            this.subActivities.Add(activityId, 0);
+            activityStack.Push(toBuild);
+            this.workflowManager.AddActivity(toBuild);
+
+            string equationId = "!" + LastEquationid;
+            Then(this);
+
+
+
+            parent.Reactions.Add(new WorkDefine.Reaction() { Logic = equationId, Work = toBuild.Id });
+
+            this.activityStack.Pop();
+
+            return this;
+        }
+
+        void IFluentExpressionBuilder<T>.And(Action<IFluentExpressionBuilder<T>> first, Action<IFluentExpressionBuilder<T>> second)
         {
 
             string equationId = string.Empty;
@@ -347,7 +504,51 @@ namespace Mchnry.Flow
     
         }
 
-        void IExpressionBuilder<T>.Or(Action<IExpressionBuilder<T>> first, Action<IExpressionBuilder<T>> second)
+        void IExpressionBuilder.And(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second)
+        {
+
+            string equationId = string.Empty;
+
+
+            //we are in a sub equation
+            if (this.epxressionStack.Count > 0)
+            {
+                string lastEquationId = this.epxressionStack.Peek().Id;
+                string suffix = (this.epxressionStack.Count % 2 == 0) ? "2" : "1";
+                equationId = lastEquationId + this.config.Convention.Delimeter + suffix;
+
+            }
+            else //we are at the root
+            {
+                string lastActivityId = this.activityStack.Peek().Id;
+                equationId = ConventionHelper.ChangePrefix(NamePrefixOptions.Activity, NamePrefixOptions.Equation, lastActivityId, this.config.Convention);
+
+            }
+
+            LogicDefine.Equation toAdd = new LogicDefine.Equation()
+            {
+                Condition = Logic.Operand.And,
+                Id = equationId
+            };
+
+            this.epxressionStack.Push(toAdd);
+            this.workflowManager.AddEquation(toAdd);
+
+
+            string firstId, secondId = null;
+            first(this);
+            firstId = this.epxressionStack.Pop().ShortHand;
+            second(this);
+            secondId = this.epxressionStack.Pop().ShortHand;
+
+
+            toAdd.First = firstId;
+            toAdd.Second = secondId;
+
+
+        }
+
+        void IFluentExpressionBuilder<T>.Or(Action<IFluentExpressionBuilder<T>> first, Action<IFluentExpressionBuilder<T>> second)
         {
             string equationId = string.Empty;
             //we are in a sub equation
@@ -385,7 +586,45 @@ namespace Mchnry.Flow
             toAdd.Second = secondId;
         }
 
-        void IExpressionBuilder<T>.True(Action<IRuleBuilder<T>> builder)
+        void IExpressionBuilder.Or(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second)
+        {
+            string equationId = string.Empty;
+            //we are in a sub equation
+            if (this.epxressionStack.Count > 0)
+            {
+                string lastEquationId = this.epxressionStack.Peek().Id;
+                string suffix = (this.epxressionStack.Count % 2 == 0) ? "2" : "1";
+                equationId = lastEquationId + this.config.Convention.Delimeter + suffix;
+
+            }
+            else //we are at the root
+            {
+                string lastActivityId = this.activityStack.Peek().Id;
+                equationId = ConventionHelper.ChangePrefix(NamePrefixOptions.Activity, NamePrefixOptions.Equation, lastActivityId, this.config.Convention);
+
+            }
+
+            LogicDefine.Equation toAdd = new LogicDefine.Equation()
+            {
+                Condition = Logic.Operand.Or,
+                Id = equationId
+            };
+
+            this.epxressionStack.Push(toAdd);
+            this.workflowManager.AddEquation(toAdd);
+
+            string firstId, secondId = null;
+            first(this);
+            firstId = this.epxressionStack.Pop().ShortHand;
+
+            second(this);
+            secondId = this.epxressionStack.Pop().ShortHand;
+
+            toAdd.First = firstId;
+            toAdd.Second = secondId;
+        }
+
+        void IFluentExpressionBuilder<T>.True(Action<IRuleBuilder<T>> builder)
         {
 
             RuleBuilder<T> builderRef = new RuleBuilder<T>();
@@ -433,9 +672,45 @@ namespace Mchnry.Flow
 
         }
 
+        void IExpressionBuilder.True(LogicDefine.Rule evaluatorId)
+        {
+
+            evaluatorId.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Evaluator, evaluatorId.Id, this.config.Convention);
+            this.workflowManager.AddEvaluator(new LogicDefine.Evaluator() { Id = evaluatorId.Id, Description = "Builder" });
+            bool isRoot = this.epxressionStack.Count == 0;
+
+            if (isRoot)
+            {
+                string equationId = ConventionHelper.ChangePrefix(NamePrefixOptions.Evaluator, NamePrefixOptions.Equation, evaluatorId.Id, this.config.Convention);
+                if (!evaluatorId.TrueCondition)
+                {
+                    equationId = ConventionHelper.NegateEquationName(equationId, this.config.Convention);
+                }
+                LogicDefine.Equation toAdd = new LogicDefine.Equation()
+                {
+                    Condition = Logic.Operand.And,
+                    First = evaluatorId,
+                    Id = equationId,
+                    Second = ConventionHelper.TrueEvaluator(this.config.Convention)
+                };
+                this.epxressionStack.Push(toAdd);
+
+                this.workflowManager.AddEquation(toAdd);
+            }
+            else
+            {
+                this.epxressionStack.Push(evaluatorId);
+            }
+            //if root... then create euqations
+            //otherwise, just use as evaluator
 
 
-        //IReactionBuilder IActivityBuilder.Do()
+
+
+        }
+
+
+        //IReactionBuilder IFluentActivityBuilder.Do()
         //{
         //    need to pull the parent activity off of stack and build on its id
         //    WorkDefine.Activity parent = this.activityStack.Peek();
@@ -459,7 +734,7 @@ namespace Mchnry.Flow
         //    return this;
         //}
 
-        //IReactionBuilder IActivityBuilder.Do(Action<IActionBuilder> DoFirst)
+        //IReactionBuilder IFluentActivityBuilder.Do(Action<IActionBuilder> DoFirst)
         //{
         //    DoFirst(this);
         //    //need to pull the parent activity off of stack and build on its id
@@ -484,8 +759,8 @@ namespace Mchnry.Flow
         //    return this;
         //}
 
-        //IReactionBuilder IMainActivityBuilder.Do(string activityId) { return ((IActivityBuilder)this).Do(activityId); }
-        //IReactionBuilder IActivityBuilder.Do(string activityId)
+        //IReactionBuilder IMainActivityBuilder.Do(string activityId) { return ((IFluentActivityBuilder)this).Do(activityId); }
+        //IReactionBuilder IFluentActivityBuilder.Do(string activityId)
         //{
         //    activityId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.config.Convention);
         //    WorkDefine.Activity toBuild = new WorkDefine.Activity() {
@@ -500,8 +775,8 @@ namespace Mchnry.Flow
         //    return this;
         //}
 
-        //IReactionBuilder IMainActivityBuilder.Do(string activityId, Action<IActionBuilder> DoFirst) { return ((IActivityBuilder)this).Do(activityId, DoFirst); }
-        //IReactionBuilder IActivityBuilder.Do(string activityId, Action<IActionBuilder> DoFirst)
+        //IReactionBuilder IMainActivityBuilder.Do(string activityId, Action<IActionBuilder> DoFirst) { return ((IFluentActivityBuilder)this).Do(activityId, DoFirst); }
+        //IReactionBuilder IFluentActivityBuilder.Do(string activityId, Action<IActionBuilder> DoFirst)
         //{
         //    DoFirst(this);
         //    activityId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.config.Convention);
@@ -521,7 +796,7 @@ namespace Mchnry.Flow
 
         //}
 
-        //IReactionBuilder IReactionBuilder.ThenAction(Action<IExpressionBuilder> If, Action<IActionBuilder> Then)
+        //IReactionBuilder IReactionBuilder.ThenAction(Action<IFluentExpressionBuilder> If, Action<IActionBuilder> Then)
         //{
         //    WorkDefine.Activity inBuild = activityStack.Peek();
 
@@ -542,7 +817,7 @@ namespace Mchnry.Flow
         //    return this;
         //}
 
-        //IReactionBuilder IReactionBuilder.ThenActivity(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then)
+        //IReactionBuilder IReactionBuilder.ThenActivity(Action<IFluentExpressionBuilder> If, Action<IFluentActivityBuilder> Then)
         //{
         //    WorkDefine.Activity inBuild =  activityStack.Peek();
 
@@ -575,7 +850,7 @@ namespace Mchnry.Flow
         //    return this;
         //}
 
-        //IReactionBuilder IReactionBuilder.ThenActivity(Action<IActivityBuilder> Then)
+        //IReactionBuilder IReactionBuilder.ThenActivity(Action<IFluentActivityBuilder> Then)
         //{
         //    WorkDefine.Activity inBuild = activityStack.Peek();
 
