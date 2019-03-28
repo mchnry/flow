@@ -531,8 +531,9 @@ namespace Mchnry.Flow
             {
                 foreach (Case tc in at.TestCases)
                 {
+                    string activityId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, at.ActivityId, this.Configuration.Convention);
                     this.ImplementationManager = new FakeImplementationManager<TModel>(tc, this.WorkflowManager.WorkFlow, this.Configuration);
-                    await this.ExecuteAsync(at.ActivityId, token);
+                    await this.ExecuteAsync(activityId, token);
 
                     tc.Trace = this.Tracer.tracer.AllNodes;
                     this.Reset(true);

@@ -7,6 +7,7 @@ using Moq;
 using Xunit;
 using Mchnry.Flow;
 using Mchnry.Flow.Work;
+using System.Linq;
 
 namespace Test.Lint
 {
@@ -33,7 +34,9 @@ namespace Test.Lint
             
 
             IEngineLinter<string> linter = e.Lint("test");
-            await linter.LintAsync((l) => { }, null, new System.Threading.CancellationToken());
+            var inspector = await linter.LintAsync((l) => { }, null, new System.Threading.CancellationToken());
+
+            
 
         }
 
