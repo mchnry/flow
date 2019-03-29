@@ -66,6 +66,8 @@ namespace Mchnry.Flow
             this.Sanitized = false;
         }
 
+
+        internal static int ordinal = 0;
         public static IEngineLoader<TModel> CreateEngine()
         {
 
@@ -640,12 +642,12 @@ namespace Mchnry.Flow
             //we need to rename the workflow .. all the main workflow and all activities will have been
             //named with the workflowid, so we need to replace
 
-
+            ordinal++;
             var subEngine = Engine<T>.CreateEngine((a) =>
             {
                 a.Cache = this.Configuration.Cache;
                 a.Convention = this.Configuration.Convention;
-                a.Ordinal = this.Configuration.Ordinal + 1;
+                a.Ordinal = ordinal;
                 
             })
                 .SetActionFactory(this.ImplementationManager.ActionFactory.proxy)

@@ -7,6 +7,8 @@ namespace Mchnry.Flow.Configuration
 {
     public class Config
     {
+
+        
         public Convention Convention { get; set; } = new Convention();
 
         public bool ValidateLintHash { get; set; } = true;
@@ -14,6 +16,9 @@ namespace Mchnry.Flow.Configuration
         public ICacheManager Cache { get; set; } = new MemoryCacheManager();
 
         internal int Ordinal { get; set; } = 0;
+
+        
+
 
     }
 }
