@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.2;net471</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.2;net471;net462</TargetFrameworks>
     <AssemblyName>Mchnry.Flow</AssemblyName>
     <RootNamespace>Mchnry.Flow</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
