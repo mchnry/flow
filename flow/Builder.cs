@@ -13,11 +13,26 @@ namespace Mchnry.Flow
 
     #region Fluent
 
+    /// <summary>
+    /// Interface for fluent activity builder.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public interface IFluentActivityBuilder<T>
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <returns></returns>
         IFluentActivityBuilder<T> Do(Action<IActionBuilder<T>> builder);
         IFluentActivityBuilder<T> DoNothing();
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="If">Builder for conditional</param>
+        /// <param name="Then">Builder for action</param>
+        /// <returns></returns>
         IFluentElseActivityBuilder<T> IfThenDo(Action<IFluentExpressionBuilder<T>> If, Action<IFluentActivityBuilder<T>> Then);
 
     }

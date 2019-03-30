@@ -5,16 +5,16 @@ using WorkDefine = Mchnry.Flow.Work.Define;
 
 namespace Mchnry.Flow.Work
 {
-    public interface IWorkflowDefinitionFactory
+    public interface IWorkflowBuilderFactory
     {
 
         IBuilderWorkflow<T> GetWorkflow<T>(string workflowId);
 
     }
 
-    internal class NoWorkflowDefinitionFactory: IWorkflowDefinitionFactory
+    internal class NoWorkflowDefinitionFactory: IWorkflowBuilderFactory
     {
-        IBuilderWorkflow<T> IWorkflowDefinitionFactory.GetWorkflow<T>(string workflowId)
+        IBuilderWorkflow<T> IWorkflowBuilderFactory.GetWorkflow<T>(string workflowId)
         {
             return new Builder<T>(workflowId);
         }

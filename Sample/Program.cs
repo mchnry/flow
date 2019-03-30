@@ -149,7 +149,7 @@ namespace Sample
     //    }
     //}
 
-    public class WorkflowDefinitionFactory : IWorkflowDefinitionFactory
+    public class WorkflowBuilderFactory : IWorkflowBuilderFactory
     {
         public IBuilderWorkflow<T> GetWorkflow<T>(string workflowId)
         {
@@ -195,7 +195,7 @@ namespace Sample
             var runner = builder
                 //.SetActionFactory(new ActionFactory())
                 //.SetEvaluatorFactory(new EvaluatorFactory())
-                .SetWorkflowDefinitionFactory(new WorkflowDefinitionFactory())
+                .SetWorkflowDefinitionFactory(new WorkflowBuilderFactory())
                 .Start("first", new Foo());
 
             var complete = runner.ExecuteAutoFinalizeAsync(new CancellationToken());

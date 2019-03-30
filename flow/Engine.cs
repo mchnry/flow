@@ -276,7 +276,7 @@ namespace Mchnry.Flow
         //    return this;
         //}
 
-        IEngineLoader<TModel> IEngineLoader<TModel>.SetWorkflowDefinitionFactory(IWorkflowDefinitionFactory factory)
+        IEngineLoader<TModel> IEngineLoader<TModel>.SetWorkflowDefinitionFactory(IWorkflowBuilderFactory factory)
         {
             ((ImplementationManager<TModel>)this.ImplementationManager).DefinitionFactory = factory;
             return this;

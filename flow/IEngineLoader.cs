@@ -18,7 +18,7 @@ namespace Mchnry.Flow
         //IEngineLoader<TModel> LoadWorkflow(WorkDefine.Workflow workflow);
   
 
-        IEngineLoader<TModel> SetWorkflowDefinitionFactory(IWorkflowDefinitionFactory factory);
+        IEngineLoader<TModel> SetWorkflowDefinitionFactory(IWorkflowBuilderFactory factory);
         IEngineLoader<TModel> SetEvaluatorFactory(IRuleEvaluatorFactory factory);
         IEngineLoader<TModel> SetActionFactory(IActionFactory factory);
 

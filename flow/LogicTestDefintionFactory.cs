@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Mchnry.Flow
 {
-    internal class LogicTestDefintionFactory : IWorkflowDefinitionFactory
+    internal class LogicTestDefintionFactory : IWorkflowBuilderFactory
     {
         private readonly Configuration.Config config;
 

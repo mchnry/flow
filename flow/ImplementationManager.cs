@@ -21,7 +21,7 @@ namespace Mchnry.Flow
         WorkDefine.Workflow GetWorkflow(string id);
 
         ProxyActionFactory<TModel> ActionFactory { get; }
-        IWorkflowDefinitionFactory DefinitionFactory { get; }
+        IWorkflowBuilderFactory DefinitionFactory { get; }
 
         void SetActionFactoryProxy(IActionFactory factory);
         void SetEvaluatorFactoryProxy(IRuleEvaluatorFactory factory);
@@ -36,7 +36,7 @@ namespace Mchnry.Flow
 
         public ProxyActionFactory<TModel> ActionFactory { get; set; }
         public ProxyEvaluatorFactory<TModel> EvaluatorFactory { get; set; }
-        public IWorkflowDefinitionFactory DefinitionFactory { get; set; }
+        public IWorkflowBuilderFactory DefinitionFactory { get; set; }
 
         public Config Configuration { get; }
 
@@ -55,7 +55,7 @@ namespace Mchnry.Flow
             this.Configuration = configuration;
         }
 
-        internal ImplementationManager(IWorkflowDefinitionFactory definitionFactory, Configuration.Config configuration) : this(configuration)
+        internal ImplementationManager(IWorkflowBuilderFactory definitionFactory, Configuration.Config configuration) : this(configuration)
         {
             this.ActionFactory.Configuration = configuration;
             this.EvaluatorFactory.Configuration = configuration;
@@ -147,7 +147,7 @@ namespace Mchnry.Flow
         ProxyActionFactory<TModel> IImplementationManager<TModel>.ActionFactory => null;
 
         ProxyEvaluatorFactory<TModel> IImplementationManager<TModel>.EvaluatorFactory => null;
-        IWorkflowDefinitionFactory IImplementationManager<TModel>.DefinitionFactory => null;
+        IWorkflowBuilderFactory IImplementationManager<TModel>.DefinitionFactory => null;
 
 
         private readonly WorkDefine.Workflow workFlow;
