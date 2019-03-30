@@ -6,7 +6,7 @@
     <RootNamespace>Mchnry.Flow</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Description>Mchnry Workflow and Logic Engine</Description>
-    <Version>1.0.3-alpha91</Version>
+    <Version>1.1.1</Version>
     <PackageDest>$(userprofile)\.nuget\packages</PackageDest>
   </PropertyGroup>
 
@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="mchnry.core" Version="1.0.1-alpha*" />
+    <PackageReference Include="mchnry.core" Version="1.1.*" />
     <PackageReference Include="newtonsoft.json" Version="12.0.1" />
   </ItemGroup>
 
