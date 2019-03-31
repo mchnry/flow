@@ -154,16 +154,19 @@ namespace Sample
         public IBuilderWorkflow<T> GetWorkflow<T>(string workflowId)
         {
             IBuilderWorkflow<T> toReturn = default;
+            ExpressionRef xRef = default;
             switch (workflowId)
             {
                 case "first":
                     toReturn = (Builder<T>)Builder<Foo>.CreateBuilder("first").BuildFluent(ToDo => ToDo
                         .IfThenDo(
-                            If => If.And(
-                                First => First.True((b) => b.Eval(new AIsTrueEvaluator()).IsTrue()), Second => Second.True((b) => b.Eval(new BIsTrueEvaluator()).IsTrue())
-                            ),
+                            (If) => {
+                                xRef = If.And(
+                                    First => First.True((b) => b.Eval(new AIsTrueEvaluator()).IsTrue()), Second => Second.True((b) => b.Eval(new BIsTrueEvaluator()).IsTrue())
+                                );
+                            },
                             Then => Then.Do((a) => a.Do(new RunAnotherWorkflowAction()))
-                            )
+                            ).IfThenDo(If => If.True(xRef.Negate()), Then => Then.DoNothing())
                     );
                     break;
                 case "second":
