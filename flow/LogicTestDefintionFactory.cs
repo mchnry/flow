@@ -14,7 +14,7 @@ namespace Mchnry.Flow
         {
             this.config = config;
         }
-        public IBuilderWorkflow<T> GetWorkflow<T>(string workflowId)
+        public IWorkflowBuilder<T> GetWorkflow<T>(string workflowId)
         {
 
             ActionDefinition def = new ActionDefinition()
@@ -23,7 +23,7 @@ namespace Mchnry.Flow
                 Description = "Fake Action"
             };
 
-            return Builder<T>.CreateBuilder(workflowId, c =>
+            var wf = Builder<T>.CreateBuilder(workflowId, c =>
             {
                 c.Cache = this.config.Cache;
                 c.Convention = this.config.Convention;
@@ -33,7 +33,7 @@ namespace Mchnry.Flow
                 
             );
 
-            
+            return new WorkflowBuilder<T>(wf);
                 
                 
         }

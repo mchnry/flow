@@ -117,6 +117,7 @@ namespace Mchnry.Flow
         /// <param name="builder"></param>
         /// <returns></returns>
         IFluentActivityBuilder<T> Do(Action<IActionBuilder<T>> builder);
+        IFluentActivityBuilder<T> Chain(IWorkflowBuilder<T> builder);
         IFluentActivityBuilder<T> DoNothing();
 
         /// <summary>
@@ -131,6 +132,7 @@ namespace Mchnry.Flow
     public interface IFluentElseActivityBuilder<T>
     {
         IFluentActivityBuilder<T> Do(Action<IActionBuilder<T>> builder);
+        IFluentActivityBuilder<T> Chain(IWorkflowBuilder<T> builder);
         IFluentElseActivityBuilder<T> IfThenDo(Action<IFluentExpressionBuilder<T>> If, Action<IFluentActivityBuilder<T>> Then);
         IFluentActivityBuilder<T> Else(Action<IFluentActivityBuilder<T>> Then);
 
@@ -344,6 +346,26 @@ namespace Mchnry.Flow
 
         }
 
+        IFluentActivityBuilder<T> IFluentElseActivityBuilder<T>.Chain(IWorkflowBuilder<T> builder) { return ((IFluentActivityBuilder<T>)this).Chain(builder); }
+        IFluentActivityBuilder<T> IFluentActivityBuilder<T>.Chain(IWorkflowBuilder<T> builder)
+        {
+
+            WorkDefine.Activity parent = default(WorkDefine.Activity);
+            //get the parent, add this as a reaction
+
+            parent = this.activityStack.Peek();
+
+            string workflowId = builder.GetBuilder().Workflow.Id;
+
+            string actionId = $"chain{workflowId}";
+            this.Do(a => a.Do(new ChainFlowAction<T>(actionId, workflowId)));
+
+            parent.Reactions.Add(new WorkDefine.Reaction() { Work = this.created.ToString() });
+
+            return this;
+
+        }
+
         IActivityBuilder IElseActivityBuilder.Do(WorkDefine.ActionRef action) { return ((IActivityBuilder)this).Do(action); }
         IActivityBuilder IActivityBuilder.Do(WorkDefine.ActionRef action)
         {
@@ -360,6 +382,8 @@ namespace Mchnry.Flow
             return this;
 
         }
+
+
 
         IFluentElseActivityBuilder<T> IFluentElseActivityBuilder<T>.IfThenDo(Action<IFluentExpressionBuilder<T>> If, Action<IFluentActivityBuilder<T>> Then) { return ((IFluentActivityBuilder<T>)this).IfThenDo(If, Then); }
         IFluentElseActivityBuilder<T> IFluentActivityBuilder<T>.IfThenDo(Action<IFluentExpressionBuilder<T>> If, Action<IFluentActivityBuilder<T>> Then)

@@ -26,7 +26,7 @@ namespace Test.Lint
             });
 
             Mock<IWorkflowBuilderFactory> mkDefFactory = new Mock<IWorkflowBuilderFactory>();
-            mkDefFactory.Setup(g => g.GetWorkflow<string>(It.IsAny<string>())).Returns(builderWorkflow);
+            mkDefFactory.Setup(g => g.GetWorkflow<string>(It.IsAny<string>())).Returns(new WorkflowBuilder<string>( builderWorkflow));
 
             IEngineLoader<string> e = Mchnry.Flow.Engine<string>.CreateEngine();
             e.SetWorkflowDefinitionFactory(mkDefFactory.Object);

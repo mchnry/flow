@@ -19,7 +19,7 @@ namespace Mchnry.Flow
         IAction<TModel> GetAction(WorkDefine.ActionDefinition id);
         IRuleEvaluator<TModel> GetEvaluator(LogicDefine.Evaluator id);
         WorkDefine.Workflow GetWorkflow(string id);
-
+        WorkDefine.Workflow GetWorkflow(IWorkflowBuilder<TModel> builder);
         ProxyActionFactory<TModel> ActionFactory { get; }
         IWorkflowBuilderFactory DefinitionFactory { get; }
 
@@ -80,8 +80,14 @@ namespace Mchnry.Flow
 
         public virtual WorkDefine.Workflow GetWorkflow(string id)
         {
-            Builder<TModel> builder = (Builder<TModel>)this.DefinitionFactory.GetWorkflow<TModel>(id);
+            IWorkflowBuilder<TModel> builder = this.DefinitionFactory.GetWorkflow<TModel>(id);
+            return this.GetWorkflow(builder);
+        }
 
+        public virtual WorkDefine.Workflow GetWorkflow(IWorkflowBuilder<TModel> workflowBuilder)
+        {
+
+            Builder<TModel> builder = (Builder<TModel>)workflowBuilder.GetBuilder();
             foreach (var action in builder.actions)
             {
                 this.ActionFactory.AddAction(action.Key, action.Value);
@@ -92,7 +98,7 @@ namespace Mchnry.Flow
                 this.EvaluatorFactory.AddEvaluator(eval.Key, eval.Value);
             }
 
-  
+
 
             WorkDefine.Workflow toReturn = ((IBuilderWorkflow<TModel>)builder).Workflow;
 
@@ -103,7 +109,6 @@ namespace Mchnry.Flow
             }
 
             return toReturn;
-
         }
 
         public virtual IRuleEvaluator<TModel> GetEvaluator(LogicDefine.Evaluator def)
@@ -177,7 +182,11 @@ namespace Mchnry.Flow
         }
         public WorkDefine.Workflow GetWorkflow(string id)
         {
-            return this.df.GetWorkflow<TModel>(id).Workflow;
+            return this.df.GetWorkflow<TModel>(id).GetBuilder().Workflow;
+        }
+        public WorkDefine.Workflow GetWorkflow(IWorkflowBuilder<TModel> builder)
+        {
+            return builder.GetBuilder().Workflow;
         }
 
         public void SetActionFactoryProxy(IActionFactory factory)

@@ -339,6 +339,25 @@ namespace Mchnry.Flow
             this.WorkflowCache = this.Configuration.Cache.Spawn(wf.Id);
         }
 
+        private void LoadWorkflow(IWorkflowBuilder<TModel> builder)
+        {
+            WorkDefine.Workflow wf = null;
+            if (this.WorkflowManager != null)
+            {
+                wf = this.WorkflowManager.WorkFlow;
+            }
+            else
+            {
+                wf = this.ImplementationManager.GetWorkflow(builder);
+                this.WorkflowManager = new WorkflowManager(wf, this.Configuration);
+
+            }
+
+            this.RunManager = new RunManager(this.Configuration, wf.Id);
+            this.ValidationContainer = ValidationContainer.CreateValidationContainer(wf.Id);
+            this.WorkflowCache = this.Configuration.Cache.Spawn(wf.Id);
+        }
+
         IEngineRunner<TModel> IEngineLoader<TModel>.Start(string workflowId, TModel model)
         {
             LoadWorkflow(workflowId);
@@ -346,7 +365,13 @@ namespace Mchnry.Flow
 
             return this;
         }
+        IEngineRunner<TModel> IEngineLoader<TModel>.Start(IWorkflowBuilder<TModel> builder, TModel model)
+        {
+            LoadWorkflow(builder);
+            ((IEngineScope<TModel>)this).SetModel(model);
 
+            return this;
+        }
 
 
 
@@ -508,7 +533,11 @@ namespace Mchnry.Flow
             LoadWorkflow(workflowId);
             return this;
         }
-
+        IEngineLinter<TModel> IEngineLoader<TModel>.Lint(IWorkflowBuilder<TModel> builder)
+        {
+            LoadWorkflow(builder);
+            return this;
+        }
 
 
         public async Task<LintInspector> LintAsync(Action<INeedIntent> addIntents, Action<Case> mockCase, CancellationToken token)
@@ -626,21 +655,55 @@ namespace Mchnry.Flow
         }
 
 
+        async Task IEngineScope<TModel>.RunWorkflowAsync<T>(IWorkflowBuilder<T> builder, T model, CancellationToken token)
+        {
+
+
+            ordinal++;
+            var subEngine = Engine<T>.CreateEngine((a) =>
+            {
+                a.Cache = this.Configuration.Cache;
+                a.Convention = this.Configuration.Convention;
+                a.Ordinal = ordinal;
+
+            })
+                .SetActionFactory(this.ImplementationManager.ActionFactory.proxy)
+                .SetEvaluatorFactory(this.ImplementationManager.EvaluatorFactory.proxy)
+                .SetWorkflowDefinitionFactory(this.ImplementationManager.DefinitionFactory);
+
+            Engine<T> asEngine = (Engine<T>)subEngine;
+
+            foreach (var v in this.ValidationContainer.Overrides)
+            {
+                subEngine.OverrideValidation(v);
+            }
+
+            var runner = subEngine.Start(builder, model);
+            var finalizer = await runner.ExecuteAsync(token);
+
+
+
+
+            //append all finalize to mine
+            foreach (var f in asEngine.finalize)
+            {
+                this.finalize.Add(f.Key, new DeferProxy<TModel, T>(f.Value, asEngine));
+            }
+            foreach (var f in asEngine.finalizeAlways)
+            {
+                this.finalize.Add(f.Key, new DeferProxy<TModel, T>(f.Value, asEngine));
+            }
+            //append validations to mine
+            foreach (var v in asEngine.ValidationContainer.Validations)
+            {
+                this.AddValidation(v);
+            }
+
+
+        }
+
         async Task IEngineScope<TModel>.RunWorkflowAsync<T>(string workflowId, T model, CancellationToken token)
         {
-            //ImplementationManager<T> subMgr = new ImplementationManager<T>( this.ImplementationManager.DefinitionFactory, this.Configuration);
-            //subMgr.SetActionFactoryProxy(this.ImplementationManager.ActionFactory.proxy);
-            //subMgr.SetEvaluatorFactoryProxy(this.ImplementationManager.EvaluatorFactory.proxy);
-
-            //WorkDefine.Workflow toRun = subMgr.GetWorkflow(workflowId);
-            //WorkflowManager mgr = new WorkflowManager(toRun, this.Configuration);
-
-            //mgr.RenameWorkflow(string.Format("{0}{1}{2}", toRun.Id, Configuration.Convention.Delimeter, subWFCount));
-            //subWFCount++;
-            //toRun = mgr.WorkFlow;
-
-            //we need to rename the workflow .. all the main workflow and all activities will have been
-            //named with the workflowid, so we need to replace
 
             ordinal++;
             var subEngine = Engine<T>.CreateEngine((a) =>

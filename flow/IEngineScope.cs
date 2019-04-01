@@ -58,5 +58,6 @@ namespace Mchnry.Flow
         StepTraceNode<ActivityProcess> Process { get; }
 
         Task RunWorkflowAsync<T>(string workflowId, T model, CancellationToken token);
+        Task RunWorkflowAsync<T>(IWorkflowBuilder<T> builder, T model, CancellationToken token);
     }
 }

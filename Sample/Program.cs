@@ -151,14 +151,14 @@ namespace Sample
 
     public class WorkflowBuilderFactory : IWorkflowBuilderFactory
     {
-        public IBuilderWorkflow<T> GetWorkflow<T>(string workflowId)
+        public IWorkflowBuilder<T> GetWorkflow<T>(string workflowId)
         {
             IBuilderWorkflow<T> toReturn = default;
             ExpressionRef xRef = default;
             switch (workflowId)
             {
                 case "first":
-                    toReturn = (Builder<T>)Builder<Foo>.CreateBuilder("first").BuildFluent(ToDo => ToDo
+                    toReturn =  (IBuilderWorkflow<T>)Builder<Foo>.CreateBuilder("first").BuildFluent(ToDo => ToDo
                         .IfThenDo(
                             (If) => {
                                 xRef = If.And(
@@ -170,7 +170,7 @@ namespace Sample
                     );
                     break;
                 case "second":
-                    toReturn = (Builder<T>)Builder<Bar>.CreateBuilder("second").BuildFluent(ToDo => ToDo
+                    toReturn = (IBuilderWorkflow<T>)Builder<Bar>.CreateBuilder("second").BuildFluent(ToDo => ToDo
                         .IfThenDo(
                             If => If.And(
                                 First => First.True((a) => a.Eval(new CIsTrueEvaluator()).IsTrue()), Second => Second.True((a) => a.Eval(new DIsTrueEvaluator()).IsTrue())
@@ -183,7 +183,7 @@ namespace Sample
 
             }
 
-            return toReturn;
+            return new WorkflowBuilder<T>( toReturn);
         }
     }
 
