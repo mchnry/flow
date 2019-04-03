@@ -167,7 +167,7 @@ namespace Mchnry.Flow.Analysis
                         //create a negation equation.
                         string negationId = ConventionHelper.NegateEquationName(rule.Id, this.config.Convention);
                         LogicDefine.Rule negated = (LogicDefine.Rule)rule.Clone();
-                        negated.TrueCondition = false;
+                        //negated.TrueCondition = false;
 
                         if (workFlow.Equations.Count(g => g.Id == negationId) == 0)
                         {
@@ -181,6 +181,8 @@ namespace Mchnry.Flow.Analysis
                             };
                             workFlow.Equations.Add(toAdd);
                         }
+
+                        rule.TrueCondition = true;
                         rule.Id = negationId;
                     }
 

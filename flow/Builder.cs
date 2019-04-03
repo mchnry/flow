@@ -10,20 +10,20 @@ using Mchnry.Flow.Logic;
 
 namespace Mchnry.Flow
 {
-    public class ExpressionRef
-    {
-        internal ExpressionRef(string Id) { this.Id = Id; }
+    //public class ExpressionRef
+    //{
+    //    internal ExpressionRef(string Id) { this.Id = Id; }
 
-        internal bool negate { get; set; } = false;
-        internal string Id { get; set; }
+    //    internal bool negate { get; set; } = false;
+    //    internal string Id { get; set; }
 
-        public ExpressionRef Negate()
-        {
-            this.negate = true;
-            return this;
-        }
+    //    public ExpressionRef Negate()
+    //    {
+    //        this.negate = true;
+    //        return this;
+    //    }
 
-    }
+    //}
 
     public interface IActionBuilder<T>
     {
@@ -142,10 +142,14 @@ namespace Mchnry.Flow
 
     public interface IFluentExpressionBuilder<T>
     {
-        void True(Action<IRuleBuilder<T>> builder);
-        void True(ExpressionRef xref);
-        ExpressionRef And(Action<IFluentExpressionBuilder<T>> first, Action<IFluentExpressionBuilder<T>> second);
-        ExpressionRef Or(Action<IFluentExpressionBuilder<T>> first, Action<IFluentExpressionBuilder<T>> second);
+        void RuleIsTrue(Action<IRuleBuilder<T>> builder);
+        //void RefIsTrue(ExpressionRef xref);
+
+        void ExpIsTrue(Action<IFluentExpressionBuilder<T>> If);
+        void ExpIsFalse(Action<IFluentExpressionBuilder<T>> If);
+
+        void And(Action<IFluentExpressionBuilder<T>> first, Action<IFluentExpressionBuilder<T>> second);
+        void Or(Action<IFluentExpressionBuilder<T>> first, Action<IFluentExpressionBuilder<T>> second);
 
     }
 
@@ -174,10 +178,10 @@ namespace Mchnry.Flow
     public interface IExpressionBuilder
     {
         void True(LogicDefine.Rule evaluatorId);
-        void True(ExpressionRef xref);
+        //void True(ExpressionRef xref);
 
-        ExpressionRef And(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second);
-        ExpressionRef Or(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second);
+        void And(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second);
+        void Or(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second);
 
     }
 
@@ -529,7 +533,93 @@ namespace Mchnry.Flow
             return this;
         }
 
-        ExpressionRef IFluentExpressionBuilder<T>.And(Action<IFluentExpressionBuilder<T>> first, Action<IFluentExpressionBuilder<T>> second)
+        void IFluentExpressionBuilder<T>.ExpIsTrue(Action<IFluentExpressionBuilder<T>> If)
+        {
+            string equationId = string.Empty;
+
+
+            //we are in a sub equation
+            if (this.epxressionStack.Count > 0)
+            {
+                string lastEquationId = this.epxressionStack.Peek().Id;
+                string suffix = (this.epxressionStack.Count % 2 == 0) ? "2" : "1";
+                equationId = lastEquationId + this.config.Convention.Delimeter + suffix;
+
+            }
+            else //we are at the root
+            {
+                string lastActivityId = this.activityStack.Peek().Id;
+                equationId = ConventionHelper.ChangePrefix(NamePrefixOptions.Activity, NamePrefixOptions.Equation, lastActivityId, this.config.Convention);
+
+            }
+
+            LogicDefine.Equation toAdd = new LogicDefine.Equation()
+            {
+                Condition = Logic.Operand.And,
+                Id = equationId
+            };
+
+            this.epxressionStack.Push(toAdd);
+            this.workflowManager.AddEquation(toAdd);
+
+
+            string firstId, secondId = null;
+            If(this);
+            firstId = this.epxressionStack.Pop().ShortHand;
+
+            secondId = ConventionHelper.TrueEvaluator(this.config.Convention);
+
+
+            toAdd.First = firstId;
+            toAdd.Second = secondId;
+
+            
+        }
+        void IFluentExpressionBuilder<T>.ExpIsFalse(Action<IFluentExpressionBuilder<T>> If)
+        {
+            string equationId = string.Empty;
+
+
+            //we are in a sub equation
+            if (this.epxressionStack.Count > 0)
+            {
+                string lastEquationId = this.epxressionStack.Peek().Id;
+                string suffix = (this.epxressionStack.Count % 2 == 0) ? "2" : "1";
+                equationId = lastEquationId + this.config.Convention.Delimeter + suffix;
+
+            }
+            else //we are at the root
+            {
+                string lastActivityId = this.activityStack.Peek().Id;
+                equationId = ConventionHelper.ChangePrefix(NamePrefixOptions.Activity, NamePrefixOptions.Equation, lastActivityId, this.config.Convention);
+
+            }
+
+            LogicDefine.Equation toAdd = new LogicDefine.Equation()
+            {
+                Condition = Logic.Operand.And,
+                Id = equationId
+            };
+
+            this.epxressionStack.Push(toAdd);
+            this.workflowManager.AddEquation(toAdd);
+
+
+            string firstId, secondId = null;
+            If(this);
+
+            LogicDefine.Rule firstRule = this.epxressionStack.Pop().ShortHand;
+            firstRule.TrueCondition = !firstRule.TrueCondition;
+
+            firstId = firstRule.ShortHand;
+
+            secondId = ConventionHelper.TrueEvaluator(this.config.Convention);
+
+
+            toAdd.First = firstId;
+            toAdd.Second = secondId;
+        }
+        void IFluentExpressionBuilder<T>.And(Action<IFluentExpressionBuilder<T>> first, Action<IFluentExpressionBuilder<T>> second)
         {
 
             string equationId = string.Empty;
@@ -569,11 +659,11 @@ namespace Mchnry.Flow
             toAdd.First = firstId;
             toAdd.Second = secondId;
 
-            return new ExpressionRef(toAdd.ShortHand);
+            //return new ExpressionRef(toAdd.ShortHand);
     
         }
 
-        ExpressionRef IExpressionBuilder.And(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second)
+        void IExpressionBuilder.And(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second)
         {
 
             string equationId = string.Empty;
@@ -614,11 +704,11 @@ namespace Mchnry.Flow
             toAdd.First = firstId;
             toAdd.Second = secondId;
 
-            return new ExpressionRef(toAdd.ShortHand);
+            // return new ExpressionRef(toAdd.ShortHand);
 
         }
 
-        ExpressionRef IFluentExpressionBuilder<T>.Or(Action<IFluentExpressionBuilder<T>> first, Action<IFluentExpressionBuilder<T>> second)
+        void IFluentExpressionBuilder<T>.Or(Action<IFluentExpressionBuilder<T>> first, Action<IFluentExpressionBuilder<T>> second)
         {
             string equationId = string.Empty;
             //we are in a sub equation
@@ -655,10 +745,10 @@ namespace Mchnry.Flow
             toAdd.First = firstId;
             toAdd.Second = secondId;
 
-            return new ExpressionRef(toAdd.ShortHand);
+            //return new ExpressionRef(toAdd.ShortHand);
         }
 
-        ExpressionRef IExpressionBuilder.Or(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second)
+        void IExpressionBuilder.Or(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second)
         {
             string equationId = string.Empty;
             //we are in a sub equation
@@ -695,10 +785,10 @@ namespace Mchnry.Flow
             toAdd.First = firstId;
             toAdd.Second = secondId;
 
-            return new ExpressionRef(toAdd.ShortHand);
+            //return new ExpressionRef(toAdd.ShortHand);
         }
 
-        void IFluentExpressionBuilder<T>.True(Action<IRuleBuilder<T>> builder)
+        void IFluentExpressionBuilder<T>.RuleIsTrue(Action<IRuleBuilder<T>> builder)
         {
 
             RuleBuilder<T> builderRef = new RuleBuilder<T>();
@@ -746,19 +836,19 @@ namespace Mchnry.Flow
 
         }
 
-        void IFluentExpressionBuilder<T>.True(ExpressionRef xref) { ((IExpressionBuilder)this).True(xref); }
-        void IExpressionBuilder.True(ExpressionRef xref)
-        {
-            //all the work has been done, we just need to eval negate and push to stack
-            LogicDefine.Rule ev = xref.Id;
+        //void IFluentExpressionBuilder<T>.RefIsTrue(ExpressionRef xref) { ((IExpressionBuilder)this).True(xref); }
+        //void IExpressionBuilder.True(ExpressionRef xref)
+        //{
+        //    //all the work has been done, we just need to eval negate and push to stack
+        //    LogicDefine.Rule ev = xref.Id;
 
-            if (xref.negate)
-            {
-                ev.TrueCondition = !ev.TrueCondition;
-            }
-            this.epxressionStack.Push(ev);
+        //    if (xref.negate)
+        //    {
+        //        ev.TrueCondition = !ev.TrueCondition;
+        //    }
+        //    this.epxressionStack.Push(ev);
 
-        }
+        //}
 
         void IExpressionBuilder.True(LogicDefine.Rule evaluatorId)
         {

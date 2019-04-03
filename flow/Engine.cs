@@ -11,6 +11,7 @@ using LogicDefine = Mchnry.Flow.Logic.Define;
 using WorkDefine = Mchnry.Flow.Work.Define;
 using System.Linq;
 using Mchnry.Core.Cache;
+using Newtonsoft.Json;
 
 namespace Mchnry.Flow
 {
@@ -645,6 +646,9 @@ namespace Mchnry.Flow
 
             Sanitizer sanitizer = new Sanitizer(lintTrace, this.Configuration);
             WorkDefine.Workflow sanitized = sanitizer.Sanitize(this.WorkflowManager.WorkFlow);
+
+            string s = JsonConvert.SerializeObject(sanitized, new JsonSerializerSettings() { Formatting = Formatting.Indented });
+
             this.WorkflowManager.WorkFlow = sanitized;
             this.lintTracer = lintTrace;
             this.Sanitized = true;

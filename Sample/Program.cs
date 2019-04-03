@@ -61,7 +61,7 @@ namespace Sample
 
         async Task IRuleEvaluator<Foo>.EvaluateAsync(IEngineScope<Foo> scope, LogicEngineTrace trace, IRuleResult result, CancellationToken token)
         {
-            result.Pass();
+            result.Fail();
         }
     }
     public class BIsTrueEvaluator : IRuleEvaluator<Foo>
@@ -154,10 +154,10 @@ namespace Sample
         public IWorkflowBuilder<T> GetWorkflow<T>(string workflowId)
         {
 
-            ExpressionRef xRef = default;
+            //ExpressionRef xRef = default;
             Action<IFluentExpressionBuilder<Foo>> eq = (If) => {
-                xRef = If.And(
-                                    First => First.True((b) => b.Eval(new AIsTrueEvaluator()).IsTrue()), Second => Second.True((b) => b.Eval(new BIsTrueEvaluator()).IsTrue())
+                If.And(
+                                    First => First.RuleIsTrue((b) => b.Eval(new AIsTrueEvaluator()).IsTrue()), Second => Second.RuleIsTrue((b) => b.Eval(new BIsTrueEvaluator()).IsTrue())
                                 );
             };
 
@@ -168,16 +168,18 @@ namespace Sample
                 case "first":
                     toReturn =  (IBuilderWorkflow<T>)Builder<Foo>.CreateBuilder("first").BuildFluent(ToDo => ToDo
                         .IfThenDo(
-                            eq,
+                            If => If.ExpIsFalse(eq),
                             Then => Then.Do((a) => a.Do(new RunAnotherWorkflowAction()))
-                            ).IfThenDo(If => If.True(xRef.Negate()), Then => Then.DoNothing())
+                            ).IfThenDo(If => If.ExpIsTrue(eq), Then => Then.DoNothing())
                     );
+                    string s = JsonConvert.SerializeObject(toReturn.Workflow, new JsonSerializerSettings() { Formatting = Formatting.Indented });
+                    Console.WriteLine(s);
                     break;
                 case "second":
                     toReturn = (IBuilderWorkflow<T>)Builder<Bar>.CreateBuilder("second").BuildFluent(ToDo => ToDo
                         .IfThenDo(
                             If => If.And(
-                                First => First.True((a) => a.Eval(new CIsTrueEvaluator()).IsTrue()), Second => Second.True((a) => a.Eval(new DIsTrueEvaluator()).IsTrue())
+                                First => First.RuleIsTrue((a) => a.Eval(new CIsTrueEvaluator()).IsTrue()), Second => Second.RuleIsTrue((a) => a.Eval(new DIsTrueEvaluator()).IsTrue())
                             ),
                             Then => Then.Do((a) => a.Do(new DoSomethingAction()))
                             )
