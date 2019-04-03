@@ -221,7 +221,7 @@ namespace Mchnry.Flow
         internal WorkDefine.ActionRef created = null;
         internal Dictionary<string, int> subActivities = new Dictionary<string, int>();
         internal string WorkflowId;
-        internal string LastEquationid;
+        internal LogicDefine.IExpression LastEquation;
 
         public static IBuilder<T> CreateBuilder(string workflowId)
         {
@@ -410,9 +410,9 @@ namespace Mchnry.Flow
             If(this);
             Then(this);
 
-            LastEquationid = this.epxressionStack.Pop().ShortHand;
+            LastEquation = this.epxressionStack.Pop();
             
-            parent.Reactions.Add(new WorkDefine.Reaction() { Logic = LastEquationid, Work = toBuild.Id });
+            parent.Reactions.Add(new WorkDefine.Reaction() { Logic = LastEquation.ShortHand, Work = toBuild.Id });
 
             this.activityStack.Pop();
 
@@ -444,9 +444,9 @@ namespace Mchnry.Flow
             If(this);
             Then(this);
 
-            LastEquationid = this.epxressionStack.Pop().ShortHand;
+            LastEquation = this.epxressionStack.Pop();
 
-            parent.Reactions.Add(new WorkDefine.Reaction() { Logic = LastEquationid, Work = toBuild.Id });
+            parent.Reactions.Add(new WorkDefine.Reaction() { Logic = LastEquation.ShortHand, Work = toBuild.Id });
 
             this.activityStack.Pop();
 
@@ -474,7 +474,12 @@ namespace Mchnry.Flow
             activityStack.Push(toBuild);
             this.workflowManager.AddActivity(toBuild);
 
-             string equationId = "!" + LastEquationid;           
+
+            LogicDefine.Rule equationAsRule = LastEquation.ShortHand;
+            //negate
+            equationAsRule.TrueCondition = !equationAsRule.TrueCondition;
+
+            string equationId = equationAsRule.ShortHand;           
             Then(this);
 
 
@@ -507,7 +512,12 @@ namespace Mchnry.Flow
             activityStack.Push(toBuild);
             this.workflowManager.AddActivity(toBuild);
 
-            string equationId = "!" + LastEquationid;
+            LogicDefine.Rule equationAsRule = LastEquation.ShortHand;
+            //negate
+            equationAsRule.TrueCondition = !equationAsRule.TrueCondition;
+
+            string equationId = equationAsRule.ShortHand;
+
             Then(this);
 
 

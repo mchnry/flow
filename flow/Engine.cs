@@ -28,7 +28,9 @@ namespace Mchnry.Flow
 
         internal virtual IImplementationManager<TModel> ImplementationManager { get; set; }
         internal virtual WorkflowManager WorkflowManager { get; set; }
-        internal virtual RunManager RunManager { get; set; }
+        internal static RunManager GlobalRunManager { get; set; }
+
+        internal virtual RunManager RunManager => GlobalRunManager;
 
         //store reference to all actions to run during finalize (if all validations succeed)
         private Dictionary<string, IDeferredAction<TModel>> finalize = new Dictionary<string, IDeferredAction<TModel>>();
@@ -96,11 +98,11 @@ namespace Mchnry.Flow
         internal virtual ActivityStatusOptions CurrentActivityStatus { get; set; } = ActivityStatusOptions.Engine_Loading;
 
 
-        LogicDefine.Rule IEngineScope<TModel>.CurrentRuleDefinition => this.RunManager.CurrentRuleDefinition;
+        LogicDefine.Rule IEngineScope<TModel>.CurrentRuleDefinition => RunManager.CurrentRuleDefinition;
 
-        WorkDefine.ActionRef IEngineScope<TModel>.CurrentAction => this.RunManager.CurrentAction;
+        WorkDefine.ActionRef IEngineScope<TModel>.CurrentAction => RunManager.CurrentAction;
 
-        WorkDefine.Activity IEngineScope<TModel>.CurrentActivity => this.RunManager.CurrentActivity;
+        WorkDefine.Activity IEngineScope<TModel>.CurrentActivity => RunManager.CurrentActivity;
 
 
         StepTraceNode<ActivityProcess> IEngineScopeDefer<TModel>.Process => this.Tracer.Root;
@@ -109,7 +111,7 @@ namespace Mchnry.Flow
         StepTraceNode<ActivityProcess> IEngineComplete<TModel>.Process => this.Tracer.Root;
 
 
-        EngineStatusOptions IEngineComplete<TModel>.Status => this.RunManager.EngineStatus;
+        EngineStatusOptions IEngineComplete<TModel>.Status => RunManager.EngineStatus;
 
 
         //store all validations created by validators/evaluators
@@ -122,17 +124,17 @@ namespace Mchnry.Flow
             //can only occure when rule is evaluating or activity is executing
             if (this.CurrentActivityStatus == ActivityStatusOptions.Action_Running)
             {
-                string scope = this.RunManager.CurrentActivity.Id;
+                string scope = RunManager.CurrentActivity.Id;
                 this.ValidationContainer.ScopeToRoot().Scope(scope).AddValidation(toAdd);
 
 
             }
             else if (this.CurrentActivityStatus == ActivityStatusOptions.Rule_Evaluating)
             {
-                string scope = this.RunManager.CurrentRuleDefinition.Id;
-                if (!string.IsNullOrEmpty(this.RunManager.CurrentRuleDefinition.Context))
+                string scope = RunManager.CurrentRuleDefinition.Id;
+                if (!string.IsNullOrEmpty(RunManager.CurrentRuleDefinition.Context))
                 {
-                    scope = string.Format("{0}.{1}", scope, this.RunManager.CurrentRuleDefinition.Context.GetHashCode().ToString());
+                    scope = string.Format("{0}.{1}", scope, RunManager.CurrentRuleDefinition.Context.GetHashCode().ToString());
                 }
                 this.ValidationContainer.ScopeToRoot().Scope(scope).AddValidation(toAdd);
 
@@ -147,7 +149,7 @@ namespace Mchnry.Flow
         //defer is called during the execution of an IAction
         void IEngineScope<TModel>.Defer(IDeferredAction<TModel> action, bool onlyIfValidationsResolved)
         {
-            string key = this.RunManager.GetDeferralId();
+            string key = RunManager.GetDeferralId();
             if (onlyIfValidationsResolved)
             {
                 this.finalize.Add(key,action);
@@ -230,7 +232,7 @@ namespace Mchnry.Flow
             switch(scope)
             {
                 case CacheScopeOptions.Activity:
-                    toReturn = this.WorkflowCache.Spawn(this.RunManager.CurrentActivity.Id).Read<T>(key);
+                    toReturn = this.WorkflowCache.Spawn(RunManager.CurrentActivity.Id).Read<T>(key);
                     break;
                 case CacheScopeOptions.Global:
                     toReturn = this.GlobalCache.Read<T>(key);
@@ -293,7 +295,7 @@ namespace Mchnry.Flow
                     this.WorkflowCache.Insert<T>(key, value);
                     break;
                 case CacheScopeOptions.Activity:
-                    this.WorkflowCache.Spawn(this.RunManager.CurrentActivity.Id).Insert<T>(key, value);
+                    this.WorkflowCache.Spawn(RunManager.CurrentActivity.Id).Insert<T>(key, value);
                     break;
                 case CacheScopeOptions.Global:
                     this.GlobalCache.Insert<T>(key, value);
@@ -334,7 +336,11 @@ namespace Mchnry.Flow
 
             }
 
-            this.RunManager = new RunManager(this.Configuration, wf.Id);
+            if (GlobalRunManager == null)
+            {
+                GlobalRunManager = new RunManager(this.Configuration.Convention, wf.Id);
+            }
+
             this.ValidationContainer = ValidationContainer.CreateValidationContainer(wf.Id);
             this.WorkflowCache = this.Configuration.Cache.Spawn(wf.Id);
         }
@@ -353,7 +359,10 @@ namespace Mchnry.Flow
 
             }
 
-            this.RunManager = new RunManager(this.Configuration, wf.Id);
+            if (GlobalRunManager == null)
+            {
+                GlobalRunManager = new RunManager(this.Configuration.Convention, wf.Id);
+            }
             this.ValidationContainer = ValidationContainer.CreateValidationContainer(wf.Id);
             this.WorkflowCache = this.Configuration.Cache.Spawn(wf.Id);
         }
@@ -645,7 +654,7 @@ namespace Mchnry.Flow
         {
             if (hard)
             {
-                this.RunManager.Reset();
+                RunManager.Reset();
                 this.CurrentActivityStatus = ActivityStatusOptions.Engine_Loading;
                 this.finalize = new Dictionary<string, IDeferredAction<TModel>>();
                 this.finalizeAlways = new Dictionary<string, IDeferredAction<TModel>>();

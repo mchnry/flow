@@ -17,11 +17,11 @@ namespace Mchnry.Flow
         internal virtual WorkDefine.Activity CurrentActivity { get; set; }
         //current status of running engine
         internal virtual EngineStatusOptions EngineStatus { get; set; } = EngineStatusOptions.NotStarted;
-        internal Configuration.Config config;
+        internal Configuration.Convention config;
         private readonly string workflowId;
         internal Dictionary<string, int> deferrals = new Dictionary<string, int>();
 
-        internal RunManager(Configuration.Config config, string workflowId)
+        internal RunManager(Configuration.Convention config, string workflowId)
         {
             this.config = config;
             this.workflowId = workflowId;
@@ -75,7 +75,7 @@ namespace Mchnry.Flow
                 this.deferrals.Add(key, cnt);
             }
 
-            return string.Format("{0}{1}{2}{3}{4}", key, this.config.Convention.Delimeter, this.workflowId, this.config.Convention.Delimeter, cnt);
+            return string.Format("{0}{1}{2}{3}{4}", key, this.config.Delimeter, this.workflowId, this.config.Delimeter, cnt);
 
         }
     }
