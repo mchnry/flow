@@ -663,6 +663,7 @@ namespace Mchnry.Flow
                 this.finalize = new Dictionary<string, IDeferredAction<TModel>>();
                 this.finalizeAlways = new Dictionary<string, IDeferredAction<TModel>>();
                 this.Configuration.Ordinal = 0;
+                this.Configuration.Cache.Flush();
                 this.Tracer = this.Tracer = new EngineStepTracer(new ActivityProcess("CreateEngine", ActivityStatusOptions.Engine_Loading, null));
             }
         }

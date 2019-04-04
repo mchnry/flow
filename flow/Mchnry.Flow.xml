@@ -136,21 +136,133 @@
             <summary>
             Interface for fluent activity builder.
             </summary>
-            <typeparam name="T"></typeparam>
+            <typeparam name="T">Type of model used in flow</typeparam>
         </member>
         <member name="M:Mchnry.Flow.IFluentActivityBuilder`1.Do(System.Action{Mchnry.Flow.IActionBuilder{`0}})">
             <summary>
-            
+            Execute the provided implementation of <see cref="T:Mchnry.Flow.IActionBuilder`1"/>
             </summary>
-            <param name="builder"></param>
-            <returns></returns>
+            <param name="builder">Implementation of IActionBuilder</param>
+            <returns><see cref="T:Mchnry.Flow.IFluentActivityBuilder`1"/></returns>
+        </member>
+        <member name="M:Mchnry.Flow.IFluentActivityBuilder`1.Chain(Mchnry.Flow.Work.IWorkflowBuilder{`0})">
+            <summary>
+            Chains another workflow to be executed as defined by this workflow.
+            </summary>
+            <remarks>
+            <list type="bullet">
+            <item>The chained workflow must use the same type of model.  Alternatively, can provide
+            and implementation if <see cref="T:Mchnry.Flow.Work.IAction`1"/> which uses scope to call another workflow of a different model type</item>
+            </list>
+            </remarks>
+            <param name="builder">Implementation of <see cref="T:Mchnry.Flow.Work.IWorkflowBuilder`1"/></param>
+            <returns><see cref="T:Mchnry.Flow.IFluentActivityBuilder`1"/></returns>
+        </member>
+        <member name="M:Mchnry.Flow.IFluentActivityBuilder`1.DoNothing">
+            <summary>
+            Placeholder for use while building a flow. This allows for the definition and linting of a flow
+            before developing the actions.
+            </summary>
+            <returns><see cref="T:Mchnry.Flow.IFluentActivityBuilder`1"/></returns>
         </member>
         <member name="M:Mchnry.Flow.IFluentActivityBuilder`1.IfThenDo(System.Action{Mchnry.Flow.IFluentExpressionBuilder{`0}},System.Action{Mchnry.Flow.IFluentActivityBuilder{`0}})">
             <summary>
-            
+            Builder for creating a condition reaction in an activity
             </summary>
-            <param name="If">Builder for conditional</param>
-            <param name="Then">Builder for action</param>
+            <param name="If">Implementation of <see cref="T:Mchnry.Flow.IFluentExpressionBuilder`1"/> for defining rule expression</param>
+            <param name="Then">Implementation of <see cref="T:Mchnry.Flow.IFluentActivityBuilder`1"/> for defining action</param>
+            <returns><see cref="T:Mchnry.Flow.IFluentElseActivityBuilder`1"/> ElseBuilder for quickly defining an else reaction</returns>
+        </member>
+        <member name="T:Mchnry.Flow.IFluentElseActivityBuilder`1">
+            <summary>
+            Fluent Interface for builing an activity. 
+            </summary>
+            <typeparam name="T">Type of model used in flow</typeparam>
+        </member>
+        <member name="M:Mchnry.Flow.IFluentElseActivityBuilder`1.Do(System.Action{Mchnry.Flow.IActionBuilder{`0}})">
+            <summary>
+            Execute the provided implementation of <see cref="T:Mchnry.Flow.IActionBuilder`1"/>
+            </summary>
+            <param name="builder">Implementation of IActionBuilder</param>
+            <returns><see cref="T:Mchnry.Flow.IFluentActivityBuilder`1"/></returns>
+        </member>
+        <member name="M:Mchnry.Flow.IFluentElseActivityBuilder`1.Chain(Mchnry.Flow.Work.IWorkflowBuilder{`0})">
+            <summary>
+            Chains another workflow to be executed as defined by this workflow.
+            </summary>
+            <remarks>
+            <list type="bullet">
+            <item>The chained workflow must use the same type of model.  Alternatively, can provide
+            and implementation if <see cref="T:Mchnry.Flow.Work.IAction`1"/> which uses scope to call another workflow of a different model type</item>
+            </list>
+            </remarks>
+            <param name="builder">Implementation of <see cref="T:Mchnry.Flow.Work.IWorkflowBuilder`1"/></param>
+            <returns><see cref="T:Mchnry.Flow.IFluentActivityBuilder`1"/></returns>
+        </member>
+        <member name="M:Mchnry.Flow.IFluentElseActivityBuilder`1.IfThenDo(System.Action{Mchnry.Flow.IFluentExpressionBuilder{`0}},System.Action{Mchnry.Flow.IFluentActivityBuilder{`0}})">
+            <summary>
+            Builder for creating a condition reaction in an activity
+            </summary>
+            <param name="If">Implementation of <see cref="T:Mchnry.Flow.IFluentExpressionBuilder`1"/> for defining rule expression</param>
+            <param name="Then">Implementation of <see cref="T:Mchnry.Flow.IFluentActivityBuilder`1"/> for defining action</param>
+            <returns><see cref="T:Mchnry.Flow.IFluentElseActivityBuilder`1"/> ElseBuilder for quickly defining an else reaction</returns>
+        </member>
+        <member name="M:Mchnry.Flow.IFluentElseActivityBuilder`1.Else(System.Action{Mchnry.Flow.IFluentActivityBuilder{`0}})">
+            <summary>
+            Defines the activity to execute if the prior activitie's condition evaluaed to false
+            </summary>
+            <param name="Then">Implementation of <see cref="T:Mchnry.Flow.IFluentActivityBuilder`1"/> to run</param>
+            <returns></returns>
+        </member>
+        <member name="T:Mchnry.Flow.IFluentExpressionBuilder`1">
+            <summary>
+            Fluent Interface for defining a rule expression.
+            </summary>
+            <typeparam name="T">Type of model used in flow.</typeparam>
+        </member>
+        <member name="M:Mchnry.Flow.IFluentExpressionBuilder`1.RuleIsTrue(System.Action{Mchnry.Flow.IRuleBuilder{`0}})">
+            <summary>
+            Defines a rule
+            </summary>
+            <param name="builder">Implementation of <see cref="T:Mchnry.Flow.Logic.IRule`1"/></param>
+        </member>
+        <member name="M:Mchnry.Flow.IFluentExpressionBuilder`1.ExpIsTrue(System.Action{Mchnry.Flow.IFluentExpressionBuilder{`0}})">
+            <summary>
+            Defines a rule where the result of the Expression defined by implementation of <see cref="T:Mchnry.Flow.IFluentExpressionBuilder`1"/> must be true.
+            </summary>
+            <param name="If">Implementation of <see cref="T:Mchnry.Flow.IFluentExpressionBuilder`1"/></param>
+        </member>
+        <member name="M:Mchnry.Flow.IFluentExpressionBuilder`1.ExpIsFalse(System.Action{Mchnry.Flow.IFluentExpressionBuilder{`0}})">
+            <summary>
+            Defines a rule where the result of the Expression defined by implementation of <see cref="T:Mchnry.Flow.IFluentExpressionBuilder`1"/> must be false.
+            </summary>
+            <param name="If">Implementation of <see cref="T:Mchnry.Flow.IFluentExpressionBuilder`1"/></param>
+        </member>
+        <member name="M:Mchnry.Flow.IFluentExpressionBuilder`1.And(System.Action{Mchnry.Flow.IFluentExpressionBuilder{`0}},System.Action{Mchnry.Flow.IFluentExpressionBuilder{`0}})">
+            <summary>
+            Defines an expression where the results of the first and second expressions must both be true.
+            </summary>
+            <param name="first">Implementation of <see cref="T:Mchnry.Flow.IFluentExpressionBuilder`1"/></param>
+            <param name="second">Implementation of <see cref="T:Mchnry.Flow.IFluentExpressionBuilder`1"/></param>
+        </member>
+        <member name="M:Mchnry.Flow.IFluentExpressionBuilder`1.Or(System.Action{Mchnry.Flow.IFluentExpressionBuilder{`0}},System.Action{Mchnry.Flow.IFluentExpressionBuilder{`0}})">
+            <summary>
+            Defines an expression where at least one of the results of the first and second expressions must be true.
+            </summary>
+            <param name="first">Implementation of <see cref="T:Mchnry.Flow.IFluentExpressionBuilder`1"/></param>
+            <param name="second">Implementation of <see cref="T:Mchnry.Flow.IFluentExpressionBuilder`1"/></param>
+        </member>
+        <member name="T:Mchnry.Flow.IBuilder`1">
+            <summary>
+            Interface for building a flow.
+            </summary>
+            <typeparam name="T">Type of model used in flow.</typeparam>
+        </member>
+        <member name="M:Mchnry.Flow.IBuilder`1.BuildFluent(System.Action{Mchnry.Flow.IFluentActivityBuilder{`0}})">
+            <summary>
+            Fluent Builder
+            </summary>
+            <param name="Activity"></param>
             <returns></returns>
         </member>
         <member name="M:Mchnry.Flow.Engine`1.#ctor(Mchnry.Flow.Configuration.Config)">

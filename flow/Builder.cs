@@ -150,40 +150,114 @@ namespace Mchnry.Flow
         /// Execute the provided implementation of <see cref="IActionBuilder{T}"/>
         /// </summary>
         /// <param name="builder">Implementation of IActionBuilder</param>
-        /// <returns></returns>
+        /// <returns><see cref="IFluentActivityBuilder{T}"/></returns>
         IFluentActivityBuilder<T> Do(Action<IActionBuilder<T>> builder);
+        /// <summary>
+        /// Chains another workflow to be executed as defined by this workflow.
+        /// </summary>
+        /// <remarks>
+        /// <list type="bullet">
+        /// <item>The chained workflow must use the same type of model.  Alternatively, can provide
+        /// and implementation if <see cref="IAction{TModel}"/> which uses scope to call another workflow of a different model type</item>
+        /// </list>
+        /// </remarks>
+        /// <param name="builder">Implementation of <see cref="IWorkflowBuilder{T}"/></param>
+        /// <returns><see cref="IFluentActivityBuilder{T}"/></returns>
         IFluentActivityBuilder<T> Chain(IWorkflowBuilder<T> builder);
+        /// <summary>
+        /// Placeholder for use while building a flow. This allows for the definition and linting of a flow
+        /// before developing the actions.
+        /// </summary>
+        /// <returns><see cref="IFluentActivityBuilder{T}"/></returns>
         IFluentActivityBuilder<T> DoNothing();
 
         /// <summary>
-        /// 
+        /// Builder for creating a condition reaction in an activity
         /// </summary>
-        /// <param name="If">Builder for conditional</param>
-        /// <param name="Then">Builder for action</param>
-        /// <returns></returns>
+        /// <param name="If">Implementation of <see cref="IFluentExpressionBuilder{T}"/> for defining rule expression</param>
+        /// <param name="Then">Implementation of <see cref="IFluentActivityBuilder{T}"/> for defining action</param>
+        /// <returns><see cref="IFluentElseActivityBuilder{T}"/> ElseBuilder for quickly defining an else reaction</returns>
         IFluentElseActivityBuilder<T> IfThenDo(Action<IFluentExpressionBuilder<T>> If, Action<IFluentActivityBuilder<T>> Then);
 
     }
+
+    /// <summary>
+    /// Fluent Interface for builing an activity. 
+    /// </summary>
+    /// <typeparam name="T">Type of model used in flow</typeparam>
     public interface IFluentElseActivityBuilder<T>
     {
+        /// <summary>
+        /// Execute the provided implementation of <see cref="IActionBuilder{T}"/>
+        /// </summary>
+        /// <param name="builder">Implementation of IActionBuilder</param>
+        /// <returns><see cref="IFluentActivityBuilder{T}"/></returns>
         IFluentActivityBuilder<T> Do(Action<IActionBuilder<T>> builder);
+        /// <summary>
+        /// Chains another workflow to be executed as defined by this workflow.
+        /// </summary>
+        /// <remarks>
+        /// <list type="bullet">
+        /// <item>The chained workflow must use the same type of model.  Alternatively, can provide
+        /// and implementation if <see cref="IAction{TModel}"/> which uses scope to call another workflow of a different model type</item>
+        /// </list>
+        /// </remarks>
+        /// <param name="builder">Implementation of <see cref="IWorkflowBuilder{T}"/></param>
+        /// <returns><see cref="IFluentActivityBuilder{T}"/></returns>
         IFluentActivityBuilder<T> Chain(IWorkflowBuilder<T> builder);
+        /// <summary>
+        /// Builder for creating a condition reaction in an activity
+        /// </summary>
+        /// <param name="If">Implementation of <see cref="IFluentExpressionBuilder{T}"/> for defining rule expression</param>
+        /// <param name="Then">Implementation of <see cref="IFluentActivityBuilder{T}"/> for defining action</param>
+        /// <returns><see cref="IFluentElseActivityBuilder{T}"/> ElseBuilder for quickly defining an else reaction</returns>
         IFluentElseActivityBuilder<T> IfThenDo(Action<IFluentExpressionBuilder<T>> If, Action<IFluentActivityBuilder<T>> Then);
+        /// <summary>
+        /// Defines the activity to execute if the prior activitie's condition evaluaed to false
+        /// </summary>
+        /// <param name="Then">Implementation of <see cref="IFluentActivityBuilder{T}"/> to run</param>
+        /// <returns></returns>
         IFluentActivityBuilder<T> Else(Action<IFluentActivityBuilder<T>> Then);
 
     }
 
 
-
+    /// <summary>
+    /// Fluent Interface for defining a rule expression.
+    /// </summary>
+    /// <typeparam name="T">Type of model used in flow.</typeparam>
     public interface IFluentExpressionBuilder<T>
     {
+        /// <summary>
+        /// Defines a rule
+        /// </summary>
+        /// <param name="builder">Implementation of <see cref="IRule{TModel}"/></param>
         void RuleIsTrue(Action<IRuleBuilder<T>> builder);
         //void RefIsTrue(ExpressionRef xref);
 
+        /// <summary>
+        /// Defines a rule where the result of the Expression defined by implementation of <see cref="IFluentExpressionBuilder{T}"/> must be true.
+        /// </summary>
+        /// <param name="If">Implementation of <see cref="IFluentExpressionBuilder{T}"/></param>
         void ExpIsTrue(Action<IFluentExpressionBuilder<T>> If);
+
+        /// <summary>
+        /// Defines a rule where the result of the Expression defined by implementation of <see cref="IFluentExpressionBuilder{T}"/> must be false.
+        /// </summary>
+        /// <param name="If">Implementation of <see cref="IFluentExpressionBuilder{T}"/></param>
         void ExpIsFalse(Action<IFluentExpressionBuilder<T>> If);
 
+        /// <summary>
+        /// Defines an expression where the results of the first and second expressions must both be true.
+        /// </summary>
+        /// <param name="first">Implementation of <see cref="IFluentExpressionBuilder{T}"/></param>
+        /// <param name="second">Implementation of <see cref="IFluentExpressionBuilder{T}"/></param>
         void And(Action<IFluentExpressionBuilder<T>> first, Action<IFluentExpressionBuilder<T>> second);
+        /// <summary>
+        /// Defines an expression where at least one of the results of the first and second expressions must be true.
+        /// </summary>
+        /// <param name="first">Implementation of <see cref="IFluentExpressionBuilder{T}"/></param>
+        /// <param name="second">Implementation of <see cref="IFluentExpressionBuilder{T}"/></param>
         void Or(Action<IFluentExpressionBuilder<T>> first, Action<IFluentExpressionBuilder<T>> second);
 
     }
