@@ -1,0 +1,266 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Mchnry.Flow</name>
+    </assembly>
+    <members>
+        <member name="M:Mchnry.Flow.Analysis.Context.HasValues(System.Collections.Generic.List{Mchnry.Flow.Analysis.ContextItem})">
+            <summary>
+            Options are inferred when traversing the logic.  However, caller can
+            use this to provide details (literals) about those options.
+            Caller need only provide the values that exist in the logic
+            </summary>
+            <param name="values"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Mchnry.Flow.Analysis.Context.OneOfExcusive">
+            <summary>
+            Expects that the test value can only be one of the items in the set of context, and that the 
+            set of context is finite.
+            </summary>
+            <example>when an equation tests for multiple cases - a,b,c - this means that only one
+            of those cases can be true, so we only need to test three cases.  Additionally, because
+            its exclusive, one of these must be true</example>
+        </member>
+        <member name="M:Mchnry.Flow.Analysis.Context.OneOfInclusive">
+            <summary>
+            Expects that the test value can only be one of the items in the set of context, and that the 
+            set of context is not finite, but the caller is only providing the test cases.
+            </summary>
+            <example>when an equation tests for multiple cases - a,b,c - this means that only one
+            of those cases can be true, so we only need to test three cases.  Additionally, because
+            its inclusive, there may be a case where all are false</example>
+        </member>
+        <member name="M:Mchnry.Flow.Analysis.Context.AnyOfExclusive">
+            <summary>
+            Expects that the test value can be any of the items in the set of context, and that the 
+            set of context is finite.
+            </summary>
+            <example>when an equation tests for multiple cases - a,b,c - this means that any
+            of those cases can be true, so we need to test all combinations (n^n).  Additionally, because
+            its exclusive, one of these must be true</example>
+        </member>
+        <member name="M:Mchnry.Flow.Analysis.Context.AnyOfInclusive">
+            <summary>
+            Expects that the test value can be any of the items in the set of context, and that the 
+            set of context is not finite, but the caller is only providing the test cases.
+            </summary>
+            <example>when an equation tests for multiple cases - a,b,c - this means that any
+            of those cases can be true, so we need to test all combinations (n^n).  Additionally, because
+            its inclusive, there may be a case where all are false</example>
+        </member>
+        <member name="T:Mchnry.Flow.Analysis.Sanitizer">
+            <summary>
+            Utility used to Sanitize a workflow definition
+            </summary>
+            <remarks>
+            <list type="bullet">
+            <item>This is used to </item>
+            </list>
+            </remarks>
+        </member>
+        <member name="T:Mchnry.Flow.IActionBuilder`1">
+            <summary>
+            Fluent Builder Interface for defining an action to be executed in a flow.
+            </summary>
+            <typeparam name="T">Type of model used in flow.</typeparam>
+        </member>
+        <member name="M:Mchnry.Flow.IActionBuilder`1.DoWithContext(Mchnry.Flow.Work.IAction{`0},System.String)">
+            <summary>
+            Define an action to be executed with context.
+            </summary>
+            <param name="action">Implementation of <see cref="T:Mchnry.Flow.Work.IAction`1"/></param>
+            <param name="context">Contextual parameter as defined by Action</param>
+        </member>
+        <member name="M:Mchnry.Flow.IActionBuilder`1.Do(Mchnry.Flow.Work.IAction{`0})">
+            <summary>
+            Define an action to be executed with context.
+            </summary>
+            <param name="action">Implementation of <see cref="T:Mchnry.Flow.Work.IAction`1"/></param>
+        </member>
+        <member name="T:Mchnry.Flow.ActionBuilder`1">
+            <summary>
+            Generic Implementation of <see cref="T:Mchnry.Flow.IActionBuilder`1"/>
+            </summary>
+            <typeparam name="T">Type of model class used in flow</typeparam>
+        </member>
+        <member name="T:Mchnry.Flow.IRuleConditionBuilder">
+            <summary>
+            Fluent Interface for defining the true condition for the defined implementation of <see cref="T:Mchnry.Flow.Logic.IRuleEvaluator`1"/>
+            </summary>
+        </member>
+        <member name="M:Mchnry.Flow.IRuleConditionBuilder.IsTrue">
+            <summary>
+            The rule will return true if the evaluator returns true.
+            </summary>
+        </member>
+        <member name="M:Mchnry.Flow.IRuleConditionBuilder.IsFalse">
+            <summary>
+            The rule will return true if the evaluator returns false.
+            </summary>
+        </member>
+        <member name="M:Mchnry.Flow.IRuleConditionBuilder.Is(System.Boolean)">
+            <summary>
+            The rule will return true if the evaluator returns the value provided.
+            </summary>
+            <param name="condition">The true condition of the rule.</param>
+        </member>
+        <member name="T:Mchnry.Flow.IRuleBuilder`1">
+            <summary>
+            Fluent Interface for defining a rule.
+            </summary>
+            <typeparam name="T">Type of model used in flow.</typeparam>
+        </member>
+        <member name="M:Mchnry.Flow.IRuleBuilder`1.Eval(Mchnry.Flow.Logic.IRuleEvaluator{`0})">
+            <summary>
+            Defines the rule that queries an <see cref="T:Mchnry.Flow.Logic.IRuleEvaluator`1"/>
+            </summary>
+            <param name="evaluator">Implementation of <see cref="T:Mchnry.Flow.Logic.IRule`1"/> to query</param>
+            <returns>Reference as <see cref="T:Mchnry.Flow.IRuleConditionBuilder"/> to indicate the true condition of evaluator.</returns>
+        </member>
+        <member name="M:Mchnry.Flow.IRuleBuilder`1.EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator{`0},System.String)">
+            <summary>
+            Defines the rule that queries an <see cref="T:Mchnry.Flow.Logic.IRuleEvaluator`1"/>
+            </summary>
+            <param name="evaluator">Implementation of <see cref="T:Mchnry.Flow.Logic.IRule`1"/> to query</param>
+            <param name="context">The context to pass to the evaluator.</param>
+            <returns>Reference as <see cref="T:Mchnry.Flow.IRuleConditionBuilder"/> to indicate the true condition of evaluator.</returns>
+        </member>
+        <member name="T:Mchnry.Flow.RuleBuilder`1">
+            <summary>
+            Implementation of <see cref="T:Mchnry.Flow.IRuleBuilder`1"/> and <see cref="T:Mchnry.Flow.IRuleConditionBuilder"/> for defining a rule.
+            </summary>
+            <typeparam name="T">Type of model used in flow.</typeparam>
+        </member>
+        <member name="T:Mchnry.Flow.IFluentActivityBuilder`1">
+            <summary>
+            Interface for fluent activity builder.
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="M:Mchnry.Flow.IFluentActivityBuilder`1.Do(System.Action{Mchnry.Flow.IActionBuilder{`0}})">
+            <summary>
+            
+            </summary>
+            <param name="builder"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Mchnry.Flow.IFluentActivityBuilder`1.IfThenDo(System.Action{Mchnry.Flow.IFluentExpressionBuilder{`0}},System.Action{Mchnry.Flow.IFluentActivityBuilder{`0}})">
+            <summary>
+            
+            </summary>
+            <param name="If">Builder for conditional</param>
+            <param name="Then">Builder for action</param>
+            <returns></returns>
+        </member>
+        <member name="M:Mchnry.Flow.Engine`1.#ctor(Mchnry.Flow.Configuration.Config)">
+            <summary>
+            engine construcor
+            </summary>
+            <remarks>
+            <list type="bullet">
+            <item>
+            internal so that caller follows fluent construction 
+            starting with <see cref="!:CreateEngine(WorkDefine.Workflow)"/>
+            </item>
+            </list>
+            </remarks>
+            <param name="workFlow">workflow definition</param>
+        </member>
+        <member name="T:Mchnry.Flow.IRuleResult">
+            <summary>
+            Passed to RuleEvaluator Implementations so that the 
+            implementation can report its result to the engine.
+            </summary>
+        </member>
+        <member name="M:Mchnry.Flow.IRuleResult.Fail">
+            <summary>
+            The result of the evaluation is false.
+            </summary>
+        </member>
+        <member name="M:Mchnry.Flow.IRuleResult.FailWithValidation(Mchnry.Flow.Validation)">
+            <summary>
+            the result of the evaluation is false.
+            </summary>
+            <param name="validation">A validation to return to the caller.</param>
+        </member>
+        <member name="M:Mchnry.Flow.IRuleResult.Pass">
+            <summary>
+            the result of the evaluation is true.
+            </summary>
+        </member>
+        <member name="M:Mchnry.Flow.IRuleResult.SetResult(System.Boolean)">
+            <summary>
+            manually set the result of the evaluation.
+            </summary>
+            <param name="result"></param>
+        </member>
+        <member name="T:Mchnry.Flow.ConventionMisMatchException">
+            <summary>
+            exception thrown if engine encounters any issue with naming conventions
+            </summary>
+        </member>
+        <member name="F:Mchnry.Flow.CacheScopeOptions.Global">
+            <summary>
+            items in global scope are available to all workflows/actions/evaluators
+            </summary>
+        </member>
+        <member name="F:Mchnry.Flow.CacheScopeOptions.Activity">
+            <summary>
+            items in activity scope are only available to actions/evaluators within the current running activity
+            </summary>
+        </member>
+        <member name="F:Mchnry.Flow.CacheScopeOptions.Workflow">
+            <summary>
+            items in workflow scope are available to all actions/evaluators in the workflow
+            </summary>
+        </member>
+        <member name="M:Mchnry.Flow.ValidationOverride.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Internal constructor for ValidationOverride
+            </summary>
+            <remarks><list type="bullet">
+            <item>Instance can only be constructed by calling <see cref="M:Mchnry.Flow.Validation.CreateOverride(System.String,System.String)">Validation.CreateOverride</see></item>
+            </list></remarks>
+            <param name="key">References the unique id of the <see cref="T:Mchnry.Flow.Validation">Validation</see> in the instance of <see cref="T:Mchnry.Flow.IValidationContainer"/></param>
+            <param name="comment">Optionally provided by the calling system when overriding.  Can be user comments captured in UI, or static provided by caller.</param>
+            <param name="auditCode">Optional code provided by consuming system to reference some system specific logging entry where this overrride is recorded</param>
+        </member>
+        <member name="P:Mchnry.Flow.ValidationOverride.Key">
+            <summary>
+            References the unique identifier of the <see cref="T:Mchnry.Flow.Validation">Validation</see> that this overrides.
+            </summary>
+        </member>
+        <member name="P:Mchnry.Flow.ValidationOverride.Comment">
+            <summary>
+            Optionally provided by the calling system when overriding.  Can be user comments captured in UI, or static provided by caller.
+            </summary>
+        </member>
+        <member name="P:Mchnry.Flow.ValidationOverride.AuditCode">
+            <summary>
+            Optional code provided by consuming system to reference some system specific logging entry where this overrride is recorded
+            </summary>
+        </member>
+        <member name="P:Mchnry.Flow.ValidationOverride.Redeemed">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:Mchnry.Flow.ValidationSeverity.Confirm">
+            <summary>
+            Alerts the calling system that a confirmation is needed. 
+            </summary>
+        </member>
+        <member name="F:Mchnry.Flow.ValidationSeverity.Escalate">
+            <summary>
+            Similar to Confirm, but advises the calling system that the confirmation should be
+            provided by someone with escalated permissions
+            </summary>
+        </member>
+        <member name="F:Mchnry.Flow.ValidationSeverity.Fatal">
+            <summary>
+            Alerts the calling system of a stop-condition that must be fixed.
+            </summary>
+        </member>
+    </members>
+</doc>

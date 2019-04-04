@@ -10,28 +10,32 @@ using Mchnry.Flow.Logic;
 
 namespace Mchnry.Flow
 {
-    //public class ExpressionRef
-    //{
-    //    internal ExpressionRef(string Id) { this.Id = Id; }
 
-    //    internal bool negate { get; set; } = false;
-    //    internal string Id { get; set; }
-
-    //    public ExpressionRef Negate()
-    //    {
-    //        this.negate = true;
-    //        return this;
-    //    }
-
-    //}
-
+    /// <summary>
+    /// Fluent Builder Interface for defining an action to be executed in a flow.
+    /// </summary>
+    /// <typeparam name="T">Type of model used in flow.</typeparam>
     public interface IActionBuilder<T>
     {
+        /// <summary>
+        /// Define an action to be executed with context.
+        /// </summary>
+        /// <param name="action">Implementation of <see cref="Mchnry.Flow.Work.IAction{TModel}"/></param>
+        /// <param name="context">Contextual parameter as defined by Action</param>
         void DoWithContext(Mchnry.Flow.Work.IAction<T> action, string context);
+
+        /// <summary>
+        /// Define an action to be executed with context.
+        /// </summary>
+        /// <param name="action">Implementation of <see cref="Mchnry.Flow.Work.IAction{TModel}"/></param>
         void Do(Mchnry.Flow.Work.IAction<T> action);
 
     }
 
+    /// <summary>
+    /// Generic Implementation of <see cref="IActionBuilder{T}"/>
+    /// </summary>
+    /// <typeparam name="T">Type of model class used in flow</typeparam>
     public class ActionBuilder<T> : IActionBuilder<T>
     {
 
@@ -51,37 +55,68 @@ namespace Mchnry.Flow
         }
     }
 
+    /// <summary>
+    /// Fluent Interface for defining the true condition for the defined implementation of <see cref="IRuleEvaluator{TModel}"/>
+    /// </summary>
     public interface IRuleConditionBuilder
     {
+        /// <summary>
+        /// The rule will return true if the evaluator returns true.
+        /// </summary>
         void IsTrue();
+        /// <summary>
+        /// The rule will return true if the evaluator returns false.
+        /// </summary>
         void IsFalse();
+        /// <summary>
+        /// The rule will return true if the evaluator returns the value provided.
+        /// </summary>
+        /// <param name="condition">The true condition of the rule.</param>
         void Is(bool condition);
 
     }
 
-
+    /// <summary>
+    /// Fluent Interface for defining a rule.
+    /// </summary>
+    /// <typeparam name="T">Type of model used in flow.</typeparam>
     public interface IRuleBuilder<T>
     {
+        /// <summary>
+        /// Defines the rule that queries an <see cref="IRuleEvaluator{TModel}"/>
+        /// </summary>
+        /// <param name="evaluator">Implementation of <see cref="IRule{TModel}"/> to query</param>
+        /// <returns>Reference as <see cref="IRuleConditionBuilder"/> to indicate the true condition of evaluator.</returns>
         IRuleConditionBuilder Eval(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator);
+        /// <summary>
+        /// Defines the rule that queries an <see cref="IRuleEvaluator{TModel}"/>
+        /// </summary>
+        /// <param name="evaluator">Implementation of <see cref="IRule{TModel}"/> to query</param>
+        /// <param name="context">The context to pass to the evaluator.</param>
+        /// <returns>Reference as <see cref="IRuleConditionBuilder"/> to indicate the true condition of evaluator.</returns>
         IRuleConditionBuilder EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator, string context);
 
     }
 
+    /// <summary>
+    /// Implementation of <see cref="IRuleBuilder{T}"/> and <see cref="IRuleConditionBuilder"/> for defining a rule.
+    /// </summary>
+    /// <typeparam name="T">Type of model used in flow.</typeparam>
     public class RuleBuilder<T> : IRuleBuilder<T>, IRuleConditionBuilder
     {
 
         internal LogicDefine.Rule rule { get; set; }
         internal Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator { get; set; }
 
-        public IRuleConditionBuilder Eval(IRuleEvaluator<T> evaluator)
+        IRuleConditionBuilder IRuleBuilder<T>.Eval(IRuleEvaluator<T> evaluator)
         {
             this.evaluator = evaluator;
             this.rule = new LogicDefine.Rule() { Id = this.evaluator.Definition.Id, TrueCondition = true };
             return this;
         }
-        public IRuleConditionBuilder EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator, string context)
+        IRuleConditionBuilder IRuleBuilder<T>.EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator, string context)
         {
-            this.Eval(evaluator);
+            ((IRuleBuilder<T>)this).Eval(evaluator);
             this.rule.Context = context;
             return this;
         }
@@ -108,13 +143,13 @@ namespace Mchnry.Flow
     /// <summary>
     /// Interface for fluent activity builder.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">Type of model used in flow</typeparam>
     public interface IFluentActivityBuilder<T>
     {
         /// <summary>
-        /// 
+        /// Execute the provided implementation of <see cref="IActionBuilder{T}"/>
         /// </summary>
-        /// <param name="builder"></param>
+        /// <param name="builder">Implementation of IActionBuilder</param>
         /// <returns></returns>
         IFluentActivityBuilder<T> Do(Action<IActionBuilder<T>> builder);
         IFluentActivityBuilder<T> Chain(IWorkflowBuilder<T> builder);
@@ -188,8 +223,17 @@ namespace Mchnry.Flow
     #endregion
 
 
+    /// <summary>
+    /// Interface for building a flow.
+    /// </summary>
+    /// <typeparam name="T">Type of model used in flow.</typeparam>
     public interface IBuilder<T>
     {
+        /// <summary>
+        /// Fluent Builder
+        /// </summary>
+        /// <param name="Activity"></param>
+        /// <returns></returns>
         IBuilderWorkflow<T> BuildFluent(Action<IFluentActivityBuilder<T>> Activity);
         IBuilderWorkflow<T> Build(Action<IActivityBuilder> Activity);
     }
