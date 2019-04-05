@@ -142,7 +142,7 @@
             <summary>
             Execute the provided implementation of <see cref="T:Mchnry.Flow.IActionBuilder`1"/>
             </summary>
-            <param name="builder">Implementation of IActionBuilder</param>
+            <param name="Do">Implementation of IActionBuilder</param>
             <returns><see cref="T:Mchnry.Flow.IFluentActivityBuilder`1"/></returns>
         </member>
         <member name="M:Mchnry.Flow.IFluentActivityBuilder`1.Chain(Mchnry.Flow.Work.IWorkflowBuilder{`0})">
@@ -183,7 +183,7 @@
             <summary>
             Execute the provided implementation of <see cref="T:Mchnry.Flow.IActionBuilder`1"/>
             </summary>
-            <param name="builder">Implementation of IActionBuilder</param>
+            <param name="Do">Implementation of IActionBuilder</param>
             <returns><see cref="T:Mchnry.Flow.IFluentActivityBuilder`1"/></returns>
         </member>
         <member name="M:Mchnry.Flow.IFluentElseActivityBuilder`1.Chain(Mchnry.Flow.Work.IWorkflowBuilder{`0})">
@@ -220,11 +220,11 @@
             </summary>
             <typeparam name="T">Type of model used in flow.</typeparam>
         </member>
-        <member name="M:Mchnry.Flow.IFluentExpressionBuilder`1.RuleIsTrue(System.Action{Mchnry.Flow.IRuleBuilder{`0}})">
+        <member name="M:Mchnry.Flow.IFluentExpressionBuilder`1.Rule(System.Action{Mchnry.Flow.IRuleBuilder{`0}})">
             <summary>
             Defines a rule
             </summary>
-            <param name="builder">Implementation of <see cref="T:Mchnry.Flow.Logic.IRule`1"/></param>
+            <param name="rule">Implementation of <see cref="T:Mchnry.Flow.Logic.IRule`1"/></param>
         </member>
         <member name="M:Mchnry.Flow.IFluentExpressionBuilder`1.ExpIsTrue(System.Action{Mchnry.Flow.IFluentExpressionBuilder{`0}})">
             <summary>

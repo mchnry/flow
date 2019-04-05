@@ -157,7 +157,7 @@ namespace Sample
             //ExpressionRef xRef = default;
             Action<IFluentExpressionBuilder<Foo>> eq = (If) => {
                 If.And(
-                                    First => First.RuleIsTrue((b) => b.Eval(new AIsTrueEvaluator()).IsTrue()), Second => Second.RuleIsTrue((b) => b.Eval(new BIsTrueEvaluator()).IsTrue())
+                                    First => First.Rule((b) => b.Eval(new AIsTrueEvaluator()).IsTrue()), Second => Second.Rule((b) => b.Eval(new BIsTrueEvaluator()).IsTrue())
                                 );
             };
 
@@ -182,7 +182,7 @@ namespace Sample
                     toReturn = (IBuilderWorkflow<T>)Builder<Bar>.CreateBuilder("second").BuildFluent(ToDo => ToDo
                         .IfThenDo(
                             If => If.And(
-                                First => First.RuleIsTrue((a) => a.Eval(new CIsTrueEvaluator()).IsTrue()), Second => Second.RuleIsTrue((a) => a.Eval(new DIsTrueEvaluator()).IsTrue())
+                                First => First.Rule((a) => a.Eval(new CIsTrueEvaluator()).IsTrue()), Second => Second.Rule((a) => a.Eval(new DIsTrueEvaluator()).IsTrue())
                             ),
                             Then => Then.Do((a) => a.Do(new DoSomethingAction()))
                             )

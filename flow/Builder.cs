@@ -149,9 +149,9 @@ namespace Mchnry.Flow
         /// <summary>
         /// Execute the provided implementation of <see cref="IActionBuilder{T}"/>
         /// </summary>
-        /// <param name="builder">Implementation of IActionBuilder</param>
+        /// <param name="Do">Implementation of IActionBuilder</param>
         /// <returns><see cref="IFluentActivityBuilder{T}"/></returns>
-        IFluentActivityBuilder<T> Do(Action<IActionBuilder<T>> builder);
+        IFluentActivityBuilder<T> Do(Action<IActionBuilder<T>> Do);
         /// <summary>
         /// Chains another workflow to be executed as defined by this workflow.
         /// </summary>
@@ -190,9 +190,9 @@ namespace Mchnry.Flow
         /// <summary>
         /// Execute the provided implementation of <see cref="IActionBuilder{T}"/>
         /// </summary>
-        /// <param name="builder">Implementation of IActionBuilder</param>
+        /// <param name="Do">Implementation of IActionBuilder</param>
         /// <returns><see cref="IFluentActivityBuilder{T}"/></returns>
-        IFluentActivityBuilder<T> Do(Action<IActionBuilder<T>> builder);
+        IFluentActivityBuilder<T> Do(Action<IActionBuilder<T>> Do);
         /// <summary>
         /// Chains another workflow to be executed as defined by this workflow.
         /// </summary>
@@ -231,8 +231,8 @@ namespace Mchnry.Flow
         /// <summary>
         /// Defines a rule
         /// </summary>
-        /// <param name="builder">Implementation of <see cref="IRule{TModel}"/></param>
-        void RuleIsTrue(Action<IRuleBuilder<T>> builder);
+        /// <param name="rule">Implementation of <see cref="IRule{TModel}"/></param>
+        void Rule(Action<IRuleBuilder<T>> rule);
         //void RefIsTrue(ExpressionRef xref);
 
         /// <summary>
@@ -906,11 +906,11 @@ namespace Mchnry.Flow
             //return new ExpressionRef(toAdd.ShortHand);
         }
 
-        void IFluentExpressionBuilder<T>.RuleIsTrue(Action<IRuleBuilder<T>> builder)
+        void IFluentExpressionBuilder<T>.Rule(Action<IRuleBuilder<T>> action)
         {
 
             RuleBuilder<T> builderRef = new RuleBuilder<T>();
-            builder.Invoke(builderRef);
+            action.Invoke(builderRef);
 
             LogicDefine.Rule evaluatorId = builderRef.rule;
 

@@ -40,7 +40,7 @@ namespace Mchnry.Flow
 
         private ICacheManager GlobalCache;
         private ICacheManager WorkflowCache;
-        private string workflowId;
+
 
         /// <summary>
         /// engine construcor
