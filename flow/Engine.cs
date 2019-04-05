@@ -74,13 +74,16 @@ namespace Mchnry.Flow
         public static IEngineLoader<TModel> CreateEngine()
         {
 
-
+            ordinal = 0;
+            GlobalRunManager = null;
             return new Engine<TModel>(new Config());
 
 
         }
         public static IEngineLoader<TModel> CreateEngine(Action<Config> Configure)
         {
+            ordinal = 0;
+            GlobalRunManager = null;
             Config config = new Config();
             Configure?.Invoke(config);
             Engine<TModel> toReturn = new Engine<TModel>(config);
@@ -658,6 +661,8 @@ namespace Mchnry.Flow
         {
             if (hard)
             {
+                GlobalRunManager = null;
+                ordinal = 0;
                 RunManager.Reset();
                 this.CurrentActivityStatus = ActivityStatusOptions.Engine_Loading;
                 this.finalize = new Dictionary<string, IDeferredAction<TModel>>();

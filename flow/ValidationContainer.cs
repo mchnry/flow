@@ -9,9 +9,9 @@ namespace Mchnry.Flow
     public class ValidationContainer : IValidationContainer
     {
 
-        [JsonProperty]
+        [JsonIgnore]
         internal List<Validation> MyValidations { get; set; } = new List<Validation>();
-        [JsonProperty]
+        [JsonIgnore]
         internal List<ValidationOverride> MyOverrides { get; set; } = new List<ValidationOverride>();
 
         internal string RootScope { get; set; }
