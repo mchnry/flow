@@ -29,10 +29,10 @@ namespace Mchnry.Flow
         //Task<bool> CompleteAsync(IEngineScope<TModel> scope, WorkflowEngineTrace trace, CancellationToken token);
         IEngineLoader<TModel> SetGlobalModel<T>(string key, T model);
         IEngineRunner<TModel> Start(string workflowId, TModel model);
-        IEngineRunner<TModel> Start(IWorkflowBuilder<TModel> builder, TModel model);
+        IEngineRunner<TModel> StartFluent(IWorkflowBuilder<TModel> builder, TModel model);
 
         IEngineLinter<TModel> Lint(string workflowId);
-        IEngineLinter<TModel> Lint(IWorkflowBuilder<TModel> builder);
+        IEngineLinter<TModel> LintFluent(IWorkflowBuilder<TModel> builder);
 
         WorkDefine.Workflow Workflow { get; }
     }

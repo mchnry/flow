@@ -6,7 +6,7 @@
     <RootNamespace>Mchnry.Flow</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Description>Mchnry Workflow and Logic Engine</Description>
-    <Version>1.1.7-beta1</Version>
+    <Version>1.1.7-beta2</Version>
     <PackageDest>$(userprofile)\.nuget\packages</PackageDest>
   </PropertyGroup>
 

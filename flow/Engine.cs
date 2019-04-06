@@ -386,7 +386,7 @@ namespace Mchnry.Flow
 
             return this;
         }
-        IEngineRunner<TModel> IEngineLoader<TModel>.Start(IWorkflowBuilder<TModel> builder, TModel model)
+        IEngineRunner<TModel> IEngineLoader<TModel>.StartFluent(IWorkflowBuilder<TModel> builder, TModel model)
         {
             LoadWorkflow(builder);
             ((IEngineScope<TModel>)this).SetModel(model);
@@ -554,7 +554,7 @@ namespace Mchnry.Flow
             LoadWorkflow(workflowId);
             return this;
         }
-        IEngineLinter<TModel> IEngineLoader<TModel>.Lint(IWorkflowBuilder<TModel> builder)
+        IEngineLinter<TModel> IEngineLoader<TModel>.LintFluent(IWorkflowBuilder<TModel> builder)
         {
             LoadWorkflow(builder);
             return this;
@@ -700,7 +700,7 @@ namespace Mchnry.Flow
                 subEngine.OverrideValidation(v);
             }
 
-            var runner = subEngine.Start(builder, model);
+            var runner = subEngine.StartFluent(builder, model);
             var finalizer = await runner.ExecuteAsync(token);
 
 
