@@ -29,9 +29,9 @@ namespace Mchnry.Flow
 
         internal virtual IImplementationManager<TModel> ImplementationManager { get; set; }
         internal virtual WorkflowManager WorkflowManager { get; set; }
-        internal static RunManager GlobalRunManager { get; set; }
+        internal RunManager RunManager { get; set; }
 
-        internal virtual RunManager RunManager => GlobalRunManager;
+        
 
         //store reference to all actions to run during finalize (if all validations succeed)
         private Dictionary<string, IDeferredAction<TModel>> finalize = new Dictionary<string, IDeferredAction<TModel>>();
@@ -60,7 +60,7 @@ namespace Mchnry.Flow
             this.Configuration = config;
             this.Tracer = new EngineStepTracer(new ActivityProcess("CreateEngine", ActivityStatusOptions.Engine_Loading, null));
             this.ImplementationManager = new ImplementationManager<TModel>(this.Configuration);
-
+            
           
 
 
@@ -68,22 +68,23 @@ namespace Mchnry.Flow
 
             this.Sanitized = false;
         }
+        internal Engine(Config config, RunManager runManager) : this(config)
+        {
+            this.RunManager = RunManager;
+        }
 
-
-        internal static int ordinal = 0;
+        
         public static IEngineLoader<TModel> CreateEngine()
         {
 
-            ordinal = 0;
-            GlobalRunManager = null;
+            
             return new Engine<TModel>(new Config());
 
 
         }
         public static IEngineLoader<TModel> CreateEngine(Action<Config> Configure)
         {
-            ordinal = 0;
-            GlobalRunManager = null;
+        
             Config config = new Config();
             Configure?.Invoke(config);
             Engine<TModel> toReturn = new Engine<TModel>(config);
@@ -340,9 +341,12 @@ namespace Mchnry.Flow
 
             }
 
-            if (GlobalRunManager == null)
+            if (RunManager == null)
             {
-                GlobalRunManager = new RunManager(this.Configuration.Convention, wf.Id);
+                RunManager   = new RunManager(this.Configuration.Convention, wf.Id);
+            } else
+            {
+                this.RunManager.WorkflowId = wf.Id;
             }
 
             this.ValidationContainer = ValidationContainer.CreateValidationContainer(wf.Id);
@@ -363,10 +367,14 @@ namespace Mchnry.Flow
 
             }
 
-            if (GlobalRunManager == null)
+            if (RunManager == null)
             {
-                GlobalRunManager = new RunManager(this.Configuration.Convention, wf.Id);
+                RunManager = new RunManager(this.Configuration.Convention, wf.Id);
+            } else
+            {
+                this.RunManager.WorkflowId = wf.Id;
             }
+
             this.ValidationContainer = ValidationContainer.CreateValidationContainer(wf.Id);
             this.WorkflowCache = this.Configuration.Cache.Spawn(wf.Id);
         }
@@ -661,8 +669,7 @@ namespace Mchnry.Flow
         {
             if (hard)
             {
-                GlobalRunManager = null;
-                ordinal = 0;
+    
                 RunManager.Reset();
                 this.CurrentActivityStatus = ActivityStatusOptions.Engine_Loading;
                 this.finalize = new Dictionary<string, IDeferredAction<TModel>>();
@@ -676,16 +683,12 @@ namespace Mchnry.Flow
 
         async Task IEngineScope<TModel>.RunWorkflowAsync<T>(IWorkflowBuilder<T> builder, T model, CancellationToken token)
         {
+            string currentWorkflowId = this.RunManager.WorkflowId;
 
+            this.RunManager.Ordinal++;
+            IEngineLoader<T> subEngine = new Engine<T>(this.Configuration, this.RunManager);
 
-            ordinal++;
-            var subEngine = Engine<T>.CreateEngine((a) =>
-            {
-                a.Cache = this.Configuration.Cache;
-                a.Convention = this.Configuration.Convention;
-                a.Ordinal = ordinal;
-
-            })
+            subEngine
                 .SetActionFactory(this.ImplementationManager.ActionFactory.proxy)
                 .SetEvaluatorFactory(this.ImplementationManager.EvaluatorFactory.proxy)
                 .SetWorkflowDefinitionFactory(this.ImplementationManager.DefinitionFactory);
@@ -718,20 +721,18 @@ namespace Mchnry.Flow
                 this.AddValidation(v);
             }
 
+            this.RunManager.WorkflowId = currentWorkflowId;
 
         }
 
         async Task IEngineScope<TModel>.RunWorkflowAsync<T>(string workflowId, T model, CancellationToken token)
         {
+            string currentWorkflowId = this.RunManager.WorkflowId;
 
-            ordinal++;
-            var subEngine = Engine<T>.CreateEngine((a) =>
-            {
-                a.Cache = this.Configuration.Cache;
-                a.Convention = this.Configuration.Convention;
-                a.Ordinal = ordinal;
-                
-            })
+            this.RunManager.Ordinal++;
+            IEngineLoader<T> subEngine = new Engine<T>(this.Configuration, this.RunManager);
+
+            subEngine
                 .SetActionFactory(this.ImplementationManager.ActionFactory.proxy)
                 .SetEvaluatorFactory(this.ImplementationManager.EvaluatorFactory.proxy)
                 .SetWorkflowDefinitionFactory(this.ImplementationManager.DefinitionFactory);
@@ -763,7 +764,8 @@ namespace Mchnry.Flow
             {
                 this.AddValidation(v);
             }
-           
+
+            this.RunManager.WorkflowId = currentWorkflowId;
 
 
         }

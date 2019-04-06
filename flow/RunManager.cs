@@ -7,25 +7,30 @@ using WorkDefine = Mchnry.Flow.Work.Define;
 
 namespace Mchnry.Flow
 {
-    public class RunManager
+    internal class RunManager
     {
         //store known evaluator results to avoid rerunning already run evaluators
         private Dictionary<string, bool?> results = new Dictionary<string, bool?>();
         internal virtual LogicDefine.Rule CurrentRuleDefinition { get; set; } = null;
-
+        
         internal virtual WorkDefine.ActionRef CurrentAction { get; set; }
         internal virtual WorkDefine.Activity CurrentActivity { get; set; }
         //current status of running engine
         internal virtual EngineStatusOptions EngineStatus { get; set; } = EngineStatusOptions.NotStarted;
         internal Configuration.Convention config;
-        private readonly string workflowId;
+        
         internal Dictionary<string, int> deferrals = new Dictionary<string, int>();
+
+        internal int Ordinal { get; set; } = 0;
 
         internal RunManager(Configuration.Convention config, string workflowId)
         {
             this.config = config;
-            this.workflowId = workflowId;
+            this.WorkflowId = workflowId;
         }
+
+        internal string WorkflowId { get; set; }
+        
 
         internal virtual bool? GetResult(LogicDefine.Rule rule)
         {
@@ -75,7 +80,7 @@ namespace Mchnry.Flow
                 this.deferrals.Add(key, cnt);
             }
 
-            return string.Format("{0}{1}{2}{3}{4}", key, this.config.Delimeter, this.workflowId, this.config.Delimeter, cnt);
+            return string.Format("{0}{1}{2}{3}{4}", key, this.config.Delimeter, this.WorkflowId, this.config.Delimeter, cnt);
 
         }
     }
