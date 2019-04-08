@@ -70,7 +70,7 @@ namespace Mchnry.Flow
         }
         internal Engine(Config config, RunManager runManager) : this(config)
         {
-            this.RunManager = RunManager;
+            this.RunManager = runManager;
         }
 
         
