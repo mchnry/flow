@@ -189,7 +189,21 @@ namespace Sample
 
                     );
                     break;
-
+                case "third":
+                    toReturn = (IBuilderWorkflow<T>)Builder<Foo>.CreateBuilder("third").BuildFluent(ToDo => ToDo
+                        .IfThenDo(
+                            If => If.Rule(rule => rule.EvalInLine("abc", async (scope,trace,result,token) =>
+                            {
+                                result.SetResult(true);
+                            })), 
+                            Then => Then.Do(Do => Do.DoInLine("abc", async (scope,trace,token) =>
+                            {
+                                return true;
+                            }))
+                            
+                        )
+                    );
+                    break;
             }
 
             return new WorkflowBuilder<T>( toReturn);
@@ -209,6 +223,8 @@ namespace Sample
                 //.SetEvaluatorFactory(new EvaluatorFactory())
                 .SetWorkflowDefinitionFactory(new WorkflowBuilderFactory())
                 .Start("first", new Foo());
+
+          
 
             var complete = runner.ExecuteAutoFinalizeAsync(new CancellationToken());
 

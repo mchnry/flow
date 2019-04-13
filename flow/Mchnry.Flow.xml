@@ -78,6 +78,13 @@
             </summary>
             <param name="action">Implementation of <see cref="T:Mchnry.Flow.Work.IAction`1"/></param>
         </member>
+        <member name="M:Mchnry.Flow.IActionBuilder`1.DoInLine(System.String,System.Func{Mchnry.Flow.IEngineScope{`0},Mchnry.Flow.Diagnostics.WorkflowEngineTrace,System.Threading.CancellationToken,System.Threading.Tasks.Task{System.Boolean}})">
+            <summary>
+            Do an inline action
+            </summary>
+            <param name="actionName">Name of action</param>
+            <param name="action">Func to do</param>
+        </member>
         <member name="T:Mchnry.Flow.ActionBuilder`1">
             <summary>
             Generic Implementation of <see cref="T:Mchnry.Flow.IActionBuilder`1"/>
@@ -125,6 +132,14 @@
             <param name="evaluator">Implementation of <see cref="T:Mchnry.Flow.Logic.IRule`1"/> to query</param>
             <param name="context">The context to pass to the evaluator.</param>
             <returns>Reference as <see cref="T:Mchnry.Flow.IRuleConditionBuilder"/> to indicate the true condition of evaluator.</returns>
+        </member>
+        <member name="M:Mchnry.Flow.IRuleBuilder`1.EvalInLine(System.String,System.Func{Mchnry.Flow.IEngineScope{`0},Mchnry.Flow.Diagnostics.LogicEngineTrace,Mchnry.Flow.IRuleResult,System.Threading.CancellationToken,System.Threading.Tasks.Task})">
+            <summary>
+            Evaluate inline evaluator function
+            </summary>
+            <param name="evaluatorName">Name of evaluator</param>
+            <param name="evaluator">Func to evaluate</param>
+            <returns></returns>
         </member>
         <member name="T:Mchnry.Flow.RuleBuilder`1">
             <summary>

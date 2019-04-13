@@ -7,6 +7,9 @@ using Mchnry.Flow.Configuration;
 using System.Linq;
 using Mchnry.Flow.Work;
 using Mchnry.Flow.Logic;
+using Mchnry.Flow.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Mchnry.Flow
 {
@@ -30,6 +33,14 @@ namespace Mchnry.Flow
         /// <param name="action">Implementation of <see cref="Mchnry.Flow.Work.IAction{TModel}"/></param>
         void Do(Mchnry.Flow.Work.IAction<T> action);
 
+        /// <summary>
+        /// Do an inline action
+        /// </summary>
+        /// <param name="actionName">Name of action</param>
+        /// <param name="action">Func to do</param>
+        void DoInLine(string actionName, Func<IEngineScope<T>, WorkflowEngineTrace, CancellationToken, Task<bool>> action);
+
+
     }
 
     /// <summary>
@@ -47,11 +58,18 @@ namespace Mchnry.Flow
             ((IActionBuilder<T>)this).Do(action);
             this.actionRef.Context = context;
         }
+
         void IActionBuilder<T>.Do(IAction<T> action)
         {
             this.action = action;
             this.actionRef = new WorkDefine.ActionRef() { Id = action.Definition.Id };
 
+        }
+
+        void IActionBuilder<T>.DoInLine(string actionName, Func<IEngineScope<T>, WorkflowEngineTrace, CancellationToken, Task<bool>> actionToDo)
+        {
+            this.action = new DynamicAction<T>(new WorkDefine.ActionDefinition() { Id = actionName, Description = "Dynamic" }, actionToDo);
+            this.actionRef = new WorkDefine.ActionRef() { Id = action.Definition.Id };
         }
     }
 
@@ -96,6 +114,14 @@ namespace Mchnry.Flow
         /// <returns>Reference as <see cref="IRuleConditionBuilder"/> to indicate the true condition of evaluator.</returns>
         IRuleConditionBuilder EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator, string context);
 
+        /// <summary>
+        /// Evaluate inline evaluator function
+        /// </summary>
+        /// <param name="evaluatorName">Name of evaluator</param>
+        /// <param name="evaluator">Func to evaluate</param>
+        /// <returns></returns>
+        IRuleConditionBuilder EvalInLine(string evaluatorName, Func<IEngineScope<T>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluator);
+
     }
 
     /// <summary>
@@ -114,6 +140,14 @@ namespace Mchnry.Flow
             this.rule = new LogicDefine.Rule() { Id = this.evaluator.Definition.Id, TrueCondition = true };
             return this;
         }
+
+        IRuleConditionBuilder IRuleBuilder<T>.EvalInLine(string evaluatorName, Func<IEngineScope<T>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluatorToEval)
+        {
+            this.evaluator = new DynamicEvaluator<T>(new LogicDefine.Evaluator() { Id = evaluatorName, Description = "Dynamic" }, evaluatorToEval);
+            this.rule = new LogicDefine.Rule() { Id = this.evaluator.Definition.Id, TrueCondition = true };
+            return this;
+        }
+
         IRuleConditionBuilder IRuleBuilder<T>.EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator, string context)
         {
             ((IRuleBuilder<T>)this).Eval(evaluator);
