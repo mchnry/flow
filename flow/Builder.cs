@@ -10,6 +10,7 @@ using Mchnry.Flow.Logic;
 using Mchnry.Flow.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.ObjectModel;
 
 namespace Mchnry.Flow
 {
@@ -38,7 +39,7 @@ namespace Mchnry.Flow
         /// </summary>
         /// <param name="actionName">Name of action</param>
         /// <param name="action">Func to do</param>
-        void DoInLine(string actionName, Func<IEngineScope<T>, WorkflowEngineTrace, CancellationToken, Task<bool>> action);
+        void DoInLine(string actionName, string description, string context, Func<IEngineScope<T>, WorkflowEngineTrace, CancellationToken, Task<bool>> action);
 
 
     }
@@ -66,10 +67,10 @@ namespace Mchnry.Flow
 
         }
 
-        void IActionBuilder<T>.DoInLine(string actionName, Func<IEngineScope<T>, WorkflowEngineTrace, CancellationToken, Task<bool>> actionToDo)
+        void IActionBuilder<T>.DoInLine(string actionName, string description, string context, Func<IEngineScope<T>, WorkflowEngineTrace, CancellationToken, Task<bool>> actionToDo)
         {
-            this.action = new DynamicAction<T>(new WorkDefine.ActionDefinition() { Id = actionName, Description = "Dynamic" }, actionToDo);
-            this.actionRef = new WorkDefine.ActionRef() { Id = action.Definition.Id };
+            this.action = new DynamicAction<T>(new WorkDefine.ActionDefinition() { Id = actionName, Description = description??"Dynamic" }, actionToDo);
+            this.actionRef = new WorkDefine.ActionRef() { Id = action.Definition.Id, Context = context??string.Empty };
         }
     }
 
@@ -120,7 +121,7 @@ namespace Mchnry.Flow
         /// <param name="evaluatorName">Name of evaluator</param>
         /// <param name="evaluator">Func to evaluate</param>
         /// <returns></returns>
-        IRuleConditionBuilder EvalInLine(string evaluatorName, Func<IEngineScope<T>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluator);
+        IRuleConditionBuilder EvalInLine(string evaluatorName, string description, string context, Func<IEngineScope<T>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluator);
 
     }
 
@@ -141,10 +142,10 @@ namespace Mchnry.Flow
             return this;
         }
 
-        IRuleConditionBuilder IRuleBuilder<T>.EvalInLine(string evaluatorName, Func<IEngineScope<T>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluatorToEval)
+        IRuleConditionBuilder IRuleBuilder<T>.EvalInLine(string evaluatorName, string description, string context, Func<IEngineScope<T>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluatorToEval)
         {
-            this.evaluator = new DynamicEvaluator<T>(new LogicDefine.Evaluator() { Id = evaluatorName, Description = "Dynamic" }, evaluatorToEval);
-            this.rule = new LogicDefine.Rule() { Id = this.evaluator.Definition.Id, TrueCondition = true };
+            this.evaluator = new DynamicEvaluator<T>(new LogicDefine.Evaluator() { Id = evaluatorName, Description = description??"Dynamic" }, evaluatorToEval);
+            this.rule = new LogicDefine.Rule() { Id = this.evaluator.Definition.Id, TrueCondition = true, Context = context??string.Empty };
             return this;
         }
 
@@ -344,6 +345,9 @@ namespace Mchnry.Flow
         /// <returns></returns>
         IBuilderWorkflow<T> BuildFluent(Action<IFluentActivityBuilder<T>> Activity);
         IBuilderWorkflow<T> Build(Action<IActivityBuilder> Activity);
+
+        ReadOnlyCollection<IAction<T>> Actions { get; }
+        ReadOnlyCollection<IRuleEvaluator<T>> Evaluators { get; }
     }
 
     public interface IBuilderWorkflow<T>
@@ -378,6 +382,9 @@ namespace Mchnry.Flow
         internal Dictionary<string, int> subActivities = new Dictionary<string, int>();
         internal string WorkflowId;
         internal LogicDefine.IExpression LastEquation;
+
+        ReadOnlyCollection<IAction<T>> IBuilder<T>.Actions => (from a in actions select a.Value).ToList().AsReadOnly();
+        ReadOnlyCollection<IRuleEvaluator<T>> IBuilder<T>.Evaluators => (from a in evaluators select a.Value).ToList().AsReadOnly();
 
         public static IBuilder<T> CreateBuilder(string workflowId)
         {
@@ -420,7 +427,16 @@ namespace Mchnry.Flow
 
             if (!this.actions.ContainsKey(ToDo.Id))
             {
+            
                 this.actions.Add(ToDo.Id, builderRef.action);
+            } else
+            {
+                //if attmpeting to add another implementation with the same id, throw an exception
+                //we can't handle this
+                if (this.actions[ToDo.Id] != builderRef.action)
+                {
+                    throw new BuilderException(ToDo.Id);
+                }
             }
 
             this.created = ToDo;
@@ -957,6 +973,11 @@ namespace Mchnry.Flow
             if (!this.evaluators.ContainsKey(evaluatorId.Id))
             {
                 this.evaluators.Add(evaluatorId.Id, builderRef.evaluator);
+            }                //if attmpeting to add another implementation with the same id, throw an exception
+                             //we can't handle this
+            else if (this.evaluators[evaluatorId.Id] != builderRef.evaluator)
+            {
+                throw new BuilderException(evaluatorId.Id);
             }
 
             if (isRoot)

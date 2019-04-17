@@ -78,7 +78,7 @@
             </summary>
             <param name="action">Implementation of <see cref="T:Mchnry.Flow.Work.IAction`1"/></param>
         </member>
-        <member name="M:Mchnry.Flow.IActionBuilder`1.DoInLine(System.String,System.Func{Mchnry.Flow.IEngineScope{`0},Mchnry.Flow.Diagnostics.WorkflowEngineTrace,System.Threading.CancellationToken,System.Threading.Tasks.Task{System.Boolean}})">
+        <member name="M:Mchnry.Flow.IActionBuilder`1.DoInLine(System.String,System.String,System.String,System.Func{Mchnry.Flow.IEngineScope{`0},Mchnry.Flow.Diagnostics.WorkflowEngineTrace,System.Threading.CancellationToken,System.Threading.Tasks.Task{System.Boolean}})">
             <summary>
             Do an inline action
             </summary>
@@ -133,7 +133,7 @@
             <param name="context">The context to pass to the evaluator.</param>
             <returns>Reference as <see cref="T:Mchnry.Flow.IRuleConditionBuilder"/> to indicate the true condition of evaluator.</returns>
         </member>
-        <member name="M:Mchnry.Flow.IRuleBuilder`1.EvalInLine(System.String,System.Func{Mchnry.Flow.IEngineScope{`0},Mchnry.Flow.Diagnostics.LogicEngineTrace,Mchnry.Flow.IRuleResult,System.Threading.CancellationToken,System.Threading.Tasks.Task})">
+        <member name="M:Mchnry.Flow.IRuleBuilder`1.EvalInLine(System.String,System.String,System.String,System.Func{Mchnry.Flow.IEngineScope{`0},Mchnry.Flow.Diagnostics.LogicEngineTrace,Mchnry.Flow.IRuleResult,System.Threading.CancellationToken,System.Threading.Tasks.Task})">
             <summary>
             Evaluate inline evaluator function
             </summary>

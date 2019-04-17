@@ -22,144 +22,57 @@ namespace Sample
         public int Id { get; set; }
     }
 
-    public class DoSomethingAction : IAction<Bar>
+
+
+    public class ActionFactory
+    {
+        public IAction<Foo> CtxAction { get => new CtxAction(); }
+    }
+
+    internal class CtxAction : IAction<Foo>
     {
         public WorkDefine.ActionDefinition Definition => new WorkDefine.ActionDefinition()
         {
-            Id = "doSomeThing",
-            Description = "Does Something"
+            Description = "context action",
+            Id = "ctxaction"
         };
 
-
-        async Task<bool> IAction<Bar>.CompleteAsync(IEngineScope<Bar> scope, WorkflowEngineTrace trace, CancellationToken token)
+        public async Task<bool> CompleteAsync(IEngineScope<Foo> scope, WorkflowEngineTrace trace, CancellationToken token)
         {
-            Console.WriteLine(scope.CurrentActivity.Id);
-            return await Task.FromResult<bool>(true);
+            Console.WriteLine($"context {scope.CurrentAction.Context}");
+            return true;
         }
     }
-    public class RunAnotherWorkflowAction : IAction<Foo>
+
+    public class EvaluatorFactory
     {
-        public WorkDefine.ActionDefinition Definition => new WorkDefine.ActionDefinition()
-        {
-            Id = "anotherWorkflow",
-            Description = "Run Another Workflow"
-        };
-
-        async Task<bool> IAction<Foo>.CompleteAsync(IEngineScope<Foo> scope, WorkflowEngineTrace trace, CancellationToken token)
-        {
-            await scope.RunWorkflowAsync<Bar>("second", new Bar(), token);
-            return await Task.FromResult<bool>(true);
-        }
+        public IRuleEvaluator<Foo> CtxRule => new CtxRule();
     }
-    public class AIsTrueEvaluator : IRuleEvaluator<Foo>
+
+    internal class CtxRule : IRuleEvaluator<Foo>
     {
         public LogicDefine.Evaluator Definition => new LogicDefine.Evaluator()
         {
-            Id = "aIsTrue",
-            Description = "Determines if A is true"
+            Id = "ctxrule",
+            Description = "context rule"
         };
 
-        async Task IRuleEvaluator<Foo>.EvaluateAsync(IEngineScope<Foo> scope, LogicEngineTrace trace, IRuleResult result, CancellationToken token)
+        public async Task EvaluateAsync(IEngineScope<Foo> scope, LogicEngineTrace trace, IRuleResult result, CancellationToken token)
         {
-            result.Fail();
-        }
-    }
-    public class BIsTrueEvaluator : IRuleEvaluator<Foo>
-    {
-
-        public LogicDefine.Evaluator Definition => new LogicDefine.Evaluator()
-        {
-            Id = "bIsTrue",
-            Description = "Determines if B is true"
-        };
-
-        async Task IRuleEvaluator<Foo>.EvaluateAsync(IEngineScope<Foo> scope, LogicEngineTrace trace, IRuleResult result, CancellationToken token)
-        {
+            Console.WriteLine($"evaluating with context {scope.CurrentRuleDefinition.Context}");
             result.Pass();
         }
     }
-    public class CIsTrueEvaluator : IRuleEvaluator<Bar>
-    {
-
-        public LogicDefine.Evaluator Definition => new LogicDefine.Evaluator()
-        {
-            Id = "cIsTrue",
-            Description = "Determines if C is true"
-        };
-
-        async Task IRuleEvaluator<Bar>.EvaluateAsync(IEngineScope<Bar> scope, LogicEngineTrace trace, IRuleResult result, CancellationToken token)
-        {
-            result.Pass();
-        }
-    }
-    public class DIsTrueEvaluator : IRuleEvaluator<Bar>
-    {
-
-        public LogicDefine.Evaluator Definition => new LogicDefine.Evaluator()
-        {
-            Id = "dIsTrue",
-            Description = "Determines if D is true"
-        };
-        async Task IRuleEvaluator<Bar>.EvaluateAsync(IEngineScope<Bar> scope, LogicEngineTrace trace, IRuleResult result, CancellationToken token)
-        {
-            result.Pass();
-        }
-    }
-
-    //public class ActionFactory : IActionFactory
-    //{
-    //    IAction<TModel> IActionFactory.GetAction<TModel>(WorkDefine.ActionDefinition definition)
-    //    {
-    //        IAction<TModel> toReturn = default(IAction<TModel>);
-    //        switch (definition.Id)
-    //        {
-    //            case "runAnotherWorkflow":
-    //                toReturn = (IAction<TModel>)new RunAnotherWorkflowAction();
-    //                break;
-    //            case "doSomething":
-    //                toReturn = (IAction<TModel>)new DoSomethingAction();
-    //                break;
-    //        }
-    //        return toReturn;
-    //    }
-    //}
-    //public class EvaluatorFactory : IRuleEvaluatorFactory
-    //{
-    //    IRuleEvaluator<TModel> IRuleEvaluatorFactory.GetRuleEvaluator<TModel>(LogicDefine.Evaluator definition)
-    //    {
-    //        IRuleEvaluator<TModel> toReturn = default(IRuleEvaluator<TModel>);
-
-    //        switch (definition.Id)
-    //        {
-    //            case "aistrue":
-    //                toReturn = (IRuleEvaluator<TModel>)new AIsTrueEvaluator();
-    //                break;
-    //            case "bistrue":
-    //                toReturn = (IRuleEvaluator<TModel>)new BIsTrueEvaluator();
-    //                break;
-    //            case "cistrue":
-    //                toReturn = (IRuleEvaluator<TModel>)new CIsTrueEvaluator();
-    //                break;
-    //            case "distrue":
-    //                toReturn = (IRuleEvaluator<TModel>)new DIsTrueEvaluator();
-    //                break;
-    //        }
-
-    //        return toReturn;
-    //    }
-    //}
 
     public class WorkflowBuilderFactory : IWorkflowBuilderFactory
     {
+
+        ActionFactory AF = new ActionFactory();
+        EvaluatorFactory EF = new EvaluatorFactory();
+
         public IWorkflowBuilder<T> GetWorkflow<T>(string workflowId)
         {
 
-            //ExpressionRef xRef = default;
-            Action<IFluentExpressionBuilder<Foo>> eq = (If) => {
-                If.And(
-                                    First => First.Rule((b) => b.Eval(new AIsTrueEvaluator()).IsTrue()), Second => Second.Rule((b) => b.Eval(new BIsTrueEvaluator()).IsTrue())
-                                );
-            };
 
     
             
@@ -171,39 +84,15 @@ namespace Sample
                 case "first":
                     toReturn =  (IBuilderWorkflow<T>)Builder<Foo>.CreateBuilder("first").BuildFluent(ToDo => ToDo
                         .IfThenDo(
-                            If => If.ExpIsFalse(eq),
-                            Then => Then.Do((a) => a.Do(new RunAnotherWorkflowAction()))
-                            ).IfThenDo(If => If.ExpIsTrue(eq), Then => Then.DoNothing())
+                            If => If.Rule(rule => rule.EvalWithContext(EF.CtxRule, "abc")),
+                            Then => Then.Do(Do => Do.DoWithContext(AF.CtxAction, "123"))
+                            )
+
                     );
                     string s = JsonConvert.SerializeObject(toReturn.Workflow, new JsonSerializerSettings() { Formatting = Formatting.Indented });
                     Console.WriteLine(s);
                     break;
-                case "second":
-                    toReturn = (IBuilderWorkflow<T>)Builder<Bar>.CreateBuilder("second").BuildFluent(ToDo => ToDo
-                        .IfThenDo(
-                            If => If.And(
-                                First => First.Rule((a) => a.Eval(new CIsTrueEvaluator()).IsTrue()), Second => Second.Rule((a) => a.Eval(new DIsTrueEvaluator()).IsTrue())
-                            ),
-                            Then => Then.Do((a) => a.Do(new DoSomethingAction()))
-                            )
 
-                    );
-                    break;
-                case "third":
-                    toReturn = (IBuilderWorkflow<T>)Builder<Foo>.CreateBuilder("third").BuildFluent(ToDo => ToDo
-                        .IfThenDo(
-                            If => If.Rule(rule => rule.EvalInLine("abc", async (scope,trace,result,token) =>
-                            {
-                                result.SetResult(true);
-                            })), 
-                            Then => Then.Do(Do => Do.DoInLine("abc", async (scope,trace,token) =>
-                            {
-                                return true;
-                            }))
-                            
-                        )
-                    );
-                    break;
             }
 
             return new WorkflowBuilder<T>( toReturn);
