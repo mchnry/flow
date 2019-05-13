@@ -15,7 +15,7 @@ namespace Mchnry.Flow.Logic
 
         LogicDefine.Evaluator Definition { get; }
         
-        Task EvaluateAsync(IEngineScope<TModel> scope, LogicEngineTrace trace, IRuleResult result, CancellationToken token);
+        Task EvaluateAsync(IEngineScope<TModel> scope, IEngineTrace trace, IRuleResult result, CancellationToken token);
 
     }
 }

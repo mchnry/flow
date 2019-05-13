@@ -14,7 +14,7 @@ namespace Mchnry.Flow.Logic
             Description = "Always Returns True"
         };
 
-        public async Task EvaluateAsync(IEngineScope<TModel> scope, LogicEngineTrace trace, IRuleResult status, CancellationToken token)
+        public async Task EvaluateAsync(IEngineScope<TModel> scope, IEngineTrace trace, IRuleResult status, CancellationToken token)
         {
             trace.TraceStep("Always True");
             status.Pass();

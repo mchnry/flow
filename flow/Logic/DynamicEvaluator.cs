@@ -10,10 +10,10 @@ namespace Mchnry.Flow.Logic
 {
     internal class DynamicEvaluator<TModel> : IRuleEvaluator<TModel>
     {
-        private Func<IEngineScope<TModel>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluator;
+        private Func<IEngineScope<TModel>, IEngineTrace, IRuleResult, CancellationToken, Task> evaluator;
         private Evaluator definition;
 
-        public DynamicEvaluator(Evaluator definition, Func<IEngineScope<TModel>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluator)
+        public DynamicEvaluator(Evaluator definition, Func<IEngineScope<TModel>, IEngineTrace, IRuleResult, CancellationToken, Task> evaluator)
         {
             this.evaluator = evaluator;
             this.definition = definition;
@@ -21,7 +21,7 @@ namespace Mchnry.Flow.Logic
 
         public Evaluator Definition => this.definition;
 
-        public async Task EvaluateAsync(IEngineScope<TModel> scope, LogicEngineTrace trace, IRuleResult status, CancellationToken token)
+        public async Task EvaluateAsync(IEngineScope<TModel> scope, IEngineTrace trace, IRuleResult status, CancellationToken token)
         {
             await this.evaluator(scope, trace, status, token);
         }

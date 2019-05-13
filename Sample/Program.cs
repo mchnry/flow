@@ -37,7 +37,7 @@ namespace Sample
             Id = "ctxaction"
         };
 
-        public async Task<bool> CompleteAsync(IEngineScope<Foo> scope, WorkflowEngineTrace trace, CancellationToken token)
+        public async Task<bool> CompleteAsync(IEngineScope<Foo> scope, IEngineTrace trace, CancellationToken token)
         {
             Console.WriteLine($"context {scope.CurrentAction.Context}");
             return true;
@@ -57,7 +57,7 @@ namespace Sample
             Description = "context rule"
         };
 
-        public async Task EvaluateAsync(IEngineScope<Foo> scope, LogicEngineTrace trace, IRuleResult result, CancellationToken token)
+        public async Task EvaluateAsync(IEngineScope<Foo> scope, IEngineTrace trace, IRuleResult result, CancellationToken token)
         {
             Console.WriteLine($"evaluating with context {scope.CurrentRuleDefinition.Context}");
             result.Pass();

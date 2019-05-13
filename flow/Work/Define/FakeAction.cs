@@ -16,7 +16,7 @@ namespace Mchnry.Flow.Work.Define
 
         public ActionDefinition Definition { get; private set; }
 
-        public Task<bool> CompleteAsync(IEngineScope<TModel> scope, WorkflowEngineTrace trace, CancellationToken token)
+        public Task<bool> CompleteAsync(IEngineScope<TModel> scope, IEngineTrace trace, CancellationToken token)
         {
             trace.TraceStep(Definition.Id);
             return Task.FromResult<bool>(true);

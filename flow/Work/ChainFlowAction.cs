@@ -25,7 +25,7 @@ namespace Mchnry.Flow.Work
             Description = $"Chain {this.workflowId}"
         };
 
-        public async Task<bool> CompleteAsync(IEngineScope<TModel> scope, WorkflowEngineTrace trace, CancellationToken token)
+        public async Task<bool> CompleteAsync(IEngineScope<TModel> scope, IEngineTrace trace, CancellationToken token)
         {
             TModel model = scope.GetModel();
             await scope.RunWorkflowAsync<TModel>(this.workflowId, model, token);

@@ -4,7 +4,11 @@ using System.Collections.Generic;
 namespace Mchnry.Flow.Diagnostics
 {
 
-    public class WorkflowEngineTrace
+    public interface IEngineTrace
+    {
+        void TraceStep(string toTrace);
+    }
+    public class WorkflowEngineTrace: IEngineTrace
     {
         internal WorkflowEngineTrace(EngineStepTracer tracer)
         {
@@ -20,7 +24,7 @@ namespace Mchnry.Flow.Diagnostics
         }
     }
 
-    public class LogicEngineTrace
+    public class LogicEngineTrace: IEngineTrace
     {
         internal LogicEngineTrace(EngineStepTracer tracer)
         {

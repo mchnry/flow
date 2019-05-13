@@ -39,7 +39,7 @@ namespace Mchnry.Flow
         /// </summary>
         /// <param name="actionName">Name of action</param>
         /// <param name="action">Func to do</param>
-        void DoInLine(string actionName, string description, string context, Func<IEngineScope<T>, WorkflowEngineTrace, CancellationToken, Task<bool>> action);
+        void DoInLine(string actionName, string description, string context, Func<IEngineScope<T>, IEngineTrace, CancellationToken, Task<bool>> action);
 
 
     }
@@ -67,7 +67,7 @@ namespace Mchnry.Flow
 
         }
 
-        void IActionBuilder<T>.DoInLine(string actionName, string description, string context, Func<IEngineScope<T>, WorkflowEngineTrace, CancellationToken, Task<bool>> actionToDo)
+        void IActionBuilder<T>.DoInLine(string actionName, string description, string context, Func<IEngineScope<T>, IEngineTrace, CancellationToken, Task<bool>> actionToDo)
         {
             this.action = new DynamicAction<T>(new WorkDefine.ActionDefinition() { Id = actionName, Description = description??"Dynamic" }, actionToDo);
             this.actionRef = new WorkDefine.ActionRef() { Id = action.Definition.Id, Context = context??string.Empty };
@@ -121,7 +121,7 @@ namespace Mchnry.Flow
         /// <param name="evaluatorName">Name of evaluator</param>
         /// <param name="evaluator">Func to evaluate</param>
         /// <returns></returns>
-        IRuleConditionBuilder EvalInLine(string evaluatorName, string description, string context, Func<IEngineScope<T>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluator);
+        IRuleConditionBuilder EvalInLine(string evaluatorName, string description, string context, Func<IEngineScope<T>, IEngineTrace, IRuleResult, CancellationToken, Task> evaluator);
 
     }
 
@@ -142,7 +142,7 @@ namespace Mchnry.Flow
             return this;
         }
 
-        IRuleConditionBuilder IRuleBuilder<T>.EvalInLine(string evaluatorName, string description, string context, Func<IEngineScope<T>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluatorToEval)
+        IRuleConditionBuilder IRuleBuilder<T>.EvalInLine(string evaluatorName, string description, string context, Func<IEngineScope<T>, IEngineTrace, IRuleResult, CancellationToken, Task> evaluatorToEval)
         {
             this.evaluator = new DynamicEvaluator<T>(new LogicDefine.Evaluator() { Id = evaluatorName, Description = description??"Dynamic" }, evaluatorToEval);
             this.rule = new LogicDefine.Rule() { Id = this.evaluator.Definition.Id, TrueCondition = true, Context = context??string.Empty };

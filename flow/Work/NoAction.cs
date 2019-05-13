@@ -16,7 +16,7 @@ namespace Mchnry.Flow.Work
             Description = "Action that doesn't do anything"
         };
 
-        public async Task<bool> CompleteAsync(IEngineScope<TModel> scope, WorkflowEngineTrace trace, CancellationToken token)
+        public async Task<bool> CompleteAsync(IEngineScope<TModel> scope, IEngineTrace trace, CancellationToken token)
         {
             return await Task.FromResult<bool>(true);
         }

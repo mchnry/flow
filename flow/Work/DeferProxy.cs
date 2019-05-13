@@ -18,7 +18,7 @@ namespace Mchnry.Flow.Work
             this.deferScope = scope;
         }
 
-        async Task<bool> IDeferredAction<TModel>.CompleteAsync(IEngineScopeDefer<TModel> scope, WorkflowEngineTrace trace, CancellationToken token)
+        async Task<bool> IDeferredAction<TModel>.CompleteAsync(IEngineScopeDefer<TModel> scope, IEngineTrace trace, CancellationToken token)
         {
             return await deferAction.CompleteAsync(deferScope, trace, token);
         }

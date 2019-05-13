@@ -23,7 +23,7 @@ namespace Mchnry.Flow.Logic
             Description = "Preset rule evaluator for testing"
         };
 
-        public async Task EvaluateAsync(IEngineScope<TModel> scope, LogicEngineTrace trace, IRuleResult result, CancellationToken token)
+        public async Task EvaluateAsync(IEngineScope<TModel> scope, IEngineTrace trace, IRuleResult result, CancellationToken token)
         {
             trace.TraceStep(string.Format("Preset:{0}", this.Expected));
             result.SetResult(Expected);
