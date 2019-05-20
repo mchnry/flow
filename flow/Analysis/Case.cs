@@ -26,7 +26,7 @@ namespace Mchnry.Flow.Analysis
         public object Clone()
         {
 
-            return new Case((from r in this.Rules select r).ToList());
+            return new Case((from r in this.Rules select (Rule)r.Clone()).ToList());
         }
     }
 }

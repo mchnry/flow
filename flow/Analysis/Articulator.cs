@@ -10,13 +10,13 @@ namespace Mchnry.Flow.Analysis
 {
     public class Articulator
     {
-        private readonly List<LogicIntent> logicIntents;
+
         private readonly WorkDefine.Workflow workflow;
         private readonly Configuration.Config configuration;
 
-        public Articulator(List<LogicIntent> logicIntents, WorkDefine.Workflow workflow, Configuration.Config configuration)
+        public Articulator(WorkDefine.Workflow workflow, Configuration.Config configuration)
         {
-            this.logicIntents = logicIntents;
+      
             this.workflow = workflow;
             this.configuration = configuration;
         }
@@ -27,32 +27,35 @@ namespace Mchnry.Flow.Analysis
             LogicDefine.Evaluator ev = this.workflow.Evaluators.FirstOrDefault(g => g.Id == x.Id);
 
             toBuild.TrueCondition = x.TrueCondition;
-            if (!string.IsNullOrEmpty(x.Context))
+            if (x.Context != null)
             {
-                ContextItem ctx = new ContextItem() { Key = x.Context, Literal = "Inferred" };
+                ContextDefinition ctxDef = this.workflow.ContextDefinitions.FirstOrDefault(g => g.Name.Equals(x.Context.Name, StringComparison.OrdinalIgnoreCase));
+
+                string ctxLit = string.Join(",", (from i in ctxDef.Items where x.Context.Keys.Contains(i.Key) select i.Literal));
+                
                 ArticulateContext articulateContext = new ArticulateContext()
                 {
-                    Literal = "Inferred", Context = ctx
+                    Literal = ctxDef.Literal, Value = ctxLit
                 };
-                var intent = this.logicIntents.FirstOrDefault(g => g.evaluatorId == x.Id);
-                if (intent != null && intent.Context != null)
-                {
-                    articulateContext.Literal = intent.Context.Literal;
-                    if (intent.Context.Values != null)
-                    {
-                        ContextItem match = intent.Context.Values.FirstOrDefault(k => k.Key == ctx.Key);
-                        if (!string.IsNullOrEmpty(match.Key))
-                        {
-                            ctx.Literal = match.Literal;
-                        }
+                //var intent = this.logicIntents.FirstOrDefault(g => g.evaluatorId == x.Id);
+                //if (intent != null && intent.Context != null)
+                //{
+                //    articulateContext.Literal = intent.Context.Literal;
+                //    if (intent.Context.Values != null)
+                //    {
+                //        ContextItem match = intent.Context.Values.FirstOrDefault(k => k.Key == ctx.Key);
+                //        if (!string.IsNullOrEmpty(match.Key))
+                //        {
+                //            ctx.Literal = match.Literal;
+                //        }
                         
-                    }
+                //    }
 
 
-                }
-                if (string.IsNullOrEmpty(ctx.Literal)) { ctx.Literal = "Inferred"; }
-                if (string.IsNullOrEmpty(articulateContext.Literal)) { articulateContext.Literal = "Inferred"; }
-                articulateContext.Context = ctx;
+                //}
+                //if (string.IsNullOrEmpty(ctx.Literal)) { ctx.Literal = "Inferred"; }
+                //if (string.IsNullOrEmpty(articulateContext.Literal)) { articulateContext.Literal = "Inferred"; }
+                //articulateContext.Context = ctx;
                 toBuild.Context = articulateContext;
 
             }
@@ -76,10 +79,18 @@ namespace Mchnry.Flow.Analysis
                 else
                 {
 
-                    string ctx = (s).Context;
-                    if (!string.IsNullOrEmpty(ctx))
+                    if (s.Context != null)
                     {
-                        action.Context = new ContextItem() { Key = ctx, Literal = "Inferred" };
+                        ContextDefinition ctxDef = this.workflow.ContextDefinitions.FirstOrDefault(g => g.Name.Equals(s.Context.Name, StringComparison.OrdinalIgnoreCase));
+
+                        string ctxLit = string.Join(",", (from i in ctxDef.Items where s.Context.Keys.Contains(i.Key) select i.Literal));
+
+                        ArticulateContext articulateContext = new ArticulateContext()
+                        {
+                            Literal = ctxDef.Literal,
+                            Value = ctxLit
+                        };
+                        action.Context = articulateContext;
                     }
 
                     return action;

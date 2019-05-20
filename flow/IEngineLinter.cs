@@ -9,6 +9,6 @@ namespace Mchnry.Flow
 {
     public interface IEngineLinter<TModel>
     {
-        Task<LintInspector> LintAsync(Action<INeedIntent> addIntents, Action<Case> mockCase, CancellationToken token);
+        Task<LintInspector> LintAsync(Action<Case> mockCase, CancellationToken token);
     }
 }

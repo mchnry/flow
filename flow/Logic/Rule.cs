@@ -81,7 +81,7 @@ namespace Mchnry.Flow.Logic
                 {
                     this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Rule_Failed;
                     this.engineRef.Tracer.TraceStep(new ActivityProcess(this.definition.Id, ActivityStatusOptions.Rule_Failed, ex.Message));
-                    throw new EvaluateException(this.definition.Id, this.definition.Context, ex);
+                    throw new EvaluateException(this.definition.Id, this.definition.Context.ToString(), ex);
                 }
                 // Cache stores the evaluator results only
                 this.engineRef.RunManager.SetResult(this.definition, thisResult);

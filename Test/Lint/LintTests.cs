@@ -8,6 +8,7 @@ using Xunit;
 using Mchnry.Flow;
 using Mchnry.Flow.Work;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Test.Lint
 {
@@ -34,9 +35,39 @@ namespace Test.Lint
             
 
             IEngineLinter<string> linter = e.Lint("test");
-            var inspector = await linter.LintAsync((l) => { }, null, new System.Threading.CancellationToken());
+            var inspector = await linter.LintAsync(null, new System.Threading.CancellationToken());
 
             
+
+        }
+
+        [Fact]
+        public async void TestWithContextNominal()
+        {
+            Func<IContextDefinitionBuilder, ContextDefinition> abc = (a) =>
+            {
+                return a.OneOf("tstctx", "test context", new List<ContextItem>() {
+                    new ContextItem() {  Key = "1", Literal = "one" },
+                    new ContextItem() { Key = "2", Literal = "two" },
+                    new ContextItem() { Key = "3", Literal = "three "}
+                }, true);
+
+            };
+
+            var BWF = Builder<string>.CreateBuilder("test").BuildFluent(
+                    TD => TD.IfThenDo(
+                            IF => IF.Rule(RULE => RULE.EvalInLine("abc","abc", ctx => ctx.MatchAny(abc, new string[] {"1","2"}),
+                                    (s,t,r,k) => { return Task.FromResult<bool>( s.CurrentRuleDefinition.Context.Keys.Contains("1")); })), 
+                            THEN => THEN.DoNothing()
+                           
+                            
+                        )
+                );
+            IEngineLoader<string> e = Mchnry.Flow.Engine<string>.CreateEngine();
+            var linter = e.LintFluent(new WorkflowBuilder<string>(BWF));
+            var inspector = await linter.LintAsync(null, new System.Threading.CancellationToken());
+
+
 
         }
 

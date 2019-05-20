@@ -31,8 +31,10 @@ namespace Mchnry.Flow
                 return new AlwaysTrueEvaluator<TModel>();
             } else {
 
-                Rule toTest = this.TestCase.Rules.FirstOrDefault(r => r.Id == definition.Id);
-                return new PreSetRuleEvaluator<TModel>(toTest.TrueCondition);
+                //in cases where the rule has context, then there will be a test case for 
+                //each individual context.  in that case, pass all to the preset rule.
+                List<Rule> toTest = this.TestCase.Rules.Where(r => r.Id == definition.Id).ToList();
+                return new PreSetRuleEvaluator<TModel>(toTest);
             }
         }
     }

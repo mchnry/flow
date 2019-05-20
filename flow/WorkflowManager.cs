@@ -102,6 +102,18 @@ namespace Mchnry.Flow
                 this.WorkFlow.Evaluators.Add(toAdd);
             }
         }
+        public virtual ContextDefinition GetContextDefinition(string name)
+        {
+            return this.WorkFlow.ContextDefinitions.FirstOrDefault(g => g.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        }
+        public virtual void AddContextDefinition(ContextDefinition toAdd)
+        {
+            ContextDefinition match = this.GetContextDefinition(toAdd.Name);
+            if (match == null)
+            {
+                this.WorkFlow.ContextDefinitions.Add(toAdd);
+            }
+        }
 
         public virtual String RootActivityId 
         {

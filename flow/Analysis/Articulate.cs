@@ -11,7 +11,7 @@ namespace Mchnry.Flow.Analysis
     public class ArticulateAction : IArticulateActivity
     {
         public string Id { get; set; }
-        public ContextItem? Context { get; set; }
+        public ArticulateContext Context { get; set; }
 
     }
     public class NothingAction: IArticulateActivity
@@ -28,7 +28,7 @@ namespace Mchnry.Flow.Analysis
     public class ArticulateContext
     {
         public string Literal { get; set; }
-        public ContextItem Context { get; set; }
+        public string Value { get; set; }
     }
 
     public class ArticulateReaction

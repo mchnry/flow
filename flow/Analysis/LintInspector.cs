@@ -9,14 +9,12 @@ namespace Mchnry.Flow.Analysis
 {
     public class LintInspector
     {
-        private readonly List<LogicIntent> intents;
         private readonly WorkDefine.Workflow workflow;
         private readonly Configuration.Config configuration;
 
-        public LintInspector(LintResult result, List<LogicIntent> intents, WorkDefine.Workflow workflow, Configuration.Config configuration)
+        public LintInspector(LintResult result, WorkDefine.Workflow workflow, Configuration.Config configuration)
         {
             this.Result = result;
-            this.intents = intents;
             this.workflow = workflow;
             this.configuration = configuration;
         }
@@ -26,14 +24,14 @@ namespace Mchnry.Flow.Analysis
 
             activityId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.configuration.Convention);
 
-            Articulator articulator = new Articulator(this.intents, this.workflow, this.configuration);
+            Articulator articulator = new Articulator( this.workflow, this.configuration);
             return articulator.ArticulateActivity(activityId, false, false);
 
         }
 
         public List<ArticulateEvaluator> ArticulateTestCase(ActivityTest test, int testCaseId)
         {
-            Articulator articulator = new Articulator(this.intents, this.workflow, this.configuration);
+            Articulator articulator = new Articulator(this.workflow, this.configuration);
             return articulator.ArticulateTestCase(test, testCaseId, false, false);
         }
 

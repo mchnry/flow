@@ -25,12 +25,12 @@ namespace Mchnry.Flow.Work.Define
         }
 
         public string Id { get; set; }
-        public string Context { get; set; }
+        public Context Context { get; set; }
 
         public override string ToString()
         {
-            if (!string.IsNullOrEmpty(this.Context)) {
-                return string.Format("{0}|{1}", this.Id, this.Context);
+            if (this.Context != null) {
+                return $"{this.Id}|{this.Context}";
             } else {
                 return this.Id;
             }

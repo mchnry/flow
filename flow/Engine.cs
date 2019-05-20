@@ -29,7 +29,7 @@ namespace Mchnry.Flow
 
         internal virtual IImplementationManager<TModel> ImplementationManager { get; set; }
         internal virtual WorkflowManager WorkflowManager { get; set; }
-        internal RunManager RunManager { get; set; }
+        internal virtual RunManager RunManager { get; set; }
 
         
 
@@ -137,7 +137,7 @@ namespace Mchnry.Flow
             else if (this.CurrentActivityStatus == ActivityStatusOptions.Rule_Evaluating)
             {
                 string scope = RunManager.CurrentRuleDefinition.Id;
-                if (!string.IsNullOrEmpty(RunManager.CurrentRuleDefinition.Context))
+                if (!string.IsNullOrEmpty(RunManager.CurrentRuleDefinition.Context.ToString()))
                 {
                     scope = string.Format("{0}.{1}", scope, RunManager.CurrentRuleDefinition.Context.GetHashCode().ToString());
                 }
@@ -561,7 +561,7 @@ namespace Mchnry.Flow
         }
 
 
-        public async Task<LintInspector> LintAsync(Action<INeedIntent> addIntents, Action<Case> mockCase, CancellationToken token)
+        public async Task<LintInspector> LintAsync(Action<Case> mockCase, CancellationToken token)
         {
             if (!this.Sanitized)
             {
@@ -570,7 +570,7 @@ namespace Mchnry.Flow
 
 
             Linter linter = new Linter(this.WorkflowManager, this.Configuration);
-            addIntents(linter);
+ 
 
             List<ActivityTest> activityTests = linter.AcvityLint();
             List<ActivityTest> mockTests = null;
@@ -631,7 +631,7 @@ namespace Mchnry.Flow
 
 
             int lintHash = this.WorkflowManager.WorkFlow.GetHashCode();
-            return new LintInspector(new LintResult(this.lintTracer, activityTests, null, auditResults, lintHash.ToString()), linter.Intents, this.Workflow, this.Configuration);
+            return new LintInspector(new LintResult(this.lintTracer, activityTests, null, auditResults, lintHash.ToString()), this.Workflow, this.Configuration);
             //return new LintResult(this.lintTracer, activityTests, null, auditResults, lintHash.ToString());
         }
 

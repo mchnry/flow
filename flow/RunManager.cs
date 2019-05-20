@@ -34,7 +34,7 @@ namespace Mchnry.Flow
 
         internal virtual bool? GetResult(LogicDefine.Rule rule)
         {
-            EvaluatorKey key = new EvaluatorKey() { Id = rule.Id, Context = rule.Context };
+            EvaluatorKey key = new EvaluatorKey() { Id = rule.Id, Context = rule.Context?.ToString() };
             if (results.ContainsKey(key.ToString()))
             {
                 return results[key.ToString()];
@@ -47,7 +47,7 @@ namespace Mchnry.Flow
 
         internal virtual void SetResult(LogicDefine.Rule rule, bool result)
         {
-            EvaluatorKey key = new EvaluatorKey() { Context = rule.Context, Id = rule.Id };
+            EvaluatorKey key = new EvaluatorKey() { Context = rule.Context?.ToString(), Id = rule.Id };
             if (this.results.ContainsKey(key.ToString()))
             {
                 this.results.Remove(key.ToString());

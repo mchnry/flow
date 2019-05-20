@@ -5,6 +5,7 @@ using Mchnry.Flow.Logic;
 using Mchnry.Flow.Work;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using LogicDefine = Mchnry.Flow.Logic.Define;
@@ -82,15 +83,15 @@ namespace Sample
             switch (workflowId)
             {
                 case "first":
-                    toReturn =  (IBuilderWorkflow<T>)Builder<Foo>.CreateBuilder("first").BuildFluent(ToDo => ToDo
-                        .IfThenDo(
-                            If => If.Rule(rule => rule.EvalWithContext(EF.CtxRule, "abc")),
-                            Then => Then.Do(Do => Do.DoWithContext(AF.CtxAction, "123"))
-                            )
+                    //toReturn =  (IBuilderWorkflow<T>)Builder<Foo>.CreateBuilder("first").BuildFluent(ToDo => ToDo
+                    //    .IfThenDo(
+                    //        If => If.Rule(rule => rule.EvalWithContext(EF.CtxRule, ctx => ctx.MatchAny
+                    //        Then => Then.Do(Do => Do.DoWithContext(AF.CtxAction, ctx => ctx.OneOf("abc", "abc", new List<ContextItem>(), false).Is)
+                    //        )
 
-                    );
-                    string s = JsonConvert.SerializeObject(toReturn.Workflow, new JsonSerializerSettings() { Formatting = Formatting.Indented });
-                    Console.WriteLine(s);
+                    //);
+                    //string s = JsonConvert.SerializeObject(toReturn.Workflow, new JsonSerializerSettings() { Formatting = Formatting.Indented });
+                    //Console.WriteLine(s);
                     break;
 
             }

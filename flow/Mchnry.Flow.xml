@@ -4,51 +4,6 @@
         <name>Mchnry.Flow</name>
     </assembly>
     <members>
-        <member name="M:Mchnry.Flow.Analysis.Context.HasValues(System.Collections.Generic.List{Mchnry.Flow.Analysis.ContextItem})">
-            <summary>
-            Options are inferred when traversing the logic.  However, caller can
-            use this to provide details (literals) about those options.
-            Caller need only provide the values that exist in the logic
-            </summary>
-            <param name="values"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Mchnry.Flow.Analysis.Context.OneOfExcusive">
-            <summary>
-            Expects that the test value can only be one of the items in the set of context, and that the 
-            set of context is finite.
-            </summary>
-            <example>when an equation tests for multiple cases - a,b,c - this means that only one
-            of those cases can be true, so we only need to test three cases.  Additionally, because
-            its exclusive, one of these must be true</example>
-        </member>
-        <member name="M:Mchnry.Flow.Analysis.Context.OneOfInclusive">
-            <summary>
-            Expects that the test value can only be one of the items in the set of context, and that the 
-            set of context is not finite, but the caller is only providing the test cases.
-            </summary>
-            <example>when an equation tests for multiple cases - a,b,c - this means that only one
-            of those cases can be true, so we only need to test three cases.  Additionally, because
-            its inclusive, there may be a case where all are false</example>
-        </member>
-        <member name="M:Mchnry.Flow.Analysis.Context.AnyOfExclusive">
-            <summary>
-            Expects that the test value can be any of the items in the set of context, and that the 
-            set of context is finite.
-            </summary>
-            <example>when an equation tests for multiple cases - a,b,c - this means that any
-            of those cases can be true, so we need to test all combinations (n^n).  Additionally, because
-            its exclusive, one of these must be true</example>
-        </member>
-        <member name="M:Mchnry.Flow.Analysis.Context.AnyOfInclusive">
-            <summary>
-            Expects that the test value can be any of the items in the set of context, and that the 
-            set of context is not finite, but the caller is only providing the test cases.
-            </summary>
-            <example>when an equation tests for multiple cases - a,b,c - this means that any
-            of those cases can be true, so we need to test all combinations (n^n).  Additionally, because
-            its inclusive, there may be a case where all are false</example>
-        </member>
         <member name="T:Mchnry.Flow.Analysis.Sanitizer">
             <summary>
             Utility used to Sanitize a workflow definition
@@ -65,7 +20,7 @@
             </summary>
             <typeparam name="T">Type of model used in flow.</typeparam>
         </member>
-        <member name="M:Mchnry.Flow.IActionBuilder`1.DoWithContext(Mchnry.Flow.Work.IAction{`0},System.String)">
+        <member name="M:Mchnry.Flow.IActionBuilder`1.DoWithContext(Mchnry.Flow.Work.IAction{`0},System.Func{Mchnry.Flow.IContextBuilder,Mchnry.Flow.Context})">
             <summary>
             Define an action to be executed with context.
             </summary>
@@ -78,7 +33,7 @@
             </summary>
             <param name="action">Implementation of <see cref="T:Mchnry.Flow.Work.IAction`1"/></param>
         </member>
-        <member name="M:Mchnry.Flow.IActionBuilder`1.DoInLine(System.String,System.String,System.String,System.Func{Mchnry.Flow.IEngineScope{`0},Mchnry.Flow.Diagnostics.IEngineTrace,System.Threading.CancellationToken,System.Threading.Tasks.Task{System.Boolean}})">
+        <member name="M:Mchnry.Flow.IActionBuilder`1.DoInLine(System.String,System.String,System.Func{Mchnry.Flow.IContextBuilder,Mchnry.Flow.Context},System.Func{Mchnry.Flow.IEngineScope{`0},Mchnry.Flow.Diagnostics.IEngineTrace,System.Threading.CancellationToken,System.Threading.Tasks.Task{System.Boolean}})">
             <summary>
             Do an inline action
             </summary>
@@ -125,7 +80,7 @@
             <param name="evaluator">Implementation of <see cref="T:Mchnry.Flow.Logic.IRule`1"/> to query</param>
             <returns>Reference as <see cref="T:Mchnry.Flow.IRuleConditionBuilder"/> to indicate the true condition of evaluator.</returns>
         </member>
-        <member name="M:Mchnry.Flow.IRuleBuilder`1.EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator{`0},System.String)">
+        <member name="M:Mchnry.Flow.IRuleBuilder`1.EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator{`0},System.Func{Mchnry.Flow.IContextBuilder,Mchnry.Flow.Context})">
             <summary>
             Defines the rule that queries an <see cref="T:Mchnry.Flow.Logic.IRuleEvaluator`1"/>
             </summary>
@@ -133,7 +88,7 @@
             <param name="context">The context to pass to the evaluator.</param>
             <returns>Reference as <see cref="T:Mchnry.Flow.IRuleConditionBuilder"/> to indicate the true condition of evaluator.</returns>
         </member>
-        <member name="M:Mchnry.Flow.IRuleBuilder`1.EvalInLine(System.String,System.String,System.String,System.Func{Mchnry.Flow.IEngineScope{`0},Mchnry.Flow.Diagnostics.IEngineTrace,Mchnry.Flow.IRuleResult,System.Threading.CancellationToken,System.Threading.Tasks.Task})">
+        <member name="M:Mchnry.Flow.IRuleBuilder`1.EvalInLine(System.String,System.String,System.Func{Mchnry.Flow.IContextBuilder,Mchnry.Flow.Context},System.Func{Mchnry.Flow.IEngineScope{`0},Mchnry.Flow.Diagnostics.IEngineTrace,Mchnry.Flow.IRuleResult,System.Threading.CancellationToken,System.Threading.Tasks.Task})">
             <summary>
             Evaluate inline evaluator function
             </summary>
