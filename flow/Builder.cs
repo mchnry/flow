@@ -484,7 +484,7 @@ namespace Mchnry.Flow
         public void Match(Action<ContextDefinitionBuilder> builder, string onKey)
         {
             builder.Invoke(this.builder);
-            new Context(new string[] { onKey }, this.builder.definition.Name);
+            this.context = new Context(new string[] { onKey }, this.builder.definition.Name);
         }
 
 
