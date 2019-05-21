@@ -26,7 +26,7 @@ namespace Mchnry.Flow
         /// </summary>
         /// <param name="action">Implementation of <see cref="Mchnry.Flow.Work.IAction{TModel}"/></param>
         /// <param name="context">Contextual parameter as defined by Action</param>
-        void DoWithContext(Mchnry.Flow.Work.IAction<T> action, Func<IContextBuilder, Context> context);
+        void DoWithContext(Mchnry.Flow.Work.IAction<T> action, Action<ContextBuilder> context);
 
         /// <summary>
         /// Define an action to be executed with context.
@@ -39,7 +39,7 @@ namespace Mchnry.Flow
         /// </summary>
         /// <param name="actionName">Name of action</param>
         /// <param name="action">Func to do</param>
-        void DoInLine(string actionName, string description, Func<IContextBuilder, Context> context, Func<IEngineScope<T>, IEngineTrace, CancellationToken, Task<bool>> action);
+        void DoInLine(string actionName, string description, Action<ContextBuilder> context, Func<IEngineScope<T>, IEngineTrace, CancellationToken, Task<bool>> action);
 
 
     }
@@ -50,9 +50,9 @@ namespace Mchnry.Flow
     /// <typeparam name="T">Type of model class used in flow</typeparam>
     internal class ActionBuilder<T> : IActionBuilder<T>
     {
-        private readonly IBuilder<T> builderRef;
+        private readonly Builder<T> builderRef;
 
-        internal ActionBuilder(IBuilder<T> builderRef) {
+        internal ActionBuilder(Builder<T> builderRef) {
             this.builderRef = builderRef;
         }
 
@@ -60,13 +60,16 @@ namespace Mchnry.Flow
         internal WorkDefine.ActionRef actionRef { get; set; }
    
 
-        void IActionBuilder<T>.DoWithContext(IAction<T> action, Func<IContextBuilder, Context> context )
+        void IActionBuilder<T>.DoWithContext(IAction<T> action, Action<ContextBuilder> context )
         {
+            ContextBuilder builder = new ContextBuilder();
 
             if (context == null) throw new ArgumentException("Caller failed to provide context");
 
             ((IActionBuilder<T>)this).Do(action);
-            this.actionRef.Context = context.Invoke((IContextBuilder)builderRef);
+            context.Invoke(builder);
+            builderRef.workflowManager.AddContextDefinition(builder.builder.definition);
+            this.actionRef.Context = builder.context;
         }
 
         void IActionBuilder<T>.Do(IAction<T> action)
@@ -76,11 +79,19 @@ namespace Mchnry.Flow
 
         }
 
-        void IActionBuilder<T>.DoInLine(string actionName, string description, Func<IContextBuilder, Context> context, Func<IEngineScope<T>, IEngineTrace, CancellationToken, Task<bool>> actionToDo)
+        void IActionBuilder<T>.DoInLine(string actionName, string description, Action<ContextBuilder> context, Func<IEngineScope<T>, IEngineTrace, CancellationToken, Task<bool>> actionToDo)
         {
+            ContextBuilder builder = new ContextBuilder();
+            Context ctx = default;
 
+            if (context != null)
+            {
+                context.Invoke(builder);
+                builderRef.workflowManager.AddContextDefinition(builder.builder.definition);
+                ctx = builder.context;
+            }
             this.action = new DynamicAction<T>(new WorkDefine.ActionDefinition() { Id = actionName, Description = description??"Dynamic" }, actionToDo);
-            this.actionRef = new WorkDefine.ActionRef() { Id = action.Definition.Id, Context = context.Invoke((IContextBuilder)builderRef) };
+            this.actionRef = new WorkDefine.ActionRef() { Id = action.Definition.Id, Context = ctx };
         }
     }
 
@@ -123,7 +134,7 @@ namespace Mchnry.Flow
         /// <param name="evaluator">Implementation of <see cref="IRule{TModel}"/> to query</param>
         /// <param name="context">The context to pass to the evaluator.</param>
         /// <returns>Reference as <see cref="IRuleConditionBuilder"/> to indicate the true condition of evaluator.</returns>
-        IRuleConditionBuilder EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator, Func<IContextBuilder, Context> context);
+        IRuleConditionBuilder EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator, Action<ContextBuilder> context);
 
         /// <summary>
         /// Evaluate inline evaluator function
@@ -131,7 +142,7 @@ namespace Mchnry.Flow
         /// <param name="evaluatorName">Name of evaluator</param>
         /// <param name="evaluator">Func to evaluate</param>
         /// <returns></returns>
-        IRuleConditionBuilder EvalInLine(string evaluatorName, string description, Func<IContextBuilder, Context> context, Func<IEngineScope<T>, IEngineTrace, IRuleResult, CancellationToken, Task> evaluator);
+        IRuleConditionBuilder EvalInLine(string evaluatorName, string description, Action<ContextBuilder> context, Func<IEngineScope<T>, IEngineTrace, IRuleResult, CancellationToken, Task> evaluator);
 
     }
 
@@ -141,9 +152,9 @@ namespace Mchnry.Flow
     /// <typeparam name="T">Type of model used in flow.</typeparam>
     internal class RuleBuilder<T> : IRuleBuilder<T>, IRuleConditionBuilder
     {
-        private readonly IBuilder<T> builderRef;
+        private readonly Builder<T> builderRef;
 
-        internal RuleBuilder(IBuilder<T> builderRef)
+        internal RuleBuilder(Builder<T> builderRef)
         {
             this.builderRef = builderRef;
         }
@@ -157,17 +168,36 @@ namespace Mchnry.Flow
             return this;
         }
 
-        IRuleConditionBuilder IRuleBuilder<T>.EvalInLine(string evaluatorName, string description, Func<IContextBuilder, Context> context, Func<IEngineScope<T>, IEngineTrace, IRuleResult, CancellationToken, Task> evaluatorToEval)
+        IRuleConditionBuilder IRuleBuilder<T>.EvalInLine(string evaluatorName, string description, Action<ContextBuilder> context, Func<IEngineScope<T>, IEngineTrace, IRuleResult, CancellationToken, Task> evaluatorToEval)
         {
+            ContextBuilder builder = new ContextBuilder();
+            Context ctx = default;
+
+            if (context != null)
+            {
+                context.Invoke(builder);
+                builderRef.workflowManager.AddContextDefinition(builder.builder.definition);
+                ctx = builder.context;
+            }
+
             this.evaluator = new DynamicEvaluator<T>(new LogicDefine.Evaluator() { Id = evaluatorName, Description = description??"Dynamic" }, evaluatorToEval);
-            this.rule = new LogicDefine.Rule() { Id = this.evaluator.Definition.Id, TrueCondition = true, Context = context.Invoke((IContextBuilder)builderRef) };
+            this.rule = new LogicDefine.Rule() { Id = this.evaluator.Definition.Id, TrueCondition = true, Context = ctx };
             return this;
         }
 
-        IRuleConditionBuilder IRuleBuilder<T>.EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator, Func<IContextBuilder, Context> context)
+        IRuleConditionBuilder IRuleBuilder<T>.EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator, Action<ContextBuilder> context)
         {
+            ContextBuilder builder = new ContextBuilder();
+
+            if (context == null) throw new ArgumentException("Caller failed to provide context");
+
+            
+            context.Invoke(builder);
+            builderRef.workflowManager.AddContextDefinition(builder.builder.definition);
+            this.rule.Context = builder.context;
+
             ((IRuleBuilder<T>)this).Eval(evaluator);
-            this.rule.Context = context.Invoke((IContextBuilder)builderRef);
+
             return this;
         }
 
@@ -373,21 +403,94 @@ namespace Mchnry.Flow
         WorkDefine.Workflow Workflow { get; }
     }
      
-    public interface IContextDefinitionBuilder
+    public class ContextDefinitionBuilder
     {
+
+        internal ContextDefinition definition { get; private set; }
+
+        internal ContextDefinitionBuilder() { }
+
+        public void OneOf(string name, string literal, IEnumerable<ContextItem> items, bool exclusive)
+        {
+            this.definition = new ContextDefinition(name, literal, items, ValidateOptions.OneOf, exclusive);
+            
+            
+        }
+
+        public void AnyOf(string name, string literal, IEnumerable<ContextItem> items, bool exclusive)
+        {
+            this.definition = new ContextDefinition(name, literal, items, ValidateOptions.AnyOf, exclusive);
+            
+            
+        }
+        public void OneOf(string name, string literal, Type enumType, bool exclusive)
+        {
+            this.definition = new ContextDefinition(name, literal, this.FromEnum(enumType), ValidateOptions.OneOf, exclusive);
+
+
+        }
+
+        public void AnyOf(string name, string literal, Type enumType, bool exclusive)
+        {
+
+
+
+            this.definition = new ContextDefinition(name, literal, this.FromEnum(enumType), ValidateOptions.AnyOf, exclusive);
+
+
+        }
+
+        private List<ContextItem> FromEnum(Type enumType)
+        {
+
+            Type baseType = enumType.GetEnumUnderlyingType();
+
+            List<ContextItem> toReturn = new List<ContextItem>();
+            var enumValues = Enum.GetValues(enumType);
+            foreach(object o in enumValues)
+            {
+                object key = Convert.ChangeType(o, baseType);
+                string value = Enum.GetName(enumType, o);
+                toReturn.Add(new ContextItem() { Key = key.ToString(), Literal = value });
+            }
         
-        ContextDefinition OneOf(string name, string literal, IEnumerable<ContextItem> items, bool exclusive);
-        ContextDefinition AnyOf(string name, string literal, IEnumerable<ContextItem> items, bool exclusive);
-    }
-    
-    public interface IContextBuilder
-    {
-        Context MatchAny(Func<IContextDefinitionBuilder, ContextDefinition> builder, IEnumerable<string> onKeys );
-        Context Match(Func<IContextDefinitionBuilder, ContextDefinition> builder, string onKey);
-   
+            return toReturn;
+        }
+
     }
 
     
+
+    
+    public class ContextBuilder
+    {
+
+        internal ContextDefinitionBuilder builder { get; private set; }
+        internal Context context { get; private set; }
+        //this.workflowManager.AddContextDefinition(toAdd);
+
+        internal ContextBuilder()
+        {
+            this.builder = new ContextDefinitionBuilder();
+        }
+ 
+        public void MatchAny(Action<ContextDefinitionBuilder> builder, IEnumerable<string> onKeys)
+        {
+            builder.Invoke(this.builder);
+
+            this.context = new Context(onKeys, this.builder.definition.Name);
+        }
+
+        public void Match(Action<ContextDefinitionBuilder> builder, string onKey)
+        {
+            builder.Invoke(this.builder);
+            new Context(new string[] { onKey }, this.builder.definition.Name);
+        }
+
+
+    }
+
+
 
 
     public class Builder<T> : 
@@ -398,9 +501,7 @@ namespace Mchnry.Flow
         IFluentElseActivityBuilder<T>,
         IExpressionBuilder, 
         IActivityBuilder, 
-        IElseActivityBuilder,
-        IContextBuilder,
-        IContextDefinitionBuilder
+        IElseActivityBuilder
     {
 
         internal Dictionary<string, IRuleEvaluator<T>> evaluators = new Dictionary<string, IRuleEvaluator<T>>();
@@ -1098,32 +1199,9 @@ namespace Mchnry.Flow
 
         }
 
-        Context IContextBuilder.MatchAny(Func<IContextDefinitionBuilder, ContextDefinition> builder, IEnumerable<string> onKeys)
-        {
-            ContextDefinition def = builder.Invoke(this);
-            return new Context(onKeys, def.Name);
-        }
-
-        Context IContextBuilder.Match(Func<IContextDefinitionBuilder, ContextDefinition> builder, string onKey)
-        {
-            ContextDefinition def = builder.Invoke(this);
-            return new Context(new string[] { onKey }, def.Name);
-        }
 
  
-        ContextDefinition IContextDefinitionBuilder.OneOf(string name, string literal, IEnumerable<ContextItem> items, bool exclusive)
-        {
-            ContextDefinition toAdd = new ContextDefinition(name, literal, items, ValidateOptions.OneOf, exclusive);
-            this.workflowManager.AddContextDefinition(toAdd);
-            return toAdd;
-        }
 
-        ContextDefinition IContextDefinitionBuilder.AnyOf(string name, string literal, IEnumerable<ContextItem> items, bool exclusive)
-        {
-            ContextDefinition toAdd = new ContextDefinition(name, literal, items, ValidateOptions.AnyOf, exclusive);
-            this.workflowManager.AddContextDefinition(toAdd);
-            return toAdd;
-        }
 
 
     }

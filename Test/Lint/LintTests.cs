@@ -44,9 +44,9 @@ namespace Test.Lint
         [Fact]
         public async void TestWithContextNominal()
         {
-            Func<IContextDefinitionBuilder, ContextDefinition> abc = (a) =>
+            Action<ContextDefinitionBuilder> abc = (a) =>
             {
-                return a.OneOf("tstctx", "test context", new List<ContextItem>() {
+                a.OneOf("tstctx", "test context", new List<ContextItem>() {
                     new ContextItem() {  Key = "1", Literal = "one" },
                     new ContextItem() { Key = "2", Literal = "two" },
                     new ContextItem() { Key = "3", Literal = "three "}

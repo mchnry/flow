@@ -20,7 +20,7 @@
             </summary>
             <typeparam name="T">Type of model used in flow.</typeparam>
         </member>
-        <member name="M:Mchnry.Flow.IActionBuilder`1.DoWithContext(Mchnry.Flow.Work.IAction{`0},System.Func{Mchnry.Flow.IContextBuilder,Mchnry.Flow.Context})">
+        <member name="M:Mchnry.Flow.IActionBuilder`1.DoWithContext(Mchnry.Flow.Work.IAction{`0},System.Action{Mchnry.Flow.ContextBuilder})">
             <summary>
             Define an action to be executed with context.
             </summary>
@@ -33,7 +33,7 @@
             </summary>
             <param name="action">Implementation of <see cref="T:Mchnry.Flow.Work.IAction`1"/></param>
         </member>
-        <member name="M:Mchnry.Flow.IActionBuilder`1.DoInLine(System.String,System.String,System.Func{Mchnry.Flow.IContextBuilder,Mchnry.Flow.Context},System.Func{Mchnry.Flow.IEngineScope{`0},Mchnry.Flow.Diagnostics.IEngineTrace,System.Threading.CancellationToken,System.Threading.Tasks.Task{System.Boolean}})">
+        <member name="M:Mchnry.Flow.IActionBuilder`1.DoInLine(System.String,System.String,System.Action{Mchnry.Flow.ContextBuilder},System.Func{Mchnry.Flow.IEngineScope{`0},Mchnry.Flow.Diagnostics.IEngineTrace,System.Threading.CancellationToken,System.Threading.Tasks.Task{System.Boolean}})">
             <summary>
             Do an inline action
             </summary>
@@ -80,7 +80,7 @@
             <param name="evaluator">Implementation of <see cref="T:Mchnry.Flow.Logic.IRule`1"/> to query</param>
             <returns>Reference as <see cref="T:Mchnry.Flow.IRuleConditionBuilder"/> to indicate the true condition of evaluator.</returns>
         </member>
-        <member name="M:Mchnry.Flow.IRuleBuilder`1.EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator{`0},System.Func{Mchnry.Flow.IContextBuilder,Mchnry.Flow.Context})">
+        <member name="M:Mchnry.Flow.IRuleBuilder`1.EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator{`0},System.Action{Mchnry.Flow.ContextBuilder})">
             <summary>
             Defines the rule that queries an <see cref="T:Mchnry.Flow.Logic.IRuleEvaluator`1"/>
             </summary>
@@ -88,7 +88,7 @@
             <param name="context">The context to pass to the evaluator.</param>
             <returns>Reference as <see cref="T:Mchnry.Flow.IRuleConditionBuilder"/> to indicate the true condition of evaluator.</returns>
         </member>
-        <member name="M:Mchnry.Flow.IRuleBuilder`1.EvalInLine(System.String,System.String,System.Func{Mchnry.Flow.IContextBuilder,Mchnry.Flow.Context},System.Func{Mchnry.Flow.IEngineScope{`0},Mchnry.Flow.Diagnostics.IEngineTrace,Mchnry.Flow.IRuleResult,System.Threading.CancellationToken,System.Threading.Tasks.Task})">
+        <member name="M:Mchnry.Flow.IRuleBuilder`1.EvalInLine(System.String,System.String,System.Action{Mchnry.Flow.ContextBuilder},System.Func{Mchnry.Flow.IEngineScope{`0},Mchnry.Flow.Diagnostics.IEngineTrace,Mchnry.Flow.IRuleResult,System.Threading.CancellationToken,System.Threading.Tasks.Task})">
             <summary>
             Evaluate inline evaluator function
             </summary>
