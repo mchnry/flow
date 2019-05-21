@@ -573,7 +573,7 @@ namespace Mchnry.Flow
             {
                 //if attmpeting to add another implementation with the same id, throw an exception
                 //we can't handle this
-                if (this.actions[ToDo.Id] != builderRef.action)
+                if ((this.actions[ToDo.Id].GetType()) != builderRef.action.GetType())
                 {
                     throw new BuilderException(ToDo.Id);
                 }
@@ -1115,7 +1115,7 @@ namespace Mchnry.Flow
                 this.evaluators.Add(evaluatorId.Id, builderRef.evaluator);
             }                //if attmpeting to add another implementation with the same id, throw an exception
                              //we can't handle this
-            else if (this.evaluators[evaluatorId.Id] != builderRef.evaluator)
+            else if (this.evaluators[evaluatorId.Id].GetType() != builderRef.evaluator.GetType())
             {
                 throw new BuilderException(evaluatorId.Id);
             }
