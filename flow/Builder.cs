@@ -187,6 +187,9 @@ namespace Mchnry.Flow
 
         IRuleConditionBuilder IRuleBuilder<T>.EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator, Action<ContextBuilder> context)
         {
+
+            ((IRuleBuilder<T>)this).Eval(evaluator);
+            
             ContextBuilder builder = new ContextBuilder();
 
             if (context == null) throw new ArgumentException("Caller failed to provide context");
@@ -196,7 +199,7 @@ namespace Mchnry.Flow
             builderRef.workflowManager.AddContextDefinition(builder.builder.definition);
             this.rule.Context = builder.context;
 
-            ((IRuleBuilder<T>)this).Eval(evaluator);
+            
 
             return this;
         }
