@@ -36,7 +36,7 @@ namespace Mchnry.Flow
         }
     }
 
-    public sealed class Context
+    public class Context
     {
         public static implicit operator Context(string serialized)
         {
@@ -48,14 +48,15 @@ namespace Mchnry.Flow
             return null;
         }
 
+        internal Context() { }
         internal Context(IEnumerable<string> keys,string name)
         {
             this.Keys = new List<string>(keys);
             this.Name = name;
         }
 
-        public List<string> Keys { get; internal set; }
-        public string Name { get; }
+        public virtual List<string> Keys { get; internal set; }
+        public virtual string Name { get; }
 
         public override string ToString()
         {
