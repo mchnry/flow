@@ -20,7 +20,7 @@
             </summary>
             <typeparam name="T">Type of model used in flow.</typeparam>
         </member>
-        <member name="M:Mchnry.Flow.IActionBuilder`1.DoWithContext(Mchnry.Flow.Work.IAction{`0},System.Action{Mchnry.Flow.ContextBuilder})">
+        <member name="M:Mchnry.Flow.IActionBuilder`1.DoWithContext(Mchnry.Flow.Work.IAction{`0},System.String)">
             <summary>
             Define an action to be executed with context.
             </summary>
@@ -33,7 +33,7 @@
             </summary>
             <param name="action">Implementation of <see cref="T:Mchnry.Flow.Work.IAction`1"/></param>
         </member>
-        <member name="M:Mchnry.Flow.IActionBuilder`1.DoInLine(System.String,System.String,System.Action{Mchnry.Flow.ContextBuilder},System.Func{Mchnry.Flow.IEngineScope{`0},Mchnry.Flow.Diagnostics.IEngineTrace,System.Threading.CancellationToken,System.Threading.Tasks.Task{System.Boolean}})">
+        <member name="M:Mchnry.Flow.IActionBuilder`1.DoInLine(System.String,System.String,System.String,System.Func{Mchnry.Flow.IEngineScope{`0},Mchnry.Flow.Diagnostics.IEngineTrace,System.Threading.CancellationToken,System.Threading.Tasks.Task{System.Boolean}})">
             <summary>
             Do an inline action
             </summary>

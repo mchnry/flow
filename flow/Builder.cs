@@ -26,7 +26,7 @@ namespace Mchnry.Flow
         /// </summary>
         /// <param name="action">Implementation of <see cref="Mchnry.Flow.Work.IAction{TModel}"/></param>
         /// <param name="context">Contextual parameter as defined by Action</param>
-        void DoWithContext(Mchnry.Flow.Work.IAction<T> action, Action<ContextBuilder> context);
+        void DoWithContext(Mchnry.Flow.Work.IAction<T> action, string input);
 
         /// <summary>
         /// Define an action to be executed with context.
@@ -39,7 +39,7 @@ namespace Mchnry.Flow
         /// </summary>
         /// <param name="actionName">Name of action</param>
         /// <param name="action">Func to do</param>
-        void DoInLine(string actionName, string description, Action<ContextBuilder> context, Func<IEngineScope<T>, IEngineTrace, CancellationToken, Task<bool>> action);
+        void DoInLine(string actionName, string description, string input, Func<IEngineScope<T>, IEngineTrace, CancellationToken, Task<bool>> action);
 
 
     }
@@ -60,16 +60,16 @@ namespace Mchnry.Flow
         internal WorkDefine.ActionRef actionRef { get; set; }
    
 
-        void IActionBuilder<T>.DoWithContext(IAction<T> action, Action<ContextBuilder> context )
+        void IActionBuilder<T>.DoWithContext(IAction<T> action, string input )
         {
             ContextBuilder builder = new ContextBuilder();
 
-            if (context == null) throw new ArgumentException("Caller failed to provide context");
+            if (string.IsNullOrEmpty(input)) throw new ArgumentException("Caller failed to provide context");
 
             ((IActionBuilder<T>)this).Do(action);
-            context.Invoke(builder);
+            
             builderRef.workflowManager.AddContextDefinition(builder.builder.definition);
-            this.actionRef.Context = builder.context;
+            this.actionRef.Input = input;
         }
 
         void IActionBuilder<T>.Do(IAction<T> action)
@@ -79,19 +79,19 @@ namespace Mchnry.Flow
 
         }
 
-        void IActionBuilder<T>.DoInLine(string actionName, string description, Action<ContextBuilder> context, Func<IEngineScope<T>, IEngineTrace, CancellationToken, Task<bool>> actionToDo)
+        void IActionBuilder<T>.DoInLine(string actionName, string description, string input, Func<IEngineScope<T>, IEngineTrace, CancellationToken, Task<bool>> actionToDo)
         {
             ContextBuilder builder = new ContextBuilder();
             Context ctx = default;
 
-            if (context != null)
-            {
-                context.Invoke(builder);
-                builderRef.workflowManager.AddContextDefinition(builder.builder.definition);
-                ctx = builder.context;
-            }
+            //if (context != null)
+            //{
+            //    context.Invoke(builder);
+            //    builderRef.workflowManager.AddContextDefinition(builder.builder.definition);
+            //    ctx = builder.context;
+            //}
             this.action = new DynamicAction<T>(new WorkDefine.ActionDefinition() { Id = actionName, Description = description??"Dynamic" }, actionToDo);
-            this.actionRef = new WorkDefine.ActionRef() { Id = action.Definition.Id, Context = ctx };
+            this.actionRef = new WorkDefine.ActionRef() { Id = action.Definition.Id, Input = input };
         }
     }
 

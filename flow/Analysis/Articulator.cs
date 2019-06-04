@@ -79,16 +79,13 @@ namespace Mchnry.Flow.Analysis
                 else
                 {
 
-                    if (s.Context != null)
+                    if (s.Input != null)
                     {
-                        ContextDefinition ctxDef = this.workflow.ContextDefinitions.FirstOrDefault(g => g.Name.Equals(s.Context.Name, StringComparison.OrdinalIgnoreCase));
-
-                        string ctxLit = string.Join(",", (from i in ctxDef.Items where s.Context.Keys.Contains(i.Key) select i.Literal));
 
                         ArticulateContext articulateContext = new ArticulateContext()
                         {
-                            Literal = ctxDef.Literal,
-                            Value = ctxLit
+                            Literal = "Input",
+                            Value = s.Input
                         };
                         action.Context = articulateContext;
                     }

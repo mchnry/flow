@@ -17,7 +17,7 @@ namespace Mchnry.Flow.Work.Define
             {
                 string[] parts = action.Split('|');
                 toReturn.Id = parts[0];
-                toReturn.Context = parts[1];
+                toReturn.Input = parts[1];
             }
             else toReturn = new ActionRef() { Id = action };
 
@@ -25,12 +25,12 @@ namespace Mchnry.Flow.Work.Define
         }
 
         public string Id { get; set; }
-        public Context Context { get; set; }
+        public string Input { get; set; }
 
         public override string ToString()
         {
-            if (this.Context != null) {
-                return $"{this.Id}|{this.Context}";
+            if (this.Input != null) {
+                return $"{this.Id}|{this.Input}";
             } else {
                 return this.Id;
             }

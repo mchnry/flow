@@ -40,7 +40,7 @@ namespace Sample
 
         public async Task<bool> CompleteAsync(IEngineScope<Foo> scope, IEngineTrace trace, CancellationToken token)
         {
-            Console.WriteLine($"context {scope.CurrentAction.Context}");
+            Console.WriteLine($"input {scope.CurrentAction.Input}");
             return true;
         }
     }
