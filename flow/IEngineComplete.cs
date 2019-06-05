@@ -11,7 +11,7 @@ namespace Mchnry.Flow
         StepTraceNode<ActivityProcess> Process { get; }
 
         TModel GetModel(string key);
-
+        TModel GetModel();
 
     }
 }

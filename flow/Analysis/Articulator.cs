@@ -25,6 +25,7 @@ namespace Mchnry.Flow.Analysis
         {
             ArticulateEvaluator toBuild = new ArticulateEvaluator() { Id = x.Id };
             LogicDefine.Evaluator ev = this.workflow.Evaluators.FirstOrDefault(g => g.Id == x.Id);
+            toBuild.Literal = ev.Description;
 
             toBuild.TrueCondition = x.TrueCondition;
             if (x.Context != null)
@@ -70,7 +71,9 @@ namespace Mchnry.Flow.Analysis
             Func<WorkDefine.ActionRef, IArticulateActivity> createAction = (s) =>
             {
 
-                ArticulateAction action = new ArticulateAction() { Id = s.Id };
+                var actionDef = this.workflow.Actions.FirstOrDefault(g => g.Id == s.Id);
+                ArticulateAction action = new ArticulateAction() { Id = s.Id, Literal = actionDef.Description };
+                
 
                 if (s.Id == "*placeHolder")
                 {

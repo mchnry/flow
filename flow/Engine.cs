@@ -114,14 +114,15 @@ namespace Mchnry.Flow
         StepTraceNode<ActivityProcess> IEngineScope<TModel>.Process => this.Tracer.Root;
 
         StepTraceNode<ActivityProcess> IEngineComplete<TModel>.Process => this.Tracer.Root;
-
+        StepTraceNode<ActivityProcess> IEngineFinalize<TModel>.Process => this.Tracer.Root;
 
         EngineStatusOptions IEngineComplete<TModel>.Status => RunManager.EngineStatus;
-
+        EngineStatusOptions IEngineFinalize<TModel>.Status => RunManager.EngineStatus;
 
         //store all validations created by validators/evaluators
         internal virtual ValidationContainer ValidationContainer { get; set; } 
         IValidationContainer IEngineComplete<TModel>.Validations => this.ValidationContainer.ScopeToRoot();
+        IValidationContainer IEngineFinalize<TModel>.Validations => this.ValidationContainer.ScopeToRoot();
 
 
         internal void AddValidation(Validation toAdd)
@@ -261,6 +262,19 @@ namespace Mchnry.Flow
         TModel IEngineComplete<TModel>.GetModel(string key)
         {
             return this.WorkflowCache.Read<TModel>(key);
+        }
+        TModel IEngineFinalize<TModel>.GetModel(string key)
+        {
+            return this.WorkflowCache.Read<TModel>(key);
+        }
+
+        TModel IEngineComplete<TModel>.GetModel()
+        {
+            return ((IEngineScope<TModel>)this).GetModel(); 
+        }
+        TModel IEngineFinalize<TModel>.GetModel()
+        {
+            return ((IEngineScope<TModel>)this).GetModel();
         }
 
         IEngineLoader<TModel> IEngineLoader<TModel>.OverrideValidation(ValidationOverride oride)

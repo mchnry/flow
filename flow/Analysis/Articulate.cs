@@ -5,24 +5,35 @@ using System.Text;
 namespace Mchnry.Flow.Analysis
 {
 
-    public interface IArticulateExpression { string Id { get; } }
-    public interface IArticulateActivity {  string Id { get; } }
+    public interface IArticulateExpression {
+        string Id { get; }
+        string Literal { get; }
+    }
+
+    public interface IArticulateActivity {
+        string Id { get; }
+        string Literal { get; }
+
+    }
 
     public class ArticulateAction : IArticulateActivity
     {
         public string Id { get; set; }
         public ArticulateContext Context { get; set; }
+        public string Literal { get; set; }
 
     }
     public class NothingAction: IArticulateActivity
     {
         public string Id => "Nothing";
+        public string Literal => "Do Nothing";
     }
 
     public class ArticulateActivity : IArticulateActivity
     {
         public string Id { get; set; }
         public List<ArticulateReaction> Reactions { get; set; }
+        public string Literal => "Activity";
     }
 
     public class ArticulateContext
@@ -42,6 +53,7 @@ namespace Mchnry.Flow.Analysis
         public string Id { get; set; }
         public bool TrueCondition { get; set; }
         public ArticulateContext Context { get; set; }
+        public string Literal { get; set; }
     }
 
     public class ArticulateExpression: IArticulateExpression
@@ -50,11 +62,13 @@ namespace Mchnry.Flow.Analysis
         public IArticulateExpression First { get; set; }
         public string Condition { get; set; }
         public IArticulateExpression Second { get; set; }
+        public string Literal => "Equation";
     }
 
     public class TrueExpression: IArticulateExpression
     {
         public string Id => "Always";
+        public string Literal => "Always True";
     }
 
 
