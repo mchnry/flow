@@ -6,9 +6,10 @@
     <RootNamespace>Mchnry.Flow</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Description>Mchnry Workflow and Logic Engine</Description>
-    <Version>1.2.6</Version>
+    <Version>1.2.7</Version>
     <PackageDest>$(userprofile)\.nuget\packages</PackageDest>
     <LangVersion>7.3</LangVersion>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp2.2|AnyCPU'">
