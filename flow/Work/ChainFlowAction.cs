@@ -11,12 +11,14 @@ namespace Mchnry.Flow.Work
     internal class ChainFlowAction<TModel> : IAction<TModel>
     {
         private readonly string actionId;
+        private readonly IWorkflowBuilder<TModel> builder;
         private readonly string workflowId;
 
-        internal ChainFlowAction(string actionId, string workflowId)
+        internal ChainFlowAction(string actionId, IWorkflowBuilder<TModel> builder)
         {
             this.actionId = actionId;
-            this.workflowId = workflowId;
+            this.builder = builder;
+            this.workflowId = builder.GetBuilder().Workflow.Id;
         }
 
         public ActionDefinition Definition => new ActionDefinition
@@ -28,7 +30,7 @@ namespace Mchnry.Flow.Work
         public async Task<bool> CompleteAsync(IEngineScope<TModel> scope, IEngineTrace trace, CancellationToken token)
         {
             TModel model = scope.GetModel();
-            await scope.RunWorkflowAsync<TModel>(this.workflowId, model, token);
+            await scope.RunWorkflowAsync<TModel>(this.builder, model, token);
             return await Task.FromResult(true);
         }
     }

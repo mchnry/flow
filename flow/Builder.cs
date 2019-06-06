@@ -674,7 +674,7 @@ namespace Mchnry.Flow
             this.chained.Add(workflowId, builder);
 
             string actionId = $"chain{workflowId}";
-            this.Do(a => a.Do(new ChainFlowAction<T>(actionId, workflowId)));
+            this.Do(a => a.Do(new ChainFlowAction<T>(actionId, builder)));
 
             parent.Reactions.Add(new WorkDefine.Reaction() { Work = this.created.ToString() });
 

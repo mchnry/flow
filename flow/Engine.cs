@@ -707,7 +707,10 @@ namespace Mchnry.Flow
                 .SetEvaluatorFactory(this.ImplementationManager.EvaluatorFactory.proxy)
                 .SetWorkflowDefinitionFactory(this.ImplementationManager.BuilderFactory.Proxy);
 
+            //this is only called by the chainactivity, which always uses the same model as the originating engine.
+            //so we can safely assume T == TModel
             Engine<T> asEngine = (Engine<T>)subEngine;
+            
 
             foreach (var v in this.ValidationContainer.Overrides)
             {
@@ -739,50 +742,57 @@ namespace Mchnry.Flow
 
         }
 
-        async Task IEngineScope<TModel>.RunWorkflowAsync<T>(string workflowId, T model, CancellationToken token)
-        {
-            string currentWorkflowId = this.RunManager.WorkflowId;
+        //async Task IEngineScope<TModel>.RunWorkflowAsync<T>(string workflowId, T model, CancellationToken token)
+        //{
+        //    string currentWorkflowId = this.RunManager.WorkflowId;
 
-            this.RunManager.Ordinal++;
-            IEngineLoader<T> subEngine = new Engine<T>(this.Configuration, this.RunManager);
+        //    this.RunManager.Ordinal++;
+        //    IEngineLoader<T> subEngine = new Engine<T>(this.Configuration, this.RunManager);
 
-            subEngine
-                .SetActionFactory(this.ImplementationManager.ActionFactory.proxy)
-                .SetEvaluatorFactory(this.ImplementationManager.EvaluatorFactory.proxy)
-                .SetWorkflowDefinitionFactory(this.ImplementationManager.BuilderFactory.Proxy);
+        //    subEngine
+        //        .SetActionFactory(this.ImplementationManager.ActionFactory.proxy)
+        //        .SetEvaluatorFactory(this.ImplementationManager.EvaluatorFactory.proxy)
+        //        .SetWorkflowDefinitionFactory(this.ImplementationManager.BuilderFactory.Proxy);
 
-            Engine<T> asEngine = (Engine<T>)subEngine;
-            
-            foreach(var v in this.ValidationContainer.Overrides)
-            {
-                subEngine.OverrideValidation(v);
-            }
+        //    //this is only called by the chainactivity, which always uses the same model as the originating engine.
+        //    //so we can safely assume T == TModel
+        //    Engine<T> asEngine = (Engine<T>)subEngine;
+        //    if (this.ImplementationManager.BuilderFactory.Builders != null && this.ImplementationManager.BuilderFactory.Builders.Count > 0)
+        //    {
 
-            var runner = subEngine.Start(workflowId, model);
-            var finalizer = await runner.ExecuteAsync(token);
-
-            
+        //    }
             
 
-            //append all finalize to mine
-            foreach(var f in  asEngine.finalize)
-            {
-                this.finalize.Add(f.Key, new DeferProxy<TModel, T>(f.Value, asEngine));
-            }
-            foreach (var f in asEngine.finalizeAlways)
-            {
-                this.finalize.Add(f.Key, new DeferProxy<TModel, T>(f.Value, asEngine));
-            }
-            //append validations to mine
-            foreach (var v in asEngine.ValidationContainer.Validations)
-            {
-                this.AddValidation(v);
-            }
+        //    foreach(var v in this.ValidationContainer.Overrides)
+        //    {
+        //        subEngine.OverrideValidation(v);
+        //    }
 
-            this.RunManager.WorkflowId = currentWorkflowId;
+        //    var runner = subEngine.Start(workflowId, model);
+        //    var finalizer = await runner.ExecuteAsync(token);
+
+            
+            
+
+        //    //append all finalize to mine
+        //    foreach(var f in  asEngine.finalize)
+        //    {
+        //        this.finalize.Add(f.Key, new DeferProxy<TModel, T>(f.Value, asEngine));
+        //    }
+        //    foreach (var f in asEngine.finalizeAlways)
+        //    {
+        //        this.finalize.Add(f.Key, new DeferProxy<TModel, T>(f.Value, asEngine));
+        //    }
+        //    //append validations to mine
+        //    foreach (var v in asEngine.ValidationContainer.Validations)
+        //    {
+        //        this.AddValidation(v);
+        //    }
+
+        //    this.RunManager.WorkflowId = currentWorkflowId;
 
 
-        }
+        //}
 
         IEngineLoader<TModel> IEngineLoader<TModel>.SetGlobalModel<T>(string key, T model)
         {
