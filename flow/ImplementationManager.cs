@@ -21,7 +21,7 @@ namespace Mchnry.Flow
         WorkDefine.Workflow GetWorkflow(string id);
         WorkDefine.Workflow GetWorkflow(IWorkflowBuilder<TModel> builder);
         ProxyActionFactory<TModel> ActionFactory { get; }
-        IWorkflowBuilderFactory DefinitionFactory { get; }
+        ProxyWorkflowBuilderFactory<TModel> BuilderFactory { get; }
 
         void SetActionFactoryProxy(IActionFactory factory);
         void SetEvaluatorFactoryProxy(IRuleEvaluatorFactory factory);
@@ -36,7 +36,7 @@ namespace Mchnry.Flow
 
         public ProxyActionFactory<TModel> ActionFactory { get; set; }
         public ProxyEvaluatorFactory<TModel> EvaluatorFactory { get; set; }
-        public IWorkflowBuilderFactory DefinitionFactory { get; set; }
+        public ProxyWorkflowBuilderFactory<TModel> BuilderFactory { get; set; }
 
         public Config Configuration { get; }
 
@@ -45,7 +45,7 @@ namespace Mchnry.Flow
             this.Configuration = new Config();
             this.ActionFactory = new ProxyActionFactory<TModel>(this.Configuration);
             this.EvaluatorFactory = new ProxyEvaluatorFactory<TModel>(this.Configuration);
-            this.DefinitionFactory = new NoWorkflowDefinitionFactory();
+            this.BuilderFactory = new ProxyWorkflowBuilderFactory<TModel>(this.Configuration);
 
         }
 
@@ -55,14 +55,14 @@ namespace Mchnry.Flow
             this.Configuration = configuration;
         }
 
-        internal ImplementationManager(IWorkflowBuilderFactory definitionFactory, Configuration.Config configuration) : this(configuration)
-        {
-            this.ActionFactory.Configuration = configuration;
-            this.EvaluatorFactory.Configuration = configuration;
+        //internal ImplementationManager(IWorkflowBuilderFactory definitionFactory, Configuration.Config configuration) : this(configuration)
+        //{
+        //    this.ActionFactory.Configuration = configuration;
+        //    this.EvaluatorFactory.Configuration = configuration;
 
-            this.DefinitionFactory = definitionFactory;
+        //    this.DefinitionFactory = definitionFactory;
 
-        }
+        //}
 
 
 
@@ -80,7 +80,7 @@ namespace Mchnry.Flow
 
         public virtual WorkDefine.Workflow GetWorkflow(string id)
         {
-            IWorkflowBuilder<TModel> builder = this.DefinitionFactory.GetWorkflow<TModel>(id);
+            IWorkflowBuilder<TModel> builder = this.BuilderFactory.GetBuilder(id);
             return this.GetWorkflow(builder);
         }
 
@@ -96,6 +96,10 @@ namespace Mchnry.Flow
             foreach (var eval in builder.evaluators)
             {
                 this.EvaluatorFactory.AddEvaluator(eval.Key, eval.Value);
+            }
+            if (builder.chained != null && builder.chained.Count > 0)
+            {
+                this.BuilderFactory.Builders = builder.chained;
             }
 
 
@@ -152,7 +156,7 @@ namespace Mchnry.Flow
         ProxyActionFactory<TModel> IImplementationManager<TModel>.ActionFactory => null;
 
         ProxyEvaluatorFactory<TModel> IImplementationManager<TModel>.EvaluatorFactory => null;
-        IWorkflowBuilderFactory IImplementationManager<TModel>.DefinitionFactory => null;
+        ProxyWorkflowBuilderFactory<TModel> IImplementationManager<TModel>.BuilderFactory => null;
 
 
         private readonly WorkDefine.Workflow workFlow;

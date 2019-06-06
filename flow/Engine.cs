@@ -299,7 +299,7 @@ namespace Mchnry.Flow
 
         IEngineLoader<TModel> IEngineLoader<TModel>.SetWorkflowDefinitionFactory(IWorkflowBuilderFactory factory)
         {
-            ((ImplementationManager<TModel>)this.ImplementationManager).DefinitionFactory = factory;
+            ((ImplementationManager<TModel>)this.ImplementationManager).BuilderFactory.Proxy = factory;
             return this;
         }
 
@@ -705,7 +705,7 @@ namespace Mchnry.Flow
             subEngine
                 .SetActionFactory(this.ImplementationManager.ActionFactory.proxy)
                 .SetEvaluatorFactory(this.ImplementationManager.EvaluatorFactory.proxy)
-                .SetWorkflowDefinitionFactory(this.ImplementationManager.DefinitionFactory);
+                .SetWorkflowDefinitionFactory(this.ImplementationManager.BuilderFactory.Proxy);
 
             Engine<T> asEngine = (Engine<T>)subEngine;
 
@@ -749,7 +749,7 @@ namespace Mchnry.Flow
             subEngine
                 .SetActionFactory(this.ImplementationManager.ActionFactory.proxy)
                 .SetEvaluatorFactory(this.ImplementationManager.EvaluatorFactory.proxy)
-                .SetWorkflowDefinitionFactory(this.ImplementationManager.DefinitionFactory);
+                .SetWorkflowDefinitionFactory(this.ImplementationManager.BuilderFactory.Proxy);
 
             Engine<T> asEngine = (Engine<T>)subEngine;
             

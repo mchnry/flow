@@ -399,6 +399,7 @@ namespace Mchnry.Flow
 
         ReadOnlyCollection<IAction<T>> Actions { get; }
         ReadOnlyCollection<IRuleEvaluator<T>> Evaluators { get; }
+        ReadOnlyCollection<IWorkflowBuilder<T>> Chained { get; }
     }
 
     public interface IBuilderWorkflow<T>
@@ -509,7 +510,7 @@ namespace Mchnry.Flow
 
         internal Dictionary<string, IRuleEvaluator<T>> evaluators = new Dictionary<string, IRuleEvaluator<T>>();
         internal Dictionary<string, IAction<T>> actions = new Dictionary<string, IAction<T>>();
-
+        internal Dictionary<string, IWorkflowBuilder<T>> chained = new Dictionary<string, IWorkflowBuilder<T>>();
           
 
         internal WorkflowManager workflowManager;
@@ -524,6 +525,8 @@ namespace Mchnry.Flow
 
         ReadOnlyCollection<IAction<T>> IBuilder<T>.Actions => (from a in actions select a.Value).ToList().AsReadOnly();
         ReadOnlyCollection<IRuleEvaluator<T>> IBuilder<T>.Evaluators => (from a in evaluators select a.Value).ToList().AsReadOnly();
+        ReadOnlyCollection<IWorkflowBuilder<T>> IBuilder<T>.Chained => (from a in chained select a.Value).ToList().AsReadOnly();
+        
 
         public static IBuilder<T> CreateBuilder(string workflowId)
         {
@@ -668,6 +671,7 @@ namespace Mchnry.Flow
             parent = this.activityStack.Peek();
 
             string workflowId = builder.GetBuilder().Workflow.Id;
+            this.chained.Add(workflowId, builder);
 
             string actionId = $"chain{workflowId}";
             this.Do(a => a.Do(new ChainFlowAction<T>(actionId, workflowId)));
