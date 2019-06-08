@@ -23,8 +23,8 @@ namespace Mchnry.Flow
         ProxyActionFactory<TModel> ActionFactory { get; }
         ProxyWorkflowBuilderFactory<TModel> BuilderFactory { get; }
 
-        void SetActionFactoryProxy(IActionFactory factory);
-        void SetEvaluatorFactoryProxy(IRuleEvaluatorFactory factory);
+        //void SetActionFactoryProxy(IActionFactory factory);
+        //void SetEvaluatorFactoryProxy(IRuleEvaluatorFactory factory);
 
         ProxyEvaluatorFactory<TModel> EvaluatorFactory { get; }
 
@@ -121,15 +121,15 @@ namespace Mchnry.Flow
             return this.EvaluatorFactory.GetRuleEvaluator(def);
         }
 
-        public void SetActionFactoryProxy(IActionFactory factory)
-        {
-            this.ActionFactory.proxy = factory;
-        }
+        //public void SetActionFactoryProxy(IActionFactory factory)
+        //{
+        //    this.ActionFactory.proxy = factory;
+        //}
 
-        public void SetEvaluatorFactoryProxy(IRuleEvaluatorFactory factory)
-        {
-            this.EvaluatorFactory.proxy = factory;
-        }
+        //public void SetEvaluatorFactoryProxy(IRuleEvaluatorFactory factory)
+        //{
+        //    this.EvaluatorFactory.proxy = factory;
+        //}
 
         //internal virtual void AddEvaluator(string id, Func<IEngineScope<TModel>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluator)
         //{
@@ -193,15 +193,15 @@ namespace Mchnry.Flow
             return builder.GetBuilder().Workflow;
         }
 
-        public void SetActionFactoryProxy(IActionFactory factory)
-        {
-            //do nothing
-        }
+        //public void SetActionFactoryProxy(IActionFactory factory)
+        //{
+        //    //do nothing
+        //}
 
-        public void SetEvaluatorFactoryProxy(IRuleEvaluatorFactory factory)
-        {
-            //do nothing
-        }
+        //public void SetEvaluatorFactoryProxy(IRuleEvaluatorFactory factory)
+        //{
+        //    //do nothing
+        //}
 
         //IAction<TModel> IImplementationManager<TModel>.GetAction(WorkDefine.ActionDefinition def)
         //{

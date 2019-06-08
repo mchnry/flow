@@ -13,7 +13,6 @@ namespace Mchnry.Flow.Logic
     public interface IRuleEvaluator<TModel>
     {
 
-        LogicDefine.Evaluator Definition { get; }
         
         Task EvaluateAsync(IEngineScope<TModel> scope, IEngineTrace trace, IRuleResult result, CancellationToken token);
 

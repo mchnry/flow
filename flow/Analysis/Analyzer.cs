@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using WorkDefine = Mchnry.Flow.Work.Define;
-using LogicDefine = Mchnry.Flow.Logic.Define;
+﻿using System.Collections.Generic;
 using System.Linq;
+using LogicDefine = Mchnry.Flow.Logic.Define;
+using WorkDefine = Mchnry.Flow.Work.Define;
 
 namespace Mchnry.Flow.Analysis
 {

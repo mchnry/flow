@@ -1,5 +1,4 @@
-﻿using Mchnry.Flow.Logic.Define;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Mchnry.Flow.Analysis
 {

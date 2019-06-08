@@ -1,9 +1,6 @@
-﻿using System;
+﻿using Mchnry.Flow.Configuration;
 using System.Collections.Generic;
-using System.Text;
 using WorkDefine = Mchnry.Flow.Work.Define;
-using LogicDefine = Mchnry.Flow.Logic.Define;
-using Mchnry.Flow.Configuration;
 
 namespace Mchnry.Flow.Analysis
 {

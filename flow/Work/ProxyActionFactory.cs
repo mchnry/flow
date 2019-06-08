@@ -26,7 +26,6 @@ namespace Mchnry.Flow.Work
         }
 
 
-        public IActionFactory proxy { get; set; }
 
         public IAction<TModel> getAction(WorkDefine.ActionDefinition def)
         {
@@ -38,35 +37,7 @@ namespace Mchnry.Flow.Work
             IAction<TModel> toReturn = default(IAction<TModel>);
 
 
-            if (!this.actions.ContainsKey(def.Id) && !this.actions.ContainsKey(withoutConvention.Id))
-            {
 
-                if (this.proxy != null)
-                {
-                    try
-                    {
-                        string searchId = ConventionHelper.RemoveConvention(def.Id, this.Configuration.Convention);
-                        toReturn = this.proxy.GetAction<TModel>(withoutConvention);
-                        if (toReturn == null)
-                        {
-                            toReturn = this.proxy.GetAction<TModel>(def);
-                        }
-                    }
-                    catch (System.Exception ex)
-                    {
-                        throw new LoadActionException(def.Id, ex);
-                    }
-
-                    if (default(IAction<TModel>) == toReturn)
-                    {
-                        throw new LoadActionException(def.Id);
-                    }
-
-                    this.actions.Add(def.Id, toReturn);
-                }
-            }
-            else
-            {
                 if (this.actions.ContainsKey(withoutConvention.Id))
                 {
                     toReturn = this.actions[withoutConvention.Id];
@@ -76,7 +47,7 @@ namespace Mchnry.Flow.Work
                 {
                     toReturn = this.actions[def.Id];
                 }
-            }
+            
             return toReturn;
         }
     }

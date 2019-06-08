@@ -2,9 +2,9 @@
 
 namespace Mchnry.Flow.Logic
 {
-    public interface IRuleEvaluatorFactory
-    {
-        IRuleEvaluator<TModel> GetRuleEvaluator<TModel>(LogicDefine.Evaluator definition);
-    }
+    //public interface IRuleEvaluatorFactory
+    //{
+    //    IRuleEvaluator<TModel> GetRuleEvaluator<TModel>(LogicDefine.Evaluator definition);
+    //}
 
 }

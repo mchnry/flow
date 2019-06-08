@@ -4,6 +4,28 @@
         <name>Mchnry.Flow</name>
     </assembly>
     <members>
+        <member name="T:Mchnry.Flow.Analysis.ActivityTest">
+            <summary>
+            Container for the lint results of an activity test
+            </summary>
+        </member>
+        <member name="M:Mchnry.Flow.Analysis.ActivityTest.#ctor(System.String)">
+            <summary>
+            Constructs an activity test for the given activity
+            </summary>
+            <param name="activityId">Id of the activity represented by this test</param>
+        </member>
+        <member name="P:Mchnry.Flow.Analysis.ActivityTest.TestCases">
+            <summary>
+            An activity test will have test cases for each logical permutation of all rules
+            involved in the activity (with context factored in)
+            </summary>
+        </member>
+        <member name="P:Mchnry.Flow.Analysis.ActivityTest.ActivityId">
+            <summary>
+            Activity Id
+            </summary>
+        </member>
         <member name="T:Mchnry.Flow.Analysis.Sanitizer">
             <summary>
             Utility used to Sanitize a workflow definition

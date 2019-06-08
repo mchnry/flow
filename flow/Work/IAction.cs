@@ -7,7 +7,6 @@ namespace Mchnry.Flow.Work
 {
     public interface IAction<TModel>
     {
-        WorkDefine.ActionDefinition Definition { get; }
         Task<bool> CompleteAsync(IEngineScope<TModel> scope, IEngineTrace trace, CancellationToken token);
 
     }

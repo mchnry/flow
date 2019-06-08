@@ -5,6 +5,9 @@ using System.Text;
 
 namespace Mchnry.Flow.Configuration
 {
+
+
+
     public class Config
     {
 
@@ -17,7 +20,6 @@ namespace Mchnry.Flow.Configuration
 
         internal int Ordinal { get; set; } = 0;
 
-        
 
 
     }

@@ -13,6 +13,8 @@ namespace Mchnry.Flow.Configuration
         Action = 3
     };
 
+    public enum ParseOptions { CamelCase, UnderScore }
+
     public class Convention
     {
         private Dictionary<NamePrefixOptions, string> prefixes = new Dictionary<NamePrefixOptions, string>();
@@ -32,6 +34,8 @@ namespace Mchnry.Flow.Configuration
         {
             prefixes[option] = value;
         }
+
+        public ParseOptions ParseMethodNamesAs { get; set; } = ParseOptions.CamelCase;
 
         public string Delimeter { get; set; } = ".";
        

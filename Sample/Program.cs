@@ -1,11 +1,13 @@
 ﻿using Mchnry.Core.JWT;
 using Mchnry.Flow;
+using Mchnry.Flow.Configuration;
 using Mchnry.Flow.Diagnostics;
 using Mchnry.Flow.Logic;
 using Mchnry.Flow.Work;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using LogicDefine = Mchnry.Flow.Logic.Define;
@@ -14,126 +16,80 @@ using WorkDefine = Mchnry.Flow.Work.Define;
 namespace Sample
 {
 
-    public class Foo
-    {
-        public int Id { get; set; }
-    }
-    public class Bar
-    {
-        public int Id { get; set; }
-    }
-
-
 
     public class ActionFactory
     {
-        public IAction<Foo> CtxAction { get => new CtxAction(); }
+        public IAction<string> DoIt => new DoIt();
     }
 
-    internal class CtxAction : IAction<Foo>
+    internal class DoIt : IAction<string>
     {
-        public WorkDefine.ActionDefinition Definition => new WorkDefine.ActionDefinition()
+        public async Task<bool> CompleteAsync(IEngineScope<string> scope, IEngineTrace trace, CancellationToken token)
         {
-            Description = "context action",
-            Id = "ctxaction"
-        };
-
-        public async Task<bool> CompleteAsync(IEngineScope<Foo> scope, IEngineTrace trace, CancellationToken token)
-        {
-            Console.WriteLine($"input {scope.CurrentAction.Input}");
+            Console.WriteLine("did it");
             return true;
         }
     }
 
     public class EvaluatorFactory
     {
-        public IRuleEvaluator<Foo> CtxRule => new CtxRule();
+        public IRuleEvaluator<string> ShouldIDoIt => new ShouldIDoIt();
     }
 
-    internal class CtxRule : IRuleEvaluator<Foo>
+    [ArticulateOptions("Test If I Should Do It")]
+    internal class ShouldIDoIt : IRuleEvaluator<string>
     {
-        public LogicDefine.Evaluator Definition => new LogicDefine.Evaluator()
+        public async Task EvaluateAsync(IEngineScope<string> scope, IEngineTrace trace, IRuleResult result, CancellationToken token)
         {
-            Id = "ctxrule",
-            Description = "context rule"
-        };
-
-        public async Task EvaluateAsync(IEngineScope<Foo> scope, IEngineTrace trace, IRuleResult result, CancellationToken token)
-        {
-            Console.WriteLine($"evaluating with context {scope.CurrentRuleDefinition.Context}");
             result.Pass();
         }
     }
 
-    public class WorkflowBuilderFactory : IWorkflowBuilderFactory
+    public class BuilderFactory
     {
+        private readonly ActionFactory af;
+        private readonly EvaluatorFactory ef;
 
-        ActionFactory AF = new ActionFactory();
-        EvaluatorFactory EF = new EvaluatorFactory();
-
-        public IWorkflowBuilder<T> GetWorkflow<T>(string workflowId)
+        public BuilderFactory(ActionFactory af, EvaluatorFactory ef)
         {
-
-
-    
-            
-            
-            IBuilderWorkflow<T> toReturn = default;
-            
-            switch (workflowId)
-            {
-                case "first":
-                    //toReturn =  (IBuilderWorkflow<T>)Builder<Foo>.CreateBuilder("first").BuildFluent(ToDo => ToDo
-                    //    .IfThenDo(
-                    //        If => If.Rule(rule => rule.EvalWithContext(EF.CtxRule, ctx => ctx.MatchAny
-                    //        Then => Then.Do(Do => Do.DoWithContext(AF.CtxAction, ctx => ctx.OneOf("abc", "abc", new List<ContextItem>(), false).Is)
-                    //        )
-
-                    //);
-                    //string s = JsonConvert.SerializeObject(toReturn.Workflow, new JsonSerializerSettings() { Formatting = Formatting.Indented });
-                    //Console.WriteLine(s);
-                    break;
-
-            }
-
-            return new WorkflowBuilder<T>( toReturn);
+            this.af = af;
+            this.ef = ef;
         }
+        public IWorkflowBuilder<string> Workflow =>
+            new WorkflowBuilder<string>(Builder<string>.CreateBuilder("workflow").BuildFluent(ToDo => ToDo
+            .IfThenDo(
+                If => If.Rule(rule => rule.Eval(ef.ShouldIDoIt).IsTrue()),
+                Then => Then.Do(Do => Do.Do(af.DoIt))
+            )));
     }
+
+
 
     class Program
     {
 
 
+
         public static async Task Main(string[] args)
         {
+            
+            ActionFactory AF = new ActionFactory();
+            EvaluatorFactory EF = new EvaluatorFactory();
+            BuilderFactory BF = new BuilderFactory(AF, EF);
 
-            var builder = Engine<Foo>.CreateEngine();
-            var runner = builder
-                //.SetActionFactory(new ActionFactory())
-                //.SetEvaluatorFactory(new EvaluatorFactory())
-                .SetWorkflowDefinitionFactory(new WorkflowBuilderFactory())
-                .Start("first", new Foo());
+            var engine = Engine<string>.CreateEngine();
+            var runner = engine.StartFluent(BF.Workflow, "hello");
 
-          
-
-            var complete = runner.ExecuteAutoFinalizeAsync(new CancellationToken());
-
+            var complete = await runner.ExecuteAutoFinalizeAsync(new CancellationToken());
 
             Console.ReadLine();
 
-            //RSAProv prov = new RSAProv(System.Security.Cryptography.X509Certificates.X509FindType.FindByThumbprint, "5d6c96212ec044b31eff0f563644ece2bc968b3b");
-            //var cert = prov.GetKey();
+            /*
+            UserHasPermission
+            ItemInInventory
 
-            //JWTHelper helper = new Mchnry.Core.JWT.JWTHelper();
-            //var jwt = helper.Encode<ApiHeader, ApiToken>(new jwt<ApiHeader, ApiToken>()
-            //{
-            //    Header = new ApiHeader() { Algorithm = "HS384", exp = helper.DateToInt(TimeSpan.FromMinutes(1))[1], TokenName = "tkn" },
-            //    Token = new ApiToken() { exp = helper.DateToInt(TimeSpan.FromMinutes(1))[1], iat = helper.DateToInt(TimeSpan.MinValue)[0], Subject = "jamie", JTI = "asdfasdf" }
-            //}, cert);
 
-            //bool expired;
-            //var decoded = helper.Decode<ApiHeader, ApiToken>(jwt, cert, out expired);
-
+            */
         }
 
     }

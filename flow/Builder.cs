@@ -75,7 +75,10 @@ namespace Mchnry.Flow
         void IActionBuilder<T>.Do(IAction<T> action)
         {
             this.action = action;
-            this.actionRef = new WorkDefine.ActionRef() { Id = action.Definition.Id };
+
+            string typeName = action.GetType().Name;
+
+            this.actionRef = new WorkDefine.ActionRef() { Id = typeName };
 
         }
 
@@ -91,7 +94,7 @@ namespace Mchnry.Flow
             //    ctx = builder.context;
             //}
             this.action = new DynamicAction<T>(new WorkDefine.ActionDefinition() { Id = actionName, Description = description??"Dynamic" }, actionToDo);
-            this.actionRef = new WorkDefine.ActionRef() { Id = action.Definition.Id, Input = input };
+            this.actionRef = new WorkDefine.ActionRef() { Id = actionName, Input = input };
         }
     }
 
@@ -164,7 +167,8 @@ namespace Mchnry.Flow
         IRuleConditionBuilder IRuleBuilder<T>.Eval(IRuleEvaluator<T> evaluator)
         {
             this.evaluator = evaluator;
-            this.rule = new LogicDefine.Rule() { Id = this.evaluator.Definition.Id, TrueCondition = true };
+            string name = evaluator.GetType().Name;
+            this.rule = new LogicDefine.Rule() { Id = name, TrueCondition = true };
             return this;
         }
 
@@ -181,7 +185,7 @@ namespace Mchnry.Flow
             }
 
             this.evaluator = new DynamicEvaluator<T>(new LogicDefine.Evaluator() { Id = evaluatorName, Description = description??"Dynamic" }, evaluatorToEval);
-            this.rule = new LogicDefine.Rule() { Id = this.evaluator.Definition.Id, TrueCondition = true, Context = ctx };
+            this.rule = new LogicDefine.Rule() { Id = evaluatorName, TrueCondition = true, Context = ctx };
             return this;
         }
 
@@ -221,7 +225,7 @@ namespace Mchnry.Flow
 
     }
 
-    #region Fluent
+
 
     /// <summary>
     /// Interface for fluent activity builder.
@@ -346,43 +350,6 @@ namespace Mchnry.Flow
     }
 
 
-
-    #endregion
-
-    #region Not Fluent
-
-    public interface IActivityBuilder
-    {
-        IActivityBuilder Do(WorkDefine.ActionRef action);
-        IActivityBuilder DoNothing();
-
-        IElseActivityBuilder IfThenDo(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then);
-
-    }
-    public interface IElseActivityBuilder
-    {
-        IActivityBuilder Do(WorkDefine.ActionRef action);
-        IElseActivityBuilder IfThenDo(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then);
-        IActivityBuilder Else(Action<IActivityBuilder> Then);
-
-    }
-
-    public interface IExpressionBuilder
-    {
-        void True(LogicDefine.Rule evaluatorId);
-        //void True(ExpressionRef xref);
-
-        void And(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second);
-        void Or(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second);
-
-    }
-
-    #endregion
-
-
-
-
-
     /// <summary>
     /// Interface for building a flow.
     /// </summary>
@@ -395,7 +362,7 @@ namespace Mchnry.Flow
         /// <param name="Activity"></param>
         /// <returns></returns>
         IBuilderWorkflow<T> BuildFluent(Action<IFluentActivityBuilder<T>> Activity);
-        IBuilderWorkflow<T> Build(Action<IActivityBuilder> Activity);
+        //IBuilderWorkflow<T> Build(Action<IActivityBuilder> Activity);
 
         ReadOnlyCollection<IAction<T>> Actions { get; }
         ReadOnlyCollection<IRuleEvaluator<T>> Evaluators { get; }
@@ -502,10 +469,7 @@ namespace Mchnry.Flow
         IBuilderWorkflow<T>, 
         IFluentExpressionBuilder<T>, 
         IFluentActivityBuilder<T>, 
-        IFluentElseActivityBuilder<T>,
-        IExpressionBuilder, 
-        IActivityBuilder, 
-        IElseActivityBuilder
+        IFluentElseActivityBuilder<T>
     {
 
         internal Dictionary<string, IRuleEvaluator<T>> evaluators = new Dictionary<string, IRuleEvaluator<T>>();
@@ -566,7 +530,20 @@ namespace Mchnry.Flow
             WorkDefine.ActionRef ToDo = builderRef.actionRef;
             
             ToDo.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Action, ToDo.Id, this.config.Convention);
-            this.workflowManager.AddAction(new WorkDefine.ActionDefinition() { Id = ToDo.Id, Description = builderRef.action.Definition.Description });
+
+            string actionName = builderRef.action.GetType().Name;
+            string description = ConventionHelper.ParseMethodName(actionName, this.config.Convention.ParseMethodNamesAs).Literal;
+
+            var descAttr = builderRef.action.GetType().GetCustomAttributes(typeof(ArticulateOptionsAttribute), true)
+                 .OfType<ArticulateOptionsAttribute>()
+                 .FirstOrDefault();
+            if (descAttr != null)
+            {
+                description = descAttr.Description;
+            }
+
+
+            this.workflowManager.AddAction(new WorkDefine.ActionDefinition() { Id = ToDo.Id, Description = description });
 
             if (!this.actions.ContainsKey(ToDo.Id))
             {
@@ -592,10 +569,7 @@ namespace Mchnry.Flow
             this.created = ToDo;
         }
 
-        IActivityBuilder IActivityBuilder.DoNothing()
-        {
-            return ((IActivityBuilder)this).Do("noaction");
-        }
+
         IFluentActivityBuilder<T> IFluentActivityBuilder<T>.DoNothing()
         {
 
@@ -619,14 +593,7 @@ namespace Mchnry.Flow
             this.workflowManager.AddActivity(parent);
             this.subActivities.Add(parent.Id, 0);
         }
-        IBuilderWorkflow<T> IBuilder<T>.Build(Action<IActivityBuilder> First)
-        {
-            this.Build();
 
-            First(this);
-
-            return this;
-        }
         IBuilderWorkflow<T> IBuilder<T>.BuildFluent(Action<IFluentActivityBuilder<T>> First)
         {
 
@@ -682,23 +649,6 @@ namespace Mchnry.Flow
 
         }
 
-        IActivityBuilder IElseActivityBuilder.Do(WorkDefine.ActionRef action) { return ((IActivityBuilder)this).Do(action); }
-        IActivityBuilder IActivityBuilder.Do(WorkDefine.ActionRef action)
-        {
-
-            WorkDefine.Activity parent = default(WorkDefine.Activity);
-            //get the parent, add this as a reaction
-
-            parent = this.activityStack.Peek();
-
-
-            this.Do(action);
-            parent.Reactions.Add(new WorkDefine.Reaction() { Work = this.created.ToString() });
-
-            return this;
-
-        }
-
 
 
         IFluentElseActivityBuilder<T> IFluentElseActivityBuilder<T>.IfThenDo(Action<IFluentExpressionBuilder<T>> If, Action<IFluentActivityBuilder<T>> Then) { return ((IFluentActivityBuilder<T>)this).IfThenDo(If, Then); }
@@ -735,40 +685,7 @@ namespace Mchnry.Flow
             return this;
         }
 
-        IElseActivityBuilder IElseActivityBuilder.IfThenDo(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then) { return ((IActivityBuilder)this).IfThenDo(If, Then); }
-        IElseActivityBuilder IActivityBuilder.IfThenDo(Action<IExpressionBuilder> If, Action<IActivityBuilder> Then)
-        {
-            WorkDefine.Activity parent = this.activityStack.Peek();
-
-            int subCount = this.subActivities[parent.Id];
-            subCount++;
-            this.subActivities[parent.Id] = subCount;
-
-            string activityId = string.Format("{0}{1}{2}", parent.Id, this.config.Convention.Delimeter, subCount);
-            WorkDefine.Activity toBuild = new WorkDefine.Activity()
-            {
-                Id = activityId,
-                Reactions = new List<WorkDefine.Reaction>() { }
-            };
-
-
-
-            this.subActivities.Add(activityId, 0);
-            activityStack.Push(toBuild);
-            this.workflowManager.AddActivity(toBuild);
-
-            If(this);
-            Then(this);
-
-            LastEquation = this.epxressionStack.Pop();
-
-            parent.Reactions.Add(new WorkDefine.Reaction() { Logic = LastEquation.ShortHand, Work = toBuild.Id });
-
-            this.activityStack.Pop();
-
-            return this;
-        }
-
+  
         IFluentActivityBuilder<T> IFluentElseActivityBuilder<T>.Else(Action<IFluentActivityBuilder<T>> Then)
         {
             WorkDefine.Activity parent = this.activityStack.Peek();
@@ -796,44 +713,6 @@ namespace Mchnry.Flow
             equationAsRule.TrueCondition = !equationAsRule.TrueCondition;
 
             string equationId = equationAsRule.ShortHand;           
-            Then(this);
-
-
-
-            parent.Reactions.Add(new WorkDefine.Reaction() { Logic = equationId, Work = toBuild.Id });
-
-            this.activityStack.Pop();
-
-            return this;
-        }
-
-        IActivityBuilder IElseActivityBuilder.Else(Action<IActivityBuilder> Then)
-        {
-            WorkDefine.Activity parent = this.activityStack.Peek();
-
-            int subCount = this.subActivities[parent.Id];
-            subCount++;
-            this.subActivities[parent.Id] = subCount;
-
-            string activityId = string.Format("{0}{1}{2}", parent.Id, this.config.Convention.Delimeter, subCount);
-            WorkDefine.Activity toBuild = new WorkDefine.Activity()
-            {
-                Id = activityId,
-                Reactions = new List<WorkDefine.Reaction>() { }
-            };
-
-
-
-            this.subActivities.Add(activityId, 0);
-            activityStack.Push(toBuild);
-            this.workflowManager.AddActivity(toBuild);
-
-            LogicDefine.Rule equationAsRule = LastEquation.ShortHand;
-            //negate
-            equationAsRule.TrueCondition = !equationAsRule.TrueCondition;
-
-            string equationId = equationAsRule.ShortHand;
-
             Then(this);
 
 
@@ -975,51 +854,6 @@ namespace Mchnry.Flow
     
         }
 
-        void IExpressionBuilder.And(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second)
-        {
-
-            string equationId = string.Empty;
-
-
-            //we are in a sub equation
-            if (this.epxressionStack.Count > 0)
-            {
-                string lastEquationId = this.epxressionStack.Peek().Id;
-                string suffix = (this.epxressionStack.Count % 2 == 0) ? "2" : "1";
-                equationId = lastEquationId + this.config.Convention.Delimeter + suffix;
-
-            }
-            else //we are at the root
-            {
-                string lastActivityId = this.activityStack.Peek().Id;
-                equationId = ConventionHelper.ChangePrefix(NamePrefixOptions.Activity, NamePrefixOptions.Equation, lastActivityId, this.config.Convention);
-
-            }
-
-            LogicDefine.Equation toAdd = new LogicDefine.Equation()
-            {
-                Condition = Logic.Operand.And,
-                Id = equationId
-            };
-
-            this.epxressionStack.Push(toAdd);
-            this.workflowManager.AddEquation(toAdd);
-
-
-            string firstId, secondId = null;
-            first(this);
-            firstId = this.epxressionStack.Pop().ShortHand;
-            second(this);
-            secondId = this.epxressionStack.Pop().ShortHand;
-
-
-            toAdd.First = firstId;
-            toAdd.Second = secondId;
-
-            // return new ExpressionRef(toAdd.ShortHand);
-
-        }
-
         void IFluentExpressionBuilder<T>.Or(Action<IFluentExpressionBuilder<T>> first, Action<IFluentExpressionBuilder<T>> second)
         {
             string equationId = string.Empty;
@@ -1060,45 +894,6 @@ namespace Mchnry.Flow
             //return new ExpressionRef(toAdd.ShortHand);
         }
 
-        void IExpressionBuilder.Or(Action<IExpressionBuilder> first, Action<IExpressionBuilder> second)
-        {
-            string equationId = string.Empty;
-            //we are in a sub equation
-            if (this.epxressionStack.Count > 0)
-            {
-                string lastEquationId = this.epxressionStack.Peek().Id;
-                string suffix = (this.epxressionStack.Count % 2 == 0) ? "2" : "1";
-                equationId = lastEquationId + this.config.Convention.Delimeter + suffix;
-
-            }
-            else //we are at the root
-            {
-                string lastActivityId = this.activityStack.Peek().Id;
-                equationId = ConventionHelper.ChangePrefix(NamePrefixOptions.Activity, NamePrefixOptions.Equation, lastActivityId, this.config.Convention);
-
-            }
-
-            LogicDefine.Equation toAdd = new LogicDefine.Equation()
-            {
-                Condition = Logic.Operand.Or,
-                Id = equationId
-            };
-
-            this.epxressionStack.Push(toAdd);
-            this.workflowManager.AddEquation(toAdd);
-
-            string firstId, secondId = null;
-            first(this);
-            firstId = this.epxressionStack.Pop().ShortHand;
-
-            second(this);
-            secondId = this.epxressionStack.Pop().ShortHand;
-
-            toAdd.First = firstId;
-            toAdd.Second = secondId;
-
-            //return new ExpressionRef(toAdd.ShortHand);
-        }
 
         void IFluentExpressionBuilder<T>.Rule(Action<IRuleBuilder<T>> action)
         {
@@ -1111,7 +906,19 @@ namespace Mchnry.Flow
            
 
             evaluatorId.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Evaluator, evaluatorId.Id, this.config.Convention);
-            this.workflowManager.AddEvaluator(new LogicDefine.Evaluator() { Id = evaluatorId.Id, Description = builderRef.evaluator.Definition.Description });
+
+            string actionName = builderRef.evaluator.GetType().Name;
+            string description = ConventionHelper.ParseMethodName(actionName, this.config.Convention.ParseMethodNamesAs).Literal;
+
+            var descAttr = builderRef.evaluator.GetType().GetCustomAttributes(typeof(ArticulateOptionsAttribute), true)
+                 .OfType<ArticulateOptionsAttribute>()
+                 .FirstOrDefault();
+            if (descAttr != null)
+            {
+                description = descAttr.Description;
+            }
+
+            this.workflowManager.AddEvaluator(new LogicDefine.Evaluator() { Id = evaluatorId.Id, Description = description });
             bool isRoot = this.epxressionStack.Count == 0;
 
             if (!this.evaluators.ContainsKey(evaluatorId.Id))
@@ -1153,63 +960,7 @@ namespace Mchnry.Flow
 
         }
 
-        //void IFluentExpressionBuilder<T>.RefIsTrue(ExpressionRef xref) { ((IExpressionBuilder)this).True(xref); }
-        //void IExpressionBuilder.True(ExpressionRef xref)
-        //{
-        //    //all the work has been done, we just need to eval negate and push to stack
-        //    LogicDefine.Rule ev = xref.Id;
-
-        //    if (xref.negate)
-        //    {
-        //        ev.TrueCondition = !ev.TrueCondition;
-        //    }
-        //    this.epxressionStack.Push(ev);
-
-        //}
-
-        void IExpressionBuilder.True(LogicDefine.Rule evaluatorId)
-        {
-
-            evaluatorId.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Evaluator, evaluatorId.Id, this.config.Convention);
-            this.workflowManager.AddEvaluator(new LogicDefine.Evaluator() { Id = evaluatorId.Id, Description = "Builder" });
-            bool isRoot = this.epxressionStack.Count == 0;
-
-            //if we're not already in an equation (i.e. the conditional is just one evaluator) create a root equation where the second
-            //operand is just true
-            if (isRoot)
-            {
-                string equationId = ConventionHelper.ChangePrefix(NamePrefixOptions.Evaluator, NamePrefixOptions.Equation, evaluatorId.Id, this.config.Convention);
-                if (!evaluatorId.TrueCondition)
-                {
-                    equationId = ConventionHelper.NegateEquationName(equationId, this.config.Convention);
-                }
-                LogicDefine.Equation toAdd = new LogicDefine.Equation()
-                {
-                    Condition = Logic.Operand.And,
-                    First = evaluatorId,
-                    Id = equationId,
-                    Second = ConventionHelper.TrueEvaluator(this.config.Convention)
-                };
-                this.epxressionStack.Push(toAdd);
-
-                this.workflowManager.AddEquation(toAdd);
-            }
-            else
-            {
-                this.epxressionStack.Push(evaluatorId);
-            }
-            //if root... then create euqations
-            //otherwise, just use as evaluator
-
-
-
-
-        }
-
-
  
-
-
 
     }
 }

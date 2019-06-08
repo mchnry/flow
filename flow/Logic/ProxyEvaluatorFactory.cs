@@ -28,7 +28,7 @@ namespace Mchnry.Flow.Logic
             }
         }
 
-        public IRuleEvaluatorFactory proxy { get; set; }
+
 
         public IRuleEvaluator<TModel> GetRuleEvaluator(LogicDefine.Evaluator def)
         {
@@ -40,35 +40,7 @@ namespace Mchnry.Flow.Logic
             IRuleEvaluator<TModel> toReturn = default(IRuleEvaluator<TModel>);
 
 
-            if (!this.evaluators.ContainsKey(def.Id) && !this.evaluators.ContainsKey(withoutConvention.Id))
-            {
-
-                if (this.proxy != null)
-                {
-                    try
-                    {
-                        string searchId = ConventionHelper.RemoveConvention(def.Id, this.Configuration.Convention);
-                        toReturn = this.proxy.GetRuleEvaluator<TModel>(withoutConvention);
-                        if (toReturn == null)
-                        {
-                            toReturn = this.proxy.GetRuleEvaluator<TModel>(def);
-                        }
-                    }
-                    catch (System.Exception ex)
-                    {
-                        throw new LoadEvaluatorException(def.Id, ex);
-                    }
-
-                    if (default(IRuleEvaluator<TModel>) == toReturn)
-                    {
-                        throw new LoadEvaluatorException(def.Id);
-                    }
-
-                    this.evaluators.Add(def.Id, toReturn);
-                }
-            }
-            else
-            {
+    
                 if (this.evaluators.ContainsKey(withoutConvention.Id))
                 {
                     toReturn = this.evaluators[withoutConvention.Id];
@@ -78,7 +50,7 @@ namespace Mchnry.Flow.Logic
                 {
                     toReturn = this.evaluators[def.Id];
                 }
-            }
+            
             return toReturn;
         }
     }

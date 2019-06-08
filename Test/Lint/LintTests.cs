@@ -15,31 +15,29 @@ namespace Test.Lint
     public class LintTests
     {
 
-        [Fact]
-        public async void TestSimpleLint()
-        {
+        //[Fact]
+        //public async void TestSimpleLint()
+        //{
 
-            IBuilder<string> builder = Builder<string>.CreateBuilder("test");
-            var builderWorkflow = builder.Build(a =>
-            {
-                a.IfThenDo(If => If.And(F => F.True("ev1"), S => S.And(F => F.True("ev2"), S2 => S2.True("ev3"))),
-                    Then => Then.DoNothing());
-            });
+        //    IBuilder<string> builder = Builder<string>.CreateBuilder("test");
+        //    var builderWorkflow = builder.Build(a =>
+        //    {
+        //        a.IfThenDo(If => If.And(F => F.True("ev1"), S => S.And(F => F.True("ev2"), S2 => S2.True("ev3"))),
+        //            Then => Then.DoNothing());
+        //    });
 
-            Mock<IWorkflowBuilderFactory> mkDefFactory = new Mock<IWorkflowBuilderFactory>();
-            mkDefFactory.Setup(g => g.GetWorkflow<string>(It.IsAny<string>())).Returns(new WorkflowBuilder<string>( builderWorkflow));
+ 
+        //    IEngineLoader<string> e = Mchnry.Flow.Engine<string>.CreateEngine();
+     
 
-            IEngineLoader<string> e = Mchnry.Flow.Engine<string>.CreateEngine();
-            e.SetWorkflowDefinitionFactory(mkDefFactory.Object);
-            
-            
 
-            IEngineLinter<string> linter = e.Lint("test");
-            var inspector = await linter.LintAsync(null, new System.Threading.CancellationToken());
+
+        //    IEngineLinter<string> linter = e.LintFluent(new WorkflowBuilder<string>(builderWorkflow));
+        //    var inspector = await linter.LintAsync(null, new System.Threading.CancellationToken());
 
             
 
-        }
+        //}
 
         [Fact]
         public async void TestWithContextNominal()

@@ -18,9 +18,9 @@ namespace Mchnry.Flow
         //IEngineLoader<TModel> LoadWorkflow(WorkDefine.Workflow workflow);
   
 
-        IEngineLoader<TModel> SetWorkflowDefinitionFactory(IWorkflowBuilderFactory factory);
-        IEngineLoader<TModel> SetEvaluatorFactory(IRuleEvaluatorFactory factory);
-        IEngineLoader<TModel> SetActionFactory(IActionFactory factory);
+        //IEngineLoader<TModel> SetWorkflowDefinitionFactory(IWorkflowBuilderFactory factory);
+        //IEngineLoader<TModel> SetEvaluatorFactory(IRuleEvaluatorFactory factory);
+        //IEngineLoader<TModel> SetActionFactory(IActionFactory factory);
 
         //IEngineLoader<TModel> AddEvaluator(string id, Func<IEngineScope<TModel>, LogicEngineTrace, IRuleResult, CancellationToken, Task> evaluator);
         //IEngineLoader<TModel> AddAction(string id, Func<IEngineScope<TModel>, WorkflowEngineTrace, CancellationToken, Task<bool>> action);
@@ -28,10 +28,10 @@ namespace Mchnry.Flow
 
         //Task<bool> CompleteAsync(IEngineScope<TModel> scope, WorkflowEngineTrace trace, CancellationToken token);
         IEngineLoader<TModel> SetGlobalModel<T>(string key, T model);
-        IEngineRunner<TModel> Start(string workflowId, TModel model);
+        //IEngineRunner<TModel> Start(string workflowId, TModel model);
         IEngineRunner<TModel> StartFluent(IWorkflowBuilder<TModel> builder, TModel model);
 
-        IEngineLinter<TModel> Lint(string workflowId);
+        //IEngineLinter<TModel> Lint(string workflowId);
         IEngineLinter<TModel> LintFluent(IWorkflowBuilder<TModel> builder);
 
         WorkDefine.Workflow Workflow { get; }

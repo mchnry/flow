@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Mchnry.Flow.Logic;
 
 namespace Mchnry.Flow
 {
@@ -9,6 +10,8 @@ namespace Mchnry.Flow
 
         public string EvaluatorId { get; set; }
         public string Context { get; set; }
+        public IRuleEvaluator<string> ShouldIDoIt { get; set; }
+
         public EvaluateException(string evaluatorId, string context, System.Exception innerException): base("Error in Evaluator", innerException)
         {
             this.EvaluatorId = evaluatorId;

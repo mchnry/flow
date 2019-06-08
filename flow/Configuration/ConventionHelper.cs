@@ -1,7 +1,12 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 
 namespace Mchnry.Flow.Configuration
 {
+
+    public struct Parsed { public string Id; public string Literal; }
+
+
     internal class ConventionHelper
     {
 
@@ -123,6 +128,27 @@ namespace Mchnry.Flow.Configuration
                 string toRemove = string.Format("{0}{1}", prefix, delimeter);
                 toReturn = id.Replace(toRemove, "");
             }
+            return toReturn;
+        }
+
+        public static Parsed ParseMethodName(string toParse, ParseOptions opt)
+        {
+
+            Parsed toReturn = new Parsed() { Id = toParse };
+            string[] parts = new string[] { };
+            if (opt == ParseOptions.UnderScore)
+            {
+                parts = toParse.Split('_');
+            }
+
+            //if not underscore, or no underscors in string, do camelcase
+            if (parts.Length == 0 || parts.Length == 1)
+            {
+                toParse = Regex.Replace(toParse, @"(?<!_)([A-Z])", "_$1");
+                parts = toParse.Split('_');
+            }
+
+            toReturn.Literal = string.Join(" ", parts);
             return toReturn;
         }
     }

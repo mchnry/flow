@@ -2,12 +2,12 @@
 {
 
 
-    public interface IWorkflowBuilderFactory
-    {
+    //public interface IWorkflowBuilderFactory
+    //{
 
-        IWorkflowBuilder<T> GetWorkflow<T>(string workflowId);
+    //    IWorkflowBuilder<T> GetWorkflow<T>(string workflowId);
 
-    }
+    //}
 
 
 }

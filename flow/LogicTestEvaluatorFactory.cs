@@ -11,7 +11,7 @@ using Mchnry.Flow.Configuration;
 
 namespace Mchnry.Flow
 {
-    internal class LogicTestEvaluatorFactory : IRuleEvaluatorFactory
+    internal class LogicTestEvaluatorFactory 
     {
         private readonly Configuration.Config configuration;
 
@@ -39,7 +39,7 @@ namespace Mchnry.Flow
         }
     }
 
-    internal class LogicTestActionFactory : IActionFactory
+    internal class LogicTestActionFactory 
     {
         public IAction<TModel> GetAction<TModel>(ActionDefinition definition)
         {
@@ -47,5 +47,5 @@ namespace Mchnry.Flow
         }
     }
 
-    
+
 }
