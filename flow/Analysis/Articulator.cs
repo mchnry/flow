@@ -64,7 +64,7 @@ namespace Mchnry.Flow.Analysis
         }
 
 
-        public ArticulateActivity ArticulateActivity(string activityId, bool removeConvention, bool verbose)
+        public ArticulateActivity ArticulateFlow( bool removeConvention, bool verbose)
         {
 
             Func<WorkDefine.ActionRef, IArticulateActivity> createAction = (s) =>
@@ -97,7 +97,10 @@ namespace Mchnry.Flow.Analysis
             };
 
             ArticulateActivity toReturn = new ArticulateActivity();
-       
+
+            string activityId = workflow.Id;
+            activityId = $"{ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.configuration.Convention)}.Main";
+
             WorkDefine.Activity toArticulate = this.workflow.Activities.FirstOrDefault(g => g.Id == activityId);
             toReturn.Id = toArticulate.Id;
 

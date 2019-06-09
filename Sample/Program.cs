@@ -78,9 +78,16 @@ namespace Sample
             BuilderFactory BF = new BuilderFactory(AF, EF);
 
             var engine = Engine<string>.CreateEngine();
-            var runner = engine.StartFluent(BF.Workflow, "hello");
+            var linter = engine.LintFluent(BF.Workflow);
 
-            var complete = await runner.ExecuteAutoFinalizeAsync(new CancellationToken());
+            var result = await linter.LintAsync(null, new CancellationToken());
+
+            var art = result.ArticulateFlow();
+
+            string s = JsonConvert.SerializeObject(art, new JsonSerializerSettings() {
+                Formatting = Formatting.Indented, ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
+
+            Console.WriteLine(s);
 
             Console.ReadLine();
 

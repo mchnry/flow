@@ -148,7 +148,7 @@ namespace Mchnry.Flow.Configuration
                 parts = toParse.Split('_');
             }
 
-            toReturn.Literal = string.Join(" ", parts);
+            toReturn.Literal = string.Join(" ", parts).TrimStart(' ');
             return toReturn;
         }
     }

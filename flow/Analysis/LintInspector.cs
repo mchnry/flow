@@ -16,13 +16,12 @@ namespace Mchnry.Flow.Analysis
             this.configuration = configuration;
         }
 
-        public ArticulateActivity ArticulateActivity(string activityId)
+        public ArticulateActivity ArticulateFlow()
         {
 
-            activityId = ConventionHelper.EnsureConvention(NamePrefixOptions.Activity, activityId, this.configuration.Convention);
 
             Articulator articulator = new Articulator( this.workflow, this.configuration);
-            return articulator.ArticulateActivity(activityId, false, false);
+            return articulator.ArticulateFlow(false, false);
 
         }
 
