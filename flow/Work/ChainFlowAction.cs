@@ -31,6 +31,9 @@ namespace Mchnry.Flow.Work
         {
             TModel model = scope.GetModel();
             await scope.RunWorkflowAsync<TModel>(this.builder, model, token);
+
+            scope.SetModel(model);
+
             return await Task.FromResult(true);
         }
     }

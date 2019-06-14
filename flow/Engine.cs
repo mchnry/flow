@@ -138,7 +138,7 @@ namespace Mchnry.Flow
             else if (this.CurrentActivityStatus == ActivityStatusOptions.Rule_Evaluating)
             {
                 string scope = RunManager.CurrentRuleDefinition.Id;
-                if (!string.IsNullOrEmpty(RunManager.CurrentRuleDefinition.Context.ToString()))
+                if (null != RunManager.CurrentRuleDefinition.Context)
                 {
                     scope = string.Format("{0}.{1}", scope, RunManager.CurrentRuleDefinition.Context.GetHashCode().ToString());
                 }
