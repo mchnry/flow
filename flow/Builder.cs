@@ -638,6 +638,12 @@ namespace Mchnry.Flow
             parent = this.activityStack.Peek();
 
             string workflowId = builder.GetBuilder().Workflow.Id;
+
+            if (this.chained.ContainsKey(WorkflowId))
+            {
+                workflowId = workflowId + (this.chained.Count() + 1).ToString();
+            }
+
             this.chained.Add(workflowId, builder);
 
             string actionId = $"chain{workflowId}";
