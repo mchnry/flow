@@ -522,13 +522,18 @@ namespace Mchnry.Flow
             this.workflowManager = new WorkflowManager(workflow, this.config);
         }
 
-        private void  Do(Action<IActionBuilder<T>> builder)
+        private void  Do(Action<IActionBuilder<T>> builder, string overrideId = null)
         {
             ActionBuilder<T> builderRef = new ActionBuilder<T>(this);
             builder.Invoke(builderRef);
 
             WorkDefine.ActionRef ToDo = builderRef.actionRef;
             
+            if (!string.IsNullOrEmpty(overrideId))
+            {
+                ToDo.Id = overrideId;
+            }
+
             ToDo.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Action, ToDo.Id, this.config.Convention);
 
             string actionName = builderRef.action.GetType().Name;
@@ -639,7 +644,7 @@ namespace Mchnry.Flow
 
             string workflowId = builder.GetBuilder().Workflow.Id;
 
-            if (this.chained.ContainsKey(WorkflowId))
+            if (this.chained.ContainsKey(workflowId))
             {
                 workflowId = workflowId + (this.chained.Count() + 1).ToString();
             }
@@ -647,7 +652,7 @@ namespace Mchnry.Flow
             this.chained.Add(workflowId, builder);
 
             string actionId = $"chain{workflowId}";
-            this.Do(a => a.Do(new ChainFlowAction<T>(actionId, builder)));
+            this.Do(a => a.Do(new ChainFlowAction<T>(actionId, builder)), actionId);
 
             parent.Reactions.Add(new WorkDefine.Reaction() { Work = this.created.ToString() });
 
