@@ -15,24 +15,24 @@
         {
             //there's not really anything i can do with a container..
             //i need the scope
-            ValidationContainer toTest = ValidationContainer.CreateValidationContainer("test");
+            ValidationContainer toTest = ValidationContainer.CreateValidationContainer();
             IValidationContainer scoped = toTest.Scope("abc");
 
             scoped.AddValidation(new Validation("test", ValidationSeverity.Confirm, "hello"));
-            Assert.Contains(toTest.Validations, t => t.Key.Equals("test.abc.test"));
+            Assert.Contains(toTest.Validations, t => t.Key.Equals("abc.test"));
 
         }
 
         [Fact]
         public void ScopesDontCollide()
         {
-            ValidationContainer toTest = ValidationContainer.CreateValidationContainer("workflow");
+            ValidationContainer toTest = ValidationContainer.CreateValidationContainer();
             toTest.Scope("one").AddValidation(new Validation("test", ValidationSeverity.Confirm, "hello"));
             toTest.ScopeToRoot().Scope("two").AddValidation(new Validation("test", ValidationSeverity.Confirm, "bye"));
             toTest.ScopeToRoot();
 
-            Assert.Contains(toTest.Validations, t => t.Key.Equals("workflow.one.test"));
-            Assert.Contains(toTest.Validations, t => t.Key.Equals("workflow.two.test"));
+            Assert.Contains(toTest.Validations, t => t.Key.Equals("one.test"));
+            Assert.Contains(toTest.Validations, t => t.Key.Equals("two.test"));
 
            
         }
@@ -43,7 +43,7 @@
         [Fact]
         public void OverrideExistingValidation_ResolveTrue()
         {
-            ValidationContainer toTest = ValidationContainer.CreateValidationContainer("workflow");
+            ValidationContainer toTest = ValidationContainer.CreateValidationContainer();
             var c = toTest.Scope("one");
             c.AddValidation(new Validation("test", ValidationSeverity.Confirm, "hello"));
 
@@ -61,7 +61,7 @@
         {
 
 
-            ValidationContainer toTest = ValidationContainer.CreateValidationContainer("workflow");
+            ValidationContainer toTest = ValidationContainer.CreateValidationContainer();
             var c = toTest.Scope("one");
             c.AddOverride("test", "test", "test");
 
@@ -80,7 +80,7 @@
         [Fact]
         public void ValidationWithNoOverrid_ResolveFalse()
         {
-            ValidationContainer toTest = ValidationContainer.CreateValidationContainer("workflow");
+            ValidationContainer toTest = ValidationContainer.CreateValidationContainer();
             var c = toTest.Scope("one");
             c.AddValidation(new Validation("test", ValidationSeverity.Confirm, "hello"));
 
@@ -98,7 +98,7 @@
         {
 
 
-            ValidationContainer toTest = ValidationContainer.CreateValidationContainer("workflow");
+            ValidationContainer toTest = ValidationContainer.CreateValidationContainer();
             var c = toTest.Scope("one");
             c.AddOverride("test", "test", "test");
 
@@ -119,7 +119,7 @@
         [Fact]
         public void ConfirmFatalValidationDoesNotPassResolve()
         {
-            ValidationContainer toTest = ValidationContainer.CreateValidationContainer("workflow");
+            ValidationContainer toTest = ValidationContainer.CreateValidationContainer();
             var c = toTest.Scope("one");
            
 

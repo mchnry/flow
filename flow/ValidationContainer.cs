@@ -14,13 +14,17 @@ namespace Mchnry.Flow
         [JsonIgnore]
         internal List<ValidationOverride> MyOverrides { get; set; } = new List<ValidationOverride>();
 
-        internal string RootScope { get; set; }
+        private string scopeId { get; set; } = string.Empty;
 
-        public static ValidationContainer CreateValidationContainer(string scope)
+
+        /// <summary>
+        /// Creates a validation container with a root scope.
+        /// </summary>
+        /// <param name="scope"></param>
+        /// <returns></returns>
+        public static ValidationContainer CreateValidationContainer()
         {
-            return new ValidationContainer() {
-                RootScope = scope, scopeId = scope
-            };
+            return new ValidationContainer();
         }
         private ValidationContainer() { }
 
@@ -40,8 +44,9 @@ namespace Mchnry.Flow
                 vals = this.MyValidations;
             }
 
-            bool toReturn = true;
-            if (vals.Count() > 0)
+            bool toReturn = !(vals.Any(v => v.Severity == ValidationSeverity.Fatal));
+            //if no fatal validations, but there are validations
+            if (toReturn && vals.Count() > 0)
             {
                 toReturn = false;
 
@@ -55,6 +60,7 @@ namespace Mchnry.Flow
                 }
 
             }
+            
 
             return toReturn;
         }
@@ -84,33 +90,36 @@ namespace Mchnry.Flow
         }
 
 
-        public ReadOnlyCollection<ValidationOverride> Overrides => this.MyOverrides.Where(g => this.scopeId == string.Empty || g.Key.StartsWith(this.scopeId + ".")).ToList().AsReadOnly();
+        public ReadOnlyCollection<ValidationOverride> Overrides => this.MyOverrides.Where(g => this.scopeId == string.Empty || g.Key.StartsWith(this.scopeId.ToLower() + ".")).ToList().AsReadOnly();
 
-        public ReadOnlyCollection<Validation> Validations {
-            get {
-                return this.MyValidations.Where(g => this.scopeId == string.Empty || g.Key.StartsWith(this.scopeId + ".")).ToList().AsReadOnly();
-            }
-        }
+        public ReadOnlyCollection<Validation> Validations  => this.MyValidations.Where(g => this.scopeId == string.Empty || g.Key.StartsWith(this.scopeId.ToLower() + ".")).ToList().AsReadOnly();
+            
+        
 
 
         internal IValidationContainer Scope(string scopeId)
         {
-            this.scopeId = this.scopeId + "." + scopeId;
+            this.scopeId = scopeId;
             return this;
         }
         internal ValidationContainer ScopeToRoot()
         {
-            this.scopeId = this.RootScope;
+            this.scopeId = string.Empty;
             return this;
         }
 
 
-        private string scopeId { get; set; } = string.Empty;
+        
         string IValidationContainer.ScopeId { get => this.scopeId; }
 
         void IValidationContainer.AddOverride(string key, string comment, string auditCode)
         {
-            string keyToAdd = string.Format("{0}.{1}", this.scopeId, key);
+            string keyToAdd = key;
+            if (!string.IsNullOrEmpty(this.scopeId))
+            {
+                keyToAdd = string.Format("{0}.{1}", this.scopeId.ToLower(), key);
+            }
+            
             Validation existing = this.MyValidations.FirstOrDefault(g => g.Key.Equals(keyToAdd, StringComparison.OrdinalIgnoreCase));
             ValidationOverride toAdd = default(ValidationOverride);
             if (existing != null)
@@ -128,7 +137,11 @@ namespace Mchnry.Flow
 
         void IValidationContainer.AddValidation(Validation toAdd)
         {
-            string keyToAdd = string.Format("{0}.{1}", this.scopeId, toAdd.Key);
+            string keyToAdd = toAdd.Key;
+            if (!string.IsNullOrEmpty(this.scopeId))
+            {
+                keyToAdd = string.Format("{0}.{1}", this.scopeId.ToLower(), toAdd.Key);
+            }
 
             Validation existing = this.MyValidations.FirstOrDefault(g => g.Key.Equals(keyToAdd, StringComparison.OrdinalIgnoreCase));
 

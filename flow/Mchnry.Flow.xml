@@ -319,6 +319,13 @@
             items in workflow scope are available to all actions/evaluators in the workflow
             </summary>
         </member>
+        <member name="M:Mchnry.Flow.ValidationContainer.CreateValidationContainer">
+            <summary>
+            Creates a validation container with a root scope.
+            </summary>
+            <param name="scope"></param>
+            <returns></returns>
+        </member>
         <member name="M:Mchnry.Flow.ValidationOverride.#ctor(System.String,System.String,System.String)">
             <summary>
             Internal constructor for ValidationOverride

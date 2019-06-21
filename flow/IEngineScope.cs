@@ -52,7 +52,7 @@ namespace Mchnry.Flow
         Work.Define.Activity CurrentActivity { get; }
 
 
-
+        IValidationContainer MyValidations { get; }
         void Defer(IDeferredAction<TModel> action, bool onlyIfValidationsResolved);
 
         StepTraceNode<ActivityProcess> Process { get; }

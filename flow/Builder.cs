@@ -478,6 +478,7 @@ namespace Mchnry.Flow
           
 
         internal WorkflowManager workflowManager;
+        internal static int equationSide = 1;
 
         internal Stack<WorkDefine.Activity> activityStack = new Stack<WorkDefine.Activity>();
         internal Stack<LogicDefine.IExpression> epxressionStack = new Stack<LogicDefine.IExpression>();
@@ -831,7 +832,8 @@ namespace Mchnry.Flow
             if (this.epxressionStack.Count > 0)
             {
                 string lastEquationId = this.epxressionStack.Peek().Id;
-                string suffix = (this.epxressionStack.Count % 2 == 0) ? "2" : "1";
+                //string suffix = (this.epxressionStack.Count % 2 == 0) ? "2" : "1";
+                string suffix = equationSide.ToString();
                 equationId = lastEquationId + this.config.Convention.Delimeter + suffix;
 
             } else //we are at the root
@@ -852,8 +854,10 @@ namespace Mchnry.Flow
             
 
             string firstId, secondId = null;
+            equationSide = 1;
             first(this);
             firstId = this.epxressionStack.Pop().ShortHand;
+            equationSide = 2;
             second(this);
             secondId = this.epxressionStack.Pop().ShortHand;
             
@@ -872,7 +876,8 @@ namespace Mchnry.Flow
             if (this.epxressionStack.Count > 0)
             {
                 string lastEquationId = this.epxressionStack.Peek().Id;
-                string suffix = (this.epxressionStack.Count % 2 == 0) ? "2" : "1";
+                //string suffix = (this.epxressionStack.Count % 2 == 0) ? "2" : "1";
+                string suffix = equationSide.ToString();
                 equationId = lastEquationId + this.config.Convention.Delimeter + suffix;
 
             }
@@ -892,10 +897,11 @@ namespace Mchnry.Flow
             this.epxressionStack.Push(toAdd);
             this.workflowManager.AddEquation(toAdd);
 
-            string firstId, secondId = null;
+            string firstId, secondId;
+            equationSide = 1;
             first(this);
             firstId = this.epxressionStack.Pop().ShortHand;
-            
+            equationSide = 2;
             second(this);
             secondId = this.epxressionStack.Pop().ShortHand;
 

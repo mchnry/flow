@@ -14,9 +14,11 @@ namespace Mchnry.Flow
     {
 
         IEngineLoader<TModel> OverrideValidation(ValidationOverride oride);
+        IEngineLoader<TModel> PreemptValidation<T>(string key, string context, string comment, string auditCode) where T : IRuleEvaluator<TModel>;
+
 
         //IEngineLoader<TModel> LoadWorkflow(WorkDefine.Workflow workflow);
-  
+
 
         //IEngineLoader<TModel> SetWorkflowDefinitionFactory(IWorkflowBuilderFactory factory);
         //IEngineLoader<TModel> SetEvaluatorFactory(IRuleEvaluatorFactory factory);

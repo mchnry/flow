@@ -22,7 +22,7 @@ namespace Mchnry.Flow
         internal Config Configuration;
         internal bool Sanitized = false;
 
-        
+        private List<ValidationOverride> preOverrides = new List<ValidationOverride>();
 
         private StepTracer<LintTrace> lintTracer = default(StepTracer<LintTrace>);
         internal virtual EngineStepTracer Tracer { get; set; }
@@ -124,6 +124,29 @@ namespace Mchnry.Flow
         IValidationContainer IEngineComplete<TModel>.Validations => this.ValidationContainer.ScopeToRoot();
         IValidationContainer IEngineFinalize<TModel>.Validations => this.ValidationContainer.ScopeToRoot();
 
+
+        IValidationContainer IEngineScope<TModel>.MyValidations {  get {
+
+                if (this.CurrentActivityStatus == ActivityStatusOptions.Action_Running)
+                {
+                    return this.ValidationContainer.ScopeToRoot().Scope(RunManager.CurrentActivity.Id);
+                }
+                else if (this.CurrentActivityStatus == ActivityStatusOptions.Rule_Evaluating)
+                {
+                    string scope = RunManager.CurrentRuleDefinition.Id;
+                    if (null != RunManager.CurrentRuleDefinition.Context)
+                    {
+                        scope = string.Format("{0}.{1}", scope, RunManager.CurrentRuleDefinition.Context.GetHashCode().ToString());
+                    }
+                    return this.ValidationContainer.ScopeToRoot().Scope(scope);
+                } else
+                {
+                    return this.ValidationContainer.ScopeToRoot();
+                }
+                
+
+            }
+        }
 
         internal void AddValidation(Validation toAdd)
         {
@@ -280,8 +303,16 @@ namespace Mchnry.Flow
         IEngineLoader<TModel> IEngineLoader<TModel>.OverrideValidation(ValidationOverride oride)
         {
 
-            ((IValidationContainer)this.ValidationContainer).AddOverride(oride.Key, oride.Comment, oride.AuditCode);
-
+            this.preOverrides.Add(oride);
+            return this;
+        }
+        IEngineLoader<TModel> IEngineLoader<TModel>.PreemptValidation<T>(string key, string context, string comment, string auditCode) 
+        {
+            string typeOfT = typeof(T).Name;
+            LogicDefine.Rule rule = new LogicDefine.Rule() { Id = typeOfT, Context = context };
+            string orideKey = ConventionHelper.ApplyConvention(NamePrefixOptions.Evaluator, rule.RuleIdWithContext + "." + key, this.Configuration.Convention);
+            ValidationOverride oride = new ValidationOverride(orideKey, comment, auditCode);
+            this.preOverrides.Add(oride);
             return this;
         }
 
@@ -339,7 +370,17 @@ namespace Mchnry.Flow
                 this.RunManager.WorkflowId = wf.Id;
             }
 
-            this.ValidationContainer = ValidationContainer.CreateValidationContainer(wf.Id);
+            this.ValidationContainer = ValidationContainer.CreateValidationContainer();
+
+            if (this.preOverrides.Count() > 0)
+            {
+                this.preOverrides.ForEach(o =>
+                {
+                    ((IValidationContainer)this.ValidationContainer).AddOverride(o.Key, o.Comment, o.AuditCode);
+
+                });
+            }
+
             this.WorkflowCache = this.Configuration.Cache.Spawn(wf.Id);
         }
 
