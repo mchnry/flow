@@ -68,7 +68,7 @@ namespace Mchnry.Flow
 
             ((IActionBuilder<T>)this).Do(action);
             
-            builderRef.workflowManager.AddContextDefinition(builder.builder.definition);
+            //builderRef.workflowManager.AddContextDefinition(builder.builder.definition);
             this.actionRef.Input = input;
         }
 
