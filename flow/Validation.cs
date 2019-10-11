@@ -1,13 +1,14 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 
 namespace Mchnry.Flow
 {
     public class Validation
-    {
+    {    
+        public Validation() { }
 
-
-        public Validation(string key, ValidationSeverity severity, string validationMessage)
+        public Validation(string key, ValidationSeverity severity, string validationMessage) : this()
         {
 
             this.Key = !string.IsNullOrEmpty(key) ? key : throw new ArgumentNullException("Key");
@@ -26,7 +27,7 @@ namespace Mchnry.Flow
 
         }
 
-        public Validation(string key, ValidationSeverity severity, string validationMessage, string overRideInstructions)
+        public Validation(string key, ValidationSeverity severity, string validationMessage, string overRideInstructions) : this()
         {
 
             this.OverRideInstructions = string.IsNullOrEmpty(overRideInstructions) ? this.OverRideInstructions : overRideInstructions;
@@ -39,11 +40,11 @@ namespace Mchnry.Flow
             this.Options = options;
         }
 
-        public string Key { get; internal set; }
-        public ValidationSeverity Severity { get; internal set; }
-        public string ValidationMessage { get; internal set; }
-        public string OverRideInstructions { get; internal set; }
-        public Dictionary<string, string> Options { get; internal set; }
+        public string Key { get; set; }
+        public ValidationSeverity Severity { get; set; }
+        public string ValidationMessage { get; set; }
+        public string OverRideInstructions { get; set; }
+        public Dictionary<string, string> Options { get; set; }
 
 
         internal ValidationOverride CreateOverride(string reason, string auditCode)
