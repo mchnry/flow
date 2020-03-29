@@ -1,4 +1,5 @@
 ﻿using Mchnry.Flow.Configuration;
+using Mchnry.Flow.Logic.Define;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -124,6 +125,8 @@ namespace Mchnry.Flow.Analysis
                     ArticulateExpression toBuild = new ArticulateExpression() { Id = x.Id };
                     LogicDefine.Equation eq = this.workflow.Equations.FirstOrDefault(g => g.Id == x.Id);
                     toBuild.Condition = (eq.Condition == Logic.Operand.And) ? "and": "or";
+                    Rule asRule = x.ShortHand;
+                    toBuild.TrueCondition = asRule.TrueCondition;
                     toBuild.First = traverseExpression(eq.First);
                     toBuild.Second = traverseExpression(eq.Second);
                     buildExpression = toBuild;

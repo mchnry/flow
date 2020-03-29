@@ -672,7 +672,7 @@ namespace Mchnry.Flow
             subCount++;
             this.subActivities[parent.Id] = subCount;
 
-            string activityId = string.Format("{0}{1}{2}", parent.Id, this.config.Convention.Delimeter, subCount);
+            string activityId = string.Format("{0}{1}rx{2}", parent.Id, this.config.Convention.Delimeter, subCount);
             WorkDefine.Activity toBuild = new WorkDefine.Activity()
             {
                 Id = activityId,
@@ -686,11 +686,21 @@ namespace Mchnry.Flow
             this.workflowManager.AddActivity(toBuild);
 
             If(this);
+
+            var eq = this.epxressionStack.Pop();
+
+
+            LastEquation = eq;
+            string logicId = eq.ShortHand;
+
             Then(this);
 
-            LastEquation = this.epxressionStack.Pop();
-            
-            parent.Reactions.Add(new WorkDefine.Reaction() { Logic = LastEquation.ShortHand, Work = toBuild.Id });
+
+
+
+
+
+            parent.Reactions.Add(new WorkDefine.Reaction() { Logic = logicId, Work = toBuild.Id });
 
             this.activityStack.Pop();
 
@@ -706,7 +716,10 @@ namespace Mchnry.Flow
             subCount++;
             this.subActivities[parent.Id] = subCount;
 
-            string activityId = string.Format("{0}{1}{2}", parent.Id, this.config.Convention.Delimeter, subCount);
+            var lastReaction = parent.Reactions.Last();
+            LogicDefine.Rule equationAsRule = lastReaction.Logic;
+
+            string activityId = string.Format("{0}{1}rx{2}", parent.Id, this.config.Convention.Delimeter, subCount);
             WorkDefine.Activity toBuild = new WorkDefine.Activity()
             {
                 Id = activityId,
@@ -719,8 +732,7 @@ namespace Mchnry.Flow
             activityStack.Push(toBuild);
             this.workflowManager.AddActivity(toBuild);
 
-
-            LogicDefine.Rule equationAsRule = LastEquation.ShortHand;
+            
             //negate
             equationAsRule.TrueCondition = !equationAsRule.TrueCondition;
 
@@ -951,16 +963,19 @@ namespace Mchnry.Flow
             if (isRoot)
             {
                 string equationId = ConventionHelper.ChangePrefix(NamePrefixOptions.Evaluator, NamePrefixOptions.Equation, evaluatorId.Id, this.config.Convention);
+                bool trueCond = true; ;
                 if (!evaluatorId.TrueCondition)
                 {
                     equationId = ConventionHelper.NegateEquationName(equationId, this.config.Convention);
+                    trueCond = false;
                 }
                 LogicDefine.Equation toAdd = new LogicDefine.Equation()
                 {
                     Condition = Logic.Operand.And,
                     First = evaluatorId,
                     Id = equationId,
-                    Second = ConventionHelper.TrueEvaluator(this.config.Convention)
+                    Second = ConventionHelper.TrueEvaluator(this.config.Convention),
+                    TrueCondition = trueCond
                 };
                 this.epxressionStack.Push(toAdd);
 

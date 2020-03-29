@@ -1,36 +1,38 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.2;net471;net48;net462</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net48;net472;net462</TargetFrameworks>
     <AssemblyName>Mchnry.Flow</AssemblyName>
     <RootNamespace>Mchnry.Flow</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Description>Mchnry Workflow and Logic Engine</Description>
-    <Version>1.999.999</Version>
-    <PackageDest>$(userprofile)\.nuget\packages</PackageDest>
-    <LangVersion>7.3</LangVersion>
+    <Version>1.3.6</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageId>mchnry.flow</PackageId>
+    <Authors>James Pritz</Authors>
+    <Owners>James Pritz</Owners>
+    <Summary>Workflow and Logic Engine</Summary>
+    <PackageTags>Workflow,Business Logic,Logic</PackageTags>
+    <Title>Mchnry.Flow</Title>
+    <PackOnBuild>true</PackOnBuild>
   </PropertyGroup>
+ 
 
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp2.2|AnyCPU'">
-    <DocumentationFile>C:\mchnry\lib\flow\flow\Mchnry.Flow.xml</DocumentationFile>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
-
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType></DebugType>
+    <LangVersion>8.0</LangVersion>
+  </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Exceptions\**" />
-    <EmbeddedResource Remove="Exceptions\**" />
-    <None Remove="Exceptions\**" />
+    <PackageReference Include="newtonsoft.json" Version="12.0.3" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="mchnry.core" Version="1.1.*" />
-    <PackageReference Include="newtonsoft.json" Version="12.0.1" />
-  </ItemGroup>
-
-  <Target Name="PubNugetDev" AfterTargets="Pack">
+<!--  <Target Name="PubNugetDev" AfterTargets="Pack">
     <MakeDir Directories="$(PackageDir)" ContinueOnError="true" />
     <Exec WorkingDirectory="$(OutputPath)" Command="NuGet.exe delete $(PackageId) $(PackageVersion) -Source &quot;$(PackageDest)&quot; -NonInteractive" Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " ContinueOnError="WarnAndContinue" />
     <Exec WorkingDirectory="$(OutputPath)" Command="NuGet.exe push &quot;$(PackageId).$(PackageVersion).nupkg&quot; -Source &quot;$(PackageDest)&quot; -NonInteractive" Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
   </Target>
-  
+  -->
 </Project>

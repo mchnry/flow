@@ -76,7 +76,7 @@ namespace Mchnry.Flow
             if (match == null)
             {
                 this.WorkFlow.Activities.Add(toAdd);
-            }
+            } 
         }
         public virtual void AddAction(WorkDefine.ActionDefinition toAdd)
         {
@@ -92,7 +92,7 @@ namespace Mchnry.Flow
             if (match == null)
             {
                 this.WorkFlow.Equations.Add(toAdd);
-            }
+            } 
         }
         public virtual void AddEvaluator(LogicDefine.Evaluator toAdd)
         {

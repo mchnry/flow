@@ -7,6 +7,7 @@ namespace Mchnry.Flow.Logic.Define
 
         public string Id { get; set; }
 
+        public bool TrueCondition { get; set; } = true;
         
         public Rule First { get; set; }
 
@@ -20,6 +21,6 @@ namespace Mchnry.Flow.Logic.Define
         public string RuleIdWithContext => this.Id;
 
         [JsonIgnore]
-        public string ShortHand => this.Id;
+        public string ShortHand => string.Format("{0}{1}", this.TrueCondition ? "" : "!", this.Id);
     }
 }

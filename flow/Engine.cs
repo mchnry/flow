@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using LogicDefine = Mchnry.Flow.Logic.Define;
 using WorkDefine = Mchnry.Flow.Work.Define;
 using System.Linq;
-using Mchnry.Core.Cache;
+using Mchnry.Flow.Cache;
 using Newtonsoft.Json;
 
 namespace Mchnry.Flow

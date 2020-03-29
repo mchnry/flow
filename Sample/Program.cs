@@ -1,17 +1,13 @@
-﻿using Mchnry.Core.JWT;
+﻿
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Mchnry.Flow;
 using Mchnry.Flow.Configuration;
 using Mchnry.Flow.Diagnostics;
 using Mchnry.Flow.Logic;
 using Mchnry.Flow.Work;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using LogicDefine = Mchnry.Flow.Logic.Define;
-using WorkDefine = Mchnry.Flow.Work.Define;
 
 namespace Sample
 {

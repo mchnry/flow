@@ -22,6 +22,8 @@ namespace Mchnry.Flow.Analysis
 
         StepTracer<LintTrace> tracer;
         Configuration.Config config;
+        List<LogicDefine.Equation> sanitized = new List<LogicDefine.Equation>();
+
 
         public Sanitizer(StepTracer<LintTrace> tracer, Configuration.Config config)
         {
@@ -143,6 +145,8 @@ namespace Mchnry.Flow.Analysis
                 if (null != eq)
                 {
 
+
+
                     if (null != eq.First)
                     {
                         LoadRule(eq.First, step, false);
@@ -180,10 +184,12 @@ namespace Mchnry.Flow.Analysis
                                 Second = ConventionHelper.TrueEvaluator(this.config.Convention)
                             };
                             workFlow.Equations.Add(toAdd);
+
+                            rule.TrueCondition = true;
+                            rule.Id = negationId;
                         }
 
-                        rule.TrueCondition = true;
-                        rule.Id = negationId;
+
                     }
 
                 }
