@@ -11,6 +11,7 @@ using Mchnry.Flow.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.ObjectModel;
+using Mchnry.Flow.Work.Define;
 
 namespace Mchnry.Flow
 {
@@ -523,33 +524,39 @@ namespace Mchnry.Flow
             this.workflowManager = new WorkflowManager(workflow, this.config);
         }
 
-        private void  Do(Action<IActionBuilder<T>> builder, string overrideId = null)
+        private void  Do(Action<IActionBuilder<T>> builder, Func<WorkDefine.ActionDefinition> overrideName = null)
         {
             ActionBuilder<T> builderRef = new ActionBuilder<T>(this);
             builder.Invoke(builderRef);
 
             WorkDefine.ActionRef ToDo = builderRef.actionRef;
-            
-            if (!string.IsNullOrEmpty(overrideId))
+            WorkDefine.ActionDefinition actionDef = new ActionDefinition();
+
+            if (overrideName != null)
             {
-                ToDo.Id = overrideId;
+                actionDef = overrideName();
+                actionDef.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Action, ToDo.Id, this.config.Convention);
+                ToDo = actionDef.Id;
+                
+            } else
+            {
+                ToDo.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Action, ToDo.Id, this.config.Convention);
+
+                string actionName = builderRef.action.GetType().Name;
+                string description = ConventionHelper.ParseMethodName(actionName, this.config.Convention.ParseMethodNamesAs).Literal;
+
+                var descAttr = builderRef.action.GetType().GetCustomAttributes(typeof(ArticulateOptionsAttribute), true)
+                     .OfType<ArticulateOptionsAttribute>()
+                     .FirstOrDefault();
+                if (descAttr != null)
+                {
+                    description = descAttr.Description;
+                }
+                actionDef = new WorkDefine.ActionDefinition() { Id = ToDo.Id, Description = description };
             }
 
-            ToDo.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Action, ToDo.Id, this.config.Convention);
 
-            string actionName = builderRef.action.GetType().Name;
-            string description = ConventionHelper.ParseMethodName(actionName, this.config.Convention.ParseMethodNamesAs).Literal;
-
-            var descAttr = builderRef.action.GetType().GetCustomAttributes(typeof(ArticulateOptionsAttribute), true)
-                 .OfType<ArticulateOptionsAttribute>()
-                 .FirstOrDefault();
-            if (descAttr != null)
-            {
-                description = descAttr.Description;
-            }
-
-
-            this.workflowManager.AddAction(new WorkDefine.ActionDefinition() { Id = ToDo.Id, Description = description });
+            this.workflowManager.AddAction(actionDef);
 
             if (!this.actions.ContainsKey(ToDo.Id))
             {
@@ -644,6 +651,7 @@ namespace Mchnry.Flow
             parent = this.activityStack.Peek();
 
             string workflowId = builder.GetBuilder().Workflow.Id;
+            string origWorkflowId = workflowId;
 
             if (this.chained.ContainsKey(workflowId))
             {
@@ -653,7 +661,7 @@ namespace Mchnry.Flow
             this.chained.Add(workflowId, builder);
 
             string actionId = $"chain{workflowId}";
-            this.Do(a => a.Do(new ChainFlowAction<T>(actionId, builder)), actionId);
+            this.Do(a => a.Do(new ChainFlowAction<T>(actionId, builder)), () => new ActionDefinition() { Id = actionId, Description = $"Chain.{origWorkflowId}" });
 
             parent.Reactions.Add(new WorkDefine.Reaction() { Work = this.created.ToString() });
 
@@ -975,7 +983,7 @@ namespace Mchnry.Flow
                     First = evaluatorId,
                     Id = equationId,
                     Second = ConventionHelper.TrueEvaluator(this.config.Convention),
-                    TrueCondition = trueCond
+                    //TrueCondition = trueCond
                 };
                 this.epxressionStack.Push(toAdd);
 

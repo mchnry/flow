@@ -41,7 +41,8 @@ namespace Mchnry.Flow.Analysis
         public string Literal { get; set; }
         public string ReaderFriendly(int indent)
         {
-            string toWrite = $"{Friendly.tabs(indent)}DO->[{this.Literal}]";
+            string ctx = Context != null ? "|" + Context.ReaderFriendly() : "";
+            string toWrite = $"{Friendly.tabs(indent)}DO->[{this.Literal}{ctx}]";
             return toWrite;
     
         }
@@ -93,6 +94,11 @@ namespace Mchnry.Flow.Analysis
     {
         public string Literal { get; set; }
         public string Value { get; set; }
+
+        public string ReaderFriendly()
+        {
+            return $"* {Literal} = {Value} *";
+        }
     }
 
     public class ArticulateReaction
@@ -126,8 +132,9 @@ namespace Mchnry.Flow.Analysis
         public string Literal { get; set; }
         public string ReaderFriendly(int indent)
         {
+            string ctx = Context != null ? "|" + Context.ReaderFriendly() : "";
             string negate = TrueCondition ? "" : "NOT ";
-            string toWrite = $"{Friendly.tabs(indent)}{negate}({this.Literal})";
+            string toWrite = $"{Friendly.tabs(indent)}{negate}({this.Literal}{ctx})";
             return toWrite;
 
         }

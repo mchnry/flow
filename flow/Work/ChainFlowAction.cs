@@ -21,12 +21,6 @@ namespace Mchnry.Flow.Work
             this.workflowId = builder.GetBuilder().Workflow.Id;
         }
 
-        public ActionDefinition Definition => new ActionDefinition
-        {
-            Id = this.actionId,
-            Description = $"Chain {this.workflowId}"
-        };
-
         public async Task<bool> CompleteAsync(IEngineScope<TModel> scope, IEngineTrace trace, CancellationToken token)
         {
             TModel model = scope.GetModel();
