@@ -535,7 +535,7 @@ namespace Mchnry.Flow
             if (overrideName != null)
             {
                 actionDef = overrideName();
-                actionDef.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Action, ToDo.Id, this.config.Convention);
+                actionDef.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Action, actionDef.Id, this.config.Convention);
                 ToDo = actionDef.Id;
                 
             } else
