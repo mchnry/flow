@@ -1,7 +1,5 @@
-﻿using Mchnry.Flow.Logic.Define;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using Mchnry.Flow.Logic.Define;
 
 namespace Mchnry.Flow.Work.Define
 {

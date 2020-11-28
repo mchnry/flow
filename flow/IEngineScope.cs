@@ -31,6 +31,7 @@ namespace Mchnry.Flow
         TModel GetModel();
         void SetModel(TModel value);
         T GetModel<T>(CacheScopeOptions scope, string key);
+        
         void SetModel<T>(CacheScopeOptions scope, string key, T value);
         StepTraceNode<ActivityProcess> Process { get; }
 
@@ -45,12 +46,13 @@ namespace Mchnry.Flow
         void SetModel(TModel value);
         T GetModel<T>(CacheScopeOptions scope, string key);
         void SetModel<T>(CacheScopeOptions scope, string key, T value);
-        
+        Task<T> GetModelAsync<T>(CacheScopeOptions scope, string key, Func<Task<T>> Get, bool cacheBeforeReturn);
 
         Logic.Define.Rule CurrentRuleDefinition { get; }
         Work.Define.ActionRef CurrentAction { get; }
         Work.Define.Activity CurrentActivity { get; }
 
+        DateTime? TimeStamp { get; }
 
         IValidationContainer MyValidations { get; }
         void Defer(IDeferredAction<TModel> action, bool onlyIfValidationsResolved);

@@ -11,24 +11,29 @@ namespace Mchnry.Flow.Logic
         private readonly IRule<TModel> first;
         private readonly IRule<TModel> second;
         private readonly Engine<TModel> engineRef;
+        private readonly bool inner = false;
 
         internal Expression(Define.Rule definition,
             Operand condition,
             IRule<TModel> first,
             IRule<TModel> second,
-            Engine<TModel> engineRef)
+            Engine<TModel> engineRef,
+            bool inner)
         {
             this.definition = definition;
             this.condition = condition;
             this.first = first;
             this.second = second;
             this.engineRef = engineRef;
+            this.inner = inner;
         }
 
         public string Id => this.definition.Id;
 
         public string RuleIdWithContext => this.definition.RuleIdWithContext;
         public string ShortHand => this.definition.ShortHand;
+
+        public bool Inner { get => this.inner; }
 
         public async Task<bool> EvaluateAsync(bool reEvaluate, CancellationToken token)
         {

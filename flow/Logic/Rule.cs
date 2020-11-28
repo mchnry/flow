@@ -14,18 +14,22 @@ namespace Mchnry.Flow.Logic
 
         private readonly Define.Rule definition;
         private Engine<TModel> engineRef;
+        private readonly bool inner;
 
         internal Rule(
             
             Define.Rule definition,
-            Engine<TModel> EngineRef
+            Engine<TModel> EngineRef,
+            bool inner
             )
         {
 
             this.definition = definition;
             this.engineRef = EngineRef;
+            this.inner = inner;
         }
 
+        public bool Inner { get => this.inner; }
         public string Id => this.definition.Id;
 
         

@@ -1,17 +1,17 @@
-﻿using Mchnry.Flow.Analysis;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Mchnry.Flow.Analysis;
+using Mchnry.Flow.Cache;
 using Mchnry.Flow.Configuration;
 using Mchnry.Flow.Diagnostics;
 using Mchnry.Flow.Logic;
 using Mchnry.Flow.Work;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
 using LogicDefine = Mchnry.Flow.Logic.Define;
 using WorkDefine = Mchnry.Flow.Work.Define;
-using System.Linq;
-using Mchnry.Flow.Cache;
-using Newtonsoft.Json;
 
 namespace Mchnry.Flow
 {
@@ -207,7 +207,7 @@ namespace Mchnry.Flow
         {
 
 
-
+            this.GlobalCache.Insert("global_timestamp", DateTime.UtcNow);
 
             Activity<TModel> toLoad = this.LoadActivity(activityId);
 
@@ -273,6 +273,28 @@ namespace Mchnry.Flow
             }
             
             return toReturn;
+        }
+
+        async Task<T> IEngineScope<TModel>.GetModelAsync<T>(CacheScopeOptions scope, string key, Func<Task<T>> Get, bool cacheBeforeReturn)
+        {
+
+            ICacheManager cache = default;
+            switch(scope)
+            {
+                case CacheScopeOptions.Activity:
+                    cache = this.WorkflowCache.Spawn(RunManager.CurrentActivity.Id); break;
+                case CacheScopeOptions.Global:
+                    cache = this.GlobalCache; break;
+                case CacheScopeOptions.Workflow:
+                    cache = this.WorkflowCache; break;
+
+            }
+
+            T toReturn = default(T);
+            toReturn = await cache.ReadAsync(key, Get, cacheBeforeReturn);
+
+            return toReturn;
+
         }
 
 
@@ -472,10 +494,9 @@ namespace Mchnry.Flow
             StepTraceNode<LintTrace> root = trace.TraceFirst(new LintTrace(LintStatusOptions.Loading, "Loading Logic", equationId));
 
 
-
             //Lint.... make sure we have everything we need first.
-            Func<LogicDefine.Rule, StepTraceNode<LintTrace>, IRule<TModel>> LoadRule = null;
-            LoadRule = (rule, parentStep) =>
+            Func<LogicDefine.Rule, StepTraceNode<LintTrace>, bool, IRule<TModel>> LoadRule = null;
+            LoadRule = (rule, parentStep, inner) =>
             {
                 StepTraceNode<LintTrace> step = trace.TraceNext(parentStep, new LintTrace(LintStatusOptions.Inspecting, "Inspecting Rule", rule.Id));
                 IRule<TModel> toReturn = null;
@@ -486,16 +507,15 @@ namespace Mchnry.Flow
                 {
                     LogicDefine.Equation eq = this.WorkflowManager.GetEquation(rule.Id);
 
-                    IRule<TModel> first = LoadRule(eq.First, step);
-                    IRule<TModel> second = LoadRule(eq.Second, step);
-                    toReturn = new Expression<TModel>(rule, eq.Condition, first, second, this);
+                    IRule<TModel> first = LoadRule(eq.First, step, true);
+                    IRule<TModel> second = LoadRule(eq.Second, step, true);
+                    toReturn = new Expression<TModel>(rule, eq.Condition, first, second, this, inner);
                 }
                 else
                 {
                     LogicDefine.Evaluator ev = this.WorkflowManager.GetEvaluator(rule.Id);
-                    toReturn = new Rule<TModel>(rule, this);
+                    toReturn = new Rule<TModel>(rule, this, inner);
                 }
-
 
 
 
@@ -507,7 +527,7 @@ namespace Mchnry.Flow
 
 
             LogicDefine.Rule eqRule = equationId;
-            IRule<TModel> loaded = LoadRule(eqRule, root);
+            IRule<TModel> loaded = LoadRule(eqRule, root, false);
 
             return loaded;
 
@@ -597,6 +617,19 @@ namespace Mchnry.Flow
         public WorkDefine.Workflow Workflow { get => this.WorkflowManager.WorkFlow; }
 
         WorkDefine.Workflow IEngineLoader<TModel>.Workflow => this.WorkflowManager.WorkFlow;
+
+        public DateTime? TimeStamp
+        {
+            get
+            {
+                DateTime? stamp = this.GlobalCache.Read<DateTime?>("global_timestamp");
+                if (stamp != null && stamp.HasValue)
+                {
+                    return stamp;
+                } else { return default; }
+
+            }
+        }
 
         internal void Sanitize()
         {

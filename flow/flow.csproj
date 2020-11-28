@@ -6,7 +6,7 @@
     <RootNamespace>Mchnry.Flow</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Description>Mchnry Workflow and Logic Engine</Description>
-    <Version>1.3.8</Version>
+    <Version>1.3.9</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageId>mchnry.flow</PackageId>
     <Authors>James Pritz</Authors>

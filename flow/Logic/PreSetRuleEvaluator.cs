@@ -1,9 +1,9 @@
-﻿using Mchnry.Flow.Diagnostics;
-using Mchnry.Flow.Logic.Define;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Mchnry.Flow.Diagnostics;
+using Mchnry.Flow.Logic.Define;
 
 namespace Mchnry.Flow.Logic
 {

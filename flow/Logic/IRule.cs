@@ -7,6 +7,6 @@ namespace Mchnry.Flow.Logic
     internal interface IRule<TModel>: IExpression
     {
         Task<bool> EvaluateAsync(bool reEvaluate, CancellationToken token);
-
+        bool Inner { get; }
     }
 }

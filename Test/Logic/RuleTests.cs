@@ -30,7 +30,7 @@ namespace Test.Logic
             mkEngine.Setup(g => g.Tracer).Returns(mkTracer.Object);
             mkEngine.Setup(g => g.ImplementationManager).Returns(mkImplMgr.Object);
             mkEngine.Setup(g => g.RunManager).Returns(mkRunMgr.Object);
-            Rule<string> toTest = new Rule<string>("test", mkEngine.Object);
+            Rule<string> toTest = new Rule<string>("test", mkEngine.Object, false);
 
             await (toTest.EvaluateAsync(false, new System.Threading.CancellationToken()));
 
@@ -58,7 +58,7 @@ namespace Test.Logic
             mkEngine.Setup(g => g.Tracer).Returns(mkTracer.Object);
             mkEngine.Setup(g => g.ImplementationManager).Returns(mkImplMgr.Object);
             mkEngine.Setup(g => g.RunManager).Returns(mkRunMgr.Object);
-            Rule<string> toTest = new Rule<string>("test", mkEngine.Object);
+            Rule<string> toTest = new Rule<string>("test", mkEngine.Object, false);
 
             await (toTest.EvaluateAsync(false, new System.Threading.CancellationToken()));
 
@@ -87,7 +87,7 @@ namespace Test.Logic
             mkEngine.Setup(g => g.Tracer).Returns(mkTracer.Object);
             mkEngine.Setup(g => g.ImplementationManager).Returns(mkImplMgr.Object);
             mkEngine.Setup(g => g.RunManager).Returns(mkRunMgr.Object);
-            Rule<string> toTest = new Rule<string>("test", mkEngine.Object);
+            Rule<string> toTest = new Rule<string>("test", mkEngine.Object, false);
 
             //true to reevaluate
             await (toTest.EvaluateAsync(true, new System.Threading.CancellationToken()));
