@@ -29,16 +29,18 @@ namespace Sample
 
     public class EvaluatorFactory
     {
-        public IRuleEvaluator<string> ShouldIDoIt => new ShouldIDoIt();
+        public IEvaluatorRule<string> ShouldIDoIt => new ShouldIDoIt();
     }
 
     [ArticulateOptions("Test If I Should Do It")]
-    internal class ShouldIDoIt : IRuleEvaluator<string>
+    internal class ShouldIDoIt : IEvaluatorRule<string>
     {
-        public async Task EvaluateAsync(IEngineScope<string> scope, IEngineTrace trace, IRuleResult result, CancellationToken token)
+        public async Task<bool> EvaluateAsync(IEngineScope<string> scope, IEngineTrace trace, CancellationToken token)
         {
-            result.Pass();
+            return await Task.FromResult(true);
         }
+
+       
     }
 
     public class BuilderFactory

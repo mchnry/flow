@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Mchnry.Flow.Logic
 {
-    internal class AlwaysTrueEvaluator<TModel> : IRuleEvaluator<TModel>
+    internal class AlwaysTrueEvaluator<TModel> : IEvaluatorRule<TModel>
     {
         public Evaluator Definition => new Evaluator()
         {
@@ -14,10 +14,10 @@ namespace Mchnry.Flow.Logic
             Description = "Always Returns True"
         };
 
-        public async Task EvaluateAsync(IEngineScope<TModel> scope, IEngineTrace trace, IRuleResult status, CancellationToken token)
+        public async Task<bool> EvaluateAsync(IEngineScope<TModel> scope, IEngineTrace trace, CancellationToken token)
         {
             trace.TraceStep("Always True");
-            status.Pass();
+            return await Task.FromResult(true);
         }
     }
 }

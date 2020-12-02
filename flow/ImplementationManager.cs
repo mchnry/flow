@@ -12,7 +12,7 @@ namespace Mchnry.Flow
     {
 
         IAction<TModel> GetAction(WorkDefine.ActionDefinition id);
-        IRuleEvaluator<TModel> GetEvaluator(LogicDefine.Evaluator id);
+        IRuleEvaluatorX<TModel> GetEvaluator(LogicDefine.Evaluator id);
         WorkDefine.Workflow GetWorkflow(string id);
         WorkDefine.Workflow GetWorkflow(IWorkflowBuilder<TModel> builder);
         ProxyActionFactory<TModel> ActionFactory { get; }
@@ -110,7 +110,7 @@ namespace Mchnry.Flow
             return toReturn;
         }
 
-        public virtual IRuleEvaluator<TModel> GetEvaluator(LogicDefine.Evaluator def)
+        public virtual IRuleEvaluatorX<TModel> GetEvaluator(LogicDefine.Evaluator def)
         {
 
             return this.EvaluatorFactory.GetRuleEvaluator(def);
@@ -174,7 +174,7 @@ namespace Mchnry.Flow
             return this.af.GetAction<TModel>(def);
         }
 
-        public IRuleEvaluator<TModel> GetEvaluator(LogicDefine.Evaluator def)
+        public IRuleEvaluatorX<TModel> GetEvaluator(LogicDefine.Evaluator def)
         {
 
             return this.ef.GetRuleEvaluator<TModel>(def);

@@ -14,4 +14,9 @@
     <ProjectReference Include="..\flow\flow.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="Mchnry.Flow">
+      <HintPath>..\flow\bin\Release\net48\Mchnry.Flow.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

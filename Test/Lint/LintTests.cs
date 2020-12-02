@@ -39,35 +39,35 @@ namespace Test.Lint
 
         //}
 
-        [Fact]
-        public async void TestWithContextNominal()
-        {
-            Action<ContextDefinitionBuilder> abc = (a) =>
-            {
-                a.OneOf("tstctx", "test context", new List<ContextItem>() {
-                    new ContextItem() {  Key = "1", Literal = "one" },
-                    new ContextItem() { Key = "2", Literal = "two" },
-                    new ContextItem() { Key = "3", Literal = "three "}
-                }, true);
+        //[Fact]
+        //public async void TestWithContextNominal()
+        //{
+        //    Action<ContextDefinitionBuilder> abc = (a) =>
+        //    {
+        //        a.OneOf("tstctx", "test context", new List<ContextItem>() {
+        //            new ContextItem() {  Key = "1", Literal = "one" },
+        //            new ContextItem() { Key = "2", Literal = "two" },
+        //            new ContextItem() { Key = "3", Literal = "three "}
+        //        }, true);
 
-            };
+        //    };
 
-            var BWF = Builder<string>.CreateBuilder("test").BuildFluent(
-                    TD => TD.IfThenDo(
-                            IF => IF.Rule(RULE => RULE.EvalInLine("abc","abc", ctx => ctx.MatchAny(abc, new string[] {"1","2"}),
-                                    (s,t,r,k) => { return Task.FromResult<bool>( s.CurrentRuleDefinition.Context.Keys.Contains("1")); })), 
-                            THEN => THEN.DoNothing()
+        //    var BWF = Builder<string>.CreateBuilder("test").BuildFluent(
+        //            TD => TD.IfThenDo(
+        //                    IF => IF.Rule(RULE => RULE.EvalInLine("abc","abc", ctx => ctx.MatchAny(abc, new string[] {"1","2"}),
+        //                            (s,t,r,k) => { return Task.FromResult<bool>( s.CurrentRuleDefinition.Context.Keys.Contains("1")); })), 
+        //                    THEN => THEN.DoNothing()
                            
                             
-                        )
-                );
-            IEngineLoader<string> e = Mchnry.Flow.Engine<string>.CreateEngine();
-            var linter = e.LintFluent(new WorkflowBuilder<string>(BWF));
-            var inspector = await linter.LintAsync(null, new System.Threading.CancellationToken());
+        //                )
+        //        );
+        //    IEngineLoader<string> e = Mchnry.Flow.Engine<string>.CreateEngine();
+        //    var linter = e.LintFluent(new WorkflowBuilder<string>(BWF));
+        //    var inspector = await linter.LintAsync(null, new System.Threading.CancellationToken());
 
 
 
-        }
+        //}
 
         //[Fact]
         //public async void TestSimpleLintWithIntent()

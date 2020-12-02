@@ -16,7 +16,7 @@ namespace Test
                  testResult = b;
              };
             IRuleResult toTest = new RuleResult(testDelegate);
-            toTest.Fail();
+            toTest.Fail(new Validation());
 
             Assert.False(testResult);
         }

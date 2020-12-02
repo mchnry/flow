@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using WorkDefine = Mchnry.Flow.Work.Define;
-using LogicDefine = Mchnry.Flow.Logic.Define;
-using Mchnry.Flow.Configuration;
+using System.Collections.ObjectModel;
 using System.Linq;
-using Mchnry.Flow.Work;
-using Mchnry.Flow.Logic;
-using Mchnry.Flow.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.ObjectModel;
+using Mchnry.Flow.Configuration;
+using Mchnry.Flow.Diagnostics;
+using Mchnry.Flow.Logic;
+using Mchnry.Flow.Work;
 using Mchnry.Flow.Work.Define;
+using LogicDefine = Mchnry.Flow.Logic.Define;
+using WorkDefine = Mchnry.Flow.Work.Define;
 
 namespace Mchnry.Flow
 {
@@ -131,14 +130,14 @@ namespace Mchnry.Flow
         /// </summary>
         /// <param name="evaluator">Implementation of <see cref="IRule{TModel}"/> to query</param>
         /// <returns>Reference as <see cref="IRuleConditionBuilder"/> to indicate the true condition of evaluator.</returns>
-        IRuleConditionBuilder Eval(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator);
+        IRuleConditionBuilder Eval(Mchnry.Flow.Logic.IEvaluatorRule<T> evaluator);
         /// <summary>
         /// Defines the rule that queries an <see cref="IRuleEvaluator{TModel}"/>
         /// </summary>
         /// <param name="evaluator">Implementation of <see cref="IRule{TModel}"/> to query</param>
         /// <param name="context">The context to pass to the evaluator.</param>
         /// <returns>Reference as <see cref="IRuleConditionBuilder"/> to indicate the true condition of evaluator.</returns>
-        IRuleConditionBuilder EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator, Action<ContextBuilder> context);
+        IRuleConditionBuilder EvalWithContext(Mchnry.Flow.Logic.IEvaluatorRule<T> evaluator, Action<ContextBuilder> context);
 
         /// <summary>
         /// Evaluate inline evaluator function
@@ -146,7 +145,11 @@ namespace Mchnry.Flow
         /// <param name="evaluatorName">Name of evaluator</param>
         /// <param name="evaluator">Func to evaluate</param>
         /// <returns></returns>
-        IRuleConditionBuilder EvalInLine(string evaluatorName, string description, Action<ContextBuilder> context, Func<IEngineScope<T>, IEngineTrace, IRuleResult, CancellationToken, Task> evaluator);
+        IRuleConditionBuilder EvalInLine(string evaluatorName, string description, Action<ContextBuilder> context, Func<IEngineScope<T>, IEngineTrace, CancellationToken, Task<bool>> evaluator);
+
+        void Validate(Mchnry.Flow.Logic.IValidatorRule<T> validator);
+        void ValidateWithContext(Mchnry.Flow.Logic.IValidatorRule<T> validator, Action<ContextBuilder> context);
+        void ValidateInLine(string validatorName, string description, Action<ContextBuilder> context, Func<IEngineScope<T>, IEngineTrace, IRuleResult, CancellationToken, Task> validator);
 
     }
 
@@ -163,17 +166,18 @@ namespace Mchnry.Flow
             this.builderRef = builderRef;
         }
         internal LogicDefine.Rule rule { get; set; }
-        internal Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator { get; set; }
+        internal Mchnry.Flow.Logic.IRuleEvaluatorX<T> evaluatorx { get; set; }
+        
 
-        IRuleConditionBuilder IRuleBuilder<T>.Eval(IRuleEvaluator<T> evaluator)
+        void IRuleBuilder<T>.Validate(IValidatorRule<T> validator)
         {
-            this.evaluator = evaluator;
-            string name = evaluator.GetType().Name;
+            this.evaluatorx = validator;
+            string name = validator.GetType().Name;
             this.rule = new LogicDefine.Rule() { Id = name, TrueCondition = true };
-            return this;
+            
         }
 
-        IRuleConditionBuilder IRuleBuilder<T>.EvalInLine(string evaluatorName, string description, Action<ContextBuilder> context, Func<IEngineScope<T>, IEngineTrace, IRuleResult, CancellationToken, Task> evaluatorToEval)
+        public void ValidateInLine(string validatorName, string description, Action<ContextBuilder> context, Func<IEngineScope<T>, IEngineTrace, IRuleResult, CancellationToken, Task> validator)
         {
             ContextBuilder builder = new ContextBuilder();
             Context ctx = default;
@@ -185,12 +189,54 @@ namespace Mchnry.Flow
                 ctx = builder.context;
             }
 
-            this.evaluator = new DynamicEvaluator<T>(new LogicDefine.Evaluator() { Id = evaluatorName, Description = description??"Dynamic" }, evaluatorToEval);
+            this.evaluatorx = new DynamicValidator<T>(new LogicDefine.Evaluator() { Id = validatorName, Description = description ?? "Dynamic" }, validator) ;
+            this.rule = new LogicDefine.Rule() { Id = validatorName, TrueCondition = true, Context = ctx };
+          
+        }
+
+        public void ValidateWithContext(IValidatorRule<T> validator, Action<ContextBuilder> context)
+        {
+            ((IRuleBuilder<T>)this).Validate(validator);
+
+            ContextBuilder builder = new ContextBuilder();
+
+            if (context == null) throw new ArgumentException("Caller failed to provide context");
+
+
+            context.Invoke(builder);
+            builderRef.workflowManager.AddContextDefinition(builder.builder.definition);
+            this.rule.Context = builder.context;
+
+
+        }
+
+        IRuleConditionBuilder IRuleBuilder<T>.Eval(IEvaluatorRule<T> evaluator)
+        {
+            this.evaluatorx = evaluator;
+            string name = evaluator.GetType().Name;
+            this.rule = new LogicDefine.Rule() { Id = name, TrueCondition = true };
+            return this;
+        }
+
+
+        IRuleConditionBuilder IRuleBuilder<T>.EvalInLine(string evaluatorName, string description, Action<ContextBuilder> context, Func<IEngineScope<T>, IEngineTrace, CancellationToken, Task<bool>> evaluatorToEval)
+        {
+            ContextBuilder builder = new ContextBuilder();
+            Context ctx = default;
+
+            if (context != null)
+            {
+                context.Invoke(builder);
+                builderRef.workflowManager.AddContextDefinition(builder.builder.definition);
+                ctx = builder.context;
+            }
+
+            this.evaluatorx = new DynamicEvaluator<T>(new LogicDefine.Evaluator() { Id = evaluatorName, Description = description??"Dynamic" }, evaluatorToEval);
             this.rule = new LogicDefine.Rule() { Id = evaluatorName, TrueCondition = true, Context = ctx };
             return this;
         }
 
-        IRuleConditionBuilder IRuleBuilder<T>.EvalWithContext(Mchnry.Flow.Logic.IRuleEvaluator<T> evaluator, Action<ContextBuilder> context)
+        IRuleConditionBuilder IRuleBuilder<T>.EvalWithContext(Mchnry.Flow.Logic.IEvaluatorRule<T> evaluator, Action<ContextBuilder> context)
         {
 
             ((IRuleBuilder<T>)this).Eval(evaluator);
@@ -366,7 +412,7 @@ namespace Mchnry.Flow
         //IBuilderWorkflow<T> Build(Action<IActivityBuilder> Activity);
 
         ReadOnlyCollection<IAction<T>> Actions { get; }
-        ReadOnlyCollection<IRuleEvaluator<T>> Evaluators { get; }
+        ReadOnlyCollection<IRuleEvaluatorX<T>> Evaluators { get; }
         ReadOnlyCollection<IWorkflowBuilder<T>> Chained { get; }
     }
 
@@ -473,7 +519,7 @@ namespace Mchnry.Flow
         IFluentElseActivityBuilder<T>
     {
 
-        internal Dictionary<string, IRuleEvaluator<T>> evaluators = new Dictionary<string, IRuleEvaluator<T>>();
+        internal Dictionary<string, IRuleEvaluatorX<T>> evaluators = new Dictionary<string, IRuleEvaluatorX<T>>();
         internal Dictionary<string, IAction<T>> actions = new Dictionary<string, IAction<T>>();
         internal Dictionary<string, IWorkflowBuilder<T>> chained = new Dictionary<string, IWorkflowBuilder<T>>();
           
@@ -490,7 +536,7 @@ namespace Mchnry.Flow
         internal LogicDefine.IExpression LastEquation;
 
         ReadOnlyCollection<IAction<T>> IBuilder<T>.Actions => (from a in actions select a.Value).ToList().AsReadOnly();
-        ReadOnlyCollection<IRuleEvaluator<T>> IBuilder<T>.Evaluators => (from a in evaluators select a.Value).ToList().AsReadOnly();
+        ReadOnlyCollection<IRuleEvaluatorX<T>> IBuilder<T>.Evaluators => (from a in evaluators select a.Value).ToList().AsReadOnly();
         ReadOnlyCollection<IWorkflowBuilder<T>> IBuilder<T>.Chained => (from a in chained select a.Value).ToList().AsReadOnly();
         
 
@@ -944,10 +990,10 @@ namespace Mchnry.Flow
 
             evaluatorId.Id = ConventionHelper.EnsureConvention(NamePrefixOptions.Evaluator, evaluatorId.Id, this.config.Convention);
 
-            string actionName = builderRef.evaluator.GetType().Name;
+            string actionName = builderRef.evaluatorx.GetType().Name;
             string description = ConventionHelper.ParseMethodName(actionName, this.config.Convention.ParseMethodNamesAs).Literal;
 
-            var descAttr = builderRef.evaluator.GetType().GetCustomAttributes(typeof(ArticulateOptionsAttribute), true)
+            var descAttr = builderRef.evaluatorx.GetType().GetCustomAttributes(typeof(ArticulateOptionsAttribute), true)
                  .OfType<ArticulateOptionsAttribute>()
                  .FirstOrDefault();
             if (descAttr != null)
@@ -960,10 +1006,10 @@ namespace Mchnry.Flow
 
             if (!this.evaluators.ContainsKey(evaluatorId.Id))
             {
-                this.evaluators.Add(evaluatorId.Id, builderRef.evaluator);
+                this.evaluators.Add(evaluatorId.Id, builderRef.evaluatorx);
             }                //if attmpeting to add another implementation with the same id, throw an exception
                              //we can't handle this
-            else if (this.evaluators[evaluatorId.Id].GetType() != builderRef.evaluator.GetType())
+            else if (this.evaluators[evaluatorId.Id].GetType() != builderRef.evaluatorx.GetType())
             {
                 throw new BuilderException(evaluatorId.Id);
             }

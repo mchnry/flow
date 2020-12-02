@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Mchnry.Flow
 {
@@ -10,26 +8,18 @@ namespace Mchnry.Flow
     /// </summary>
     public interface IRuleResult
     {
-        /// <summary>
-        /// The result of the evaluation is false.
-        /// </summary>
-        void Fail();
+
         /// <summary>
         /// the result of the evaluation is false.
         /// </summary>
         /// <param name="validation">A validation to return to the caller.</param>
-        void FailWithValidation(Validation validation);
+        void Fail(Validation validation);
 
         /// <summary>
         /// the result of the evaluation is true.
         /// </summary>
         void Pass();
 
-        /// <summary>
-        /// manually set the result of the evaluation.
-        /// </summary>
-        /// <param name="result"></param>
-        void SetResult(bool result);
     }
 
     internal class RuleResult : IRuleResult
@@ -40,19 +30,13 @@ namespace Mchnry.Flow
         {
             this.status = status;
         }
-        void IRuleResult.Fail()
-        {
-            status(false, null);
-        }
 
-        void IRuleResult.FailWithValidation(Validation validation)
+
+        void IRuleResult.Fail(Validation validation)
         {
             status(false, validation);
         }
-        void IRuleResult.SetResult(bool result)
-        {
-            status(result, null);
-        }
+
 
         void IRuleResult.Pass()
         {

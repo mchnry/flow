@@ -6,7 +6,7 @@
     <RootNamespace>Mchnry.Flow</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Description>Mchnry Workflow and Logic Engine</Description>
-    <Version>1.3.9</Version>
+    <Version>1.3.10</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageId>mchnry.flow</PackageId>
     <Authors>James Pritz</Authors>
@@ -16,7 +16,7 @@
     <Title>Mchnry.Flow</Title>
     <PackOnBuild>true</PackOnBuild>
     <PackageReleaseNotes>Fixes issues with nested logic.  
-Adds a ReaderFriendly function to Articulator.</PackageReleaseNotes>
+Adds a ReaderFriendly function to Articulator. Separates evaluator vs validator concepts</PackageReleaseNotes>
     <Copyright>Copyright 2020 JamesPritz, LLC</Copyright>
   </PropertyGroup>
  

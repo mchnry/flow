@@ -23,7 +23,7 @@ namespace Mchnry.Flow
 
         public Case TestCase { get; }
 
-        public IRuleEvaluator<TModel> GetRuleEvaluator<TModel>(Evaluator definition)
+        public IRuleEvaluatorX<TModel> GetRuleEvaluator<TModel>(Evaluator definition)
         {
 
             if (definition.Id == ConventionHelper.TrueEvaluator(this.configuration.Convention))

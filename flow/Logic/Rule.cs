@@ -42,7 +42,7 @@ namespace Mchnry.Flow.Logic
             bool thisResult = !this.definition.TrueCondition;
             
             bool? knownResult = this.engineRef.RunManager.GetResult(this.definition);
-            IRuleEvaluator<TModel> evaluator = this.engineRef.ImplementationManager.GetEvaluator(
+            IRuleEvaluatorX<TModel> evaluator = this.engineRef.ImplementationManager.GetEvaluator(
                 new Define.Evaluator() { Id = this.definition.Id });
 
             bool doEval = reEvaluate || !knownResult.HasValue;
@@ -70,11 +70,22 @@ namespace Mchnry.Flow.Logic
 
                     Stopwatch t = new Stopwatch(); t.Start();
 
-                     await evaluator.EvaluateAsync(
-                        this.engineRef,
-                        new LogicEngineTrace(this.engineRef.Tracer),
-                        new RuleResult(status),
-                        token);
+                    //if evaluator, run and return result
+                    if (evaluator is IEvaluatorRule<TModel>)
+                    {
+                        bool result = await ((IEvaluatorRule<TModel>)evaluator).EvaluateAsync(this.engineRef, new LogicEngineTrace(this.engineRef.Tracer), token);
+                        status(result, null);
+                    } else
+                    {
+                        await ((IValidatorRule<TModel>)evaluator).ValidateAsync(
+                            this.engineRef,
+                            new LogicEngineTrace(this.engineRef.Tracer),
+                            new RuleResult(status),
+                            token
+                            );
+                            
+                    }
+
                     t.Stop();
                     this.engineRef.CurrentActivityStatus = ActivityStatusOptions.Rule_Evaluated;
 

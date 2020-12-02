@@ -7,7 +7,7 @@ using Mchnry.Flow.Logic.Define;
 
 namespace Mchnry.Flow.Logic
 {
-    internal class PreSetRuleEvaluator<TModel> : IRuleEvaluator<TModel>
+    internal class PreSetRuleEvaluator<TModel> : IEvaluatorRule<TModel>
     {
 
         internal List<Rule> rules = new List<Rule>();
@@ -24,7 +24,7 @@ namespace Mchnry.Flow.Logic
             Description = "Preset rule evaluator for testing"
         };
 
-        public async Task EvaluateAsync(IEngineScope<TModel> scope, IEngineTrace trace, IRuleResult result, CancellationToken token)
+        public async Task<bool> EvaluateAsync(IEngineScope<TModel> scope, IEngineTrace trace, CancellationToken token)
         {
             //thinking out-loud
             //if single rule where truecondition == false, then isTrue = false, set result to false.  good that.
@@ -32,7 +32,9 @@ namespace Mchnry.Flow.Logic
 
             bool isTrue = this.rules.Any(a => a.TrueCondition);
             trace.TraceStep(string.Format("Preset:{0}", isTrue));
-            result.SetResult(isTrue);
+
+            return await Task.FromResult(isTrue);
+            
         }
     }
 }
