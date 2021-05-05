@@ -618,15 +618,13 @@ namespace Mchnry.Flow
 
         WorkDefine.Workflow IEngineLoader<TModel>.Workflow => this.WorkflowManager.WorkFlow;
 
-        public DateTime? TimeStamp
+        public DateTime TimeStamp
         {
             get
             {
-                DateTime? stamp = this.GlobalCache.Read<DateTime?>("global_timestamp");
-                if (stamp != null && stamp.HasValue)
-                {
-                    return stamp;
-                } else { return default; }
+                DateTime stamp = this.GlobalCache.Read<DateTime>("global_timestamp", () => DateTime.UtcNow, true);
+                return stamp;
+                
 
             }
         }
