@@ -47,10 +47,10 @@ namespace Mchnry.Flow
         public Dictionary<string, string> Options { get; set; }
 
 
-        internal ValidationOverride CreateOverride(string reason, string auditCode)
+        public ValidationOverride CreateOverride(string reason, string auditCode)
         {
 
-            if (this.Options.Count > 0)
+            if (this.Options != null && this.Options.Count > 0)
             {
                 if (!this.Options.ContainsKey(reason))
                 {

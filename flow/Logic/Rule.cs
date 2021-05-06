@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Mchnry.Flow.Logic
 {
@@ -52,10 +53,29 @@ namespace Mchnry.Flow.Logic
 
             Action<bool, Validation> status = (a, s) =>
              {
-                 thisResult = a;
-                 if (s != null)
+
+                 if (s !=null)
                  {
-                     engineRef.AddValidation(s);
+                     if (s.Severity == ValidationSeverity.Confirm)
+                     {
+                         var oride = engineRef.ValidationContainer.Overrides.FirstOrDefault(g => g.Key.EndsWith(s.Key, StringComparison.OrdinalIgnoreCase));
+                         if (oride == null)
+                         {
+                             thisResult = a;
+                             engineRef.AddValidation(s);
+                         } else
+                         {
+                             thisResult = true;
+                         }
+
+                     } else
+                     {
+                         thisResult = a;
+                         engineRef.AddValidation(s);
+                     }
+                 } else
+                 {
+                     thisResult = a;
                  }
              };
             

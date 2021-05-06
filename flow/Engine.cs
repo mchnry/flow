@@ -332,8 +332,12 @@ namespace Mchnry.Flow
         {
             string typeOfT = typeof(T).Name;
             LogicDefine.Rule rule = new LogicDefine.Rule() { Id = typeOfT, Context = context };
+
+            string normalized = ConventionHelper.ApplyConvention(NamePrefixOptions.Evaluator, rule.RuleIdWithContext, this.Configuration.Convention) + ".";
+            key = key.ToLower().Replace(normalized.ToLower(), "");
+
             string orideKey = ConventionHelper.ApplyConvention(NamePrefixOptions.Evaluator, rule.RuleIdWithContext + "." + key, this.Configuration.Convention);
-            ValidationOverride oride = new ValidationOverride(orideKey, comment, auditCode);
+            ValidationOverride oride = new ValidationOverride(orideKey.ToLower(), comment, auditCode);
             this.preOverrides.Add(oride);
             return this;
         }

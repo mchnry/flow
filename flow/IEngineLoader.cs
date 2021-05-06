@@ -14,7 +14,7 @@ namespace Mchnry.Flow
     {
 
         IEngineLoader<TModel> OverrideValidation(ValidationOverride oride);
-        IEngineLoader<TModel> PreemptValidation<T>(string key, string context, string comment, string auditCode) where T : IEvaluatorRule<TModel>;
+        IEngineLoader<TModel> PreemptValidation<T>(string key, string context, string comment, string auditCode) where T : IValidatorRule<TModel>;
 
 
         //IEngineLoader<TModel> LoadWorkflow(WorkDefine.Workflow workflow);
