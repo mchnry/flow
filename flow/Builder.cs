@@ -34,6 +34,8 @@ namespace Mchnry.Flow
         /// <param name="action">Implementation of <see cref="Mchnry.Flow.Work.IAction{TModel}"/></param>
         void Do(Mchnry.Flow.Work.IAction<T> action);
 
+        
+
         /// <summary>
         /// Do an inline action
         /// </summary>
@@ -286,6 +288,9 @@ namespace Mchnry.Flow
         /// <param name="Do">Implementation of IActionBuilder</param>
         /// <returns><see cref="IFluentActivityBuilder{T}"/></returns>
         IFluentActivityBuilder<T> Do(Action<IActionBuilder<T>> Do);
+
+        IFluentActivityBuilder<T> Do(IAction<T> action);
+
         /// <summary>
         /// Chains another workflow to be executed as defined by this workflow.
         /// </summary>
@@ -327,6 +332,9 @@ namespace Mchnry.Flow
         /// <param name="Do">Implementation of IActionBuilder</param>
         /// <returns><see cref="IFluentActivityBuilder{T}"/></returns>
         IFluentActivityBuilder<T> Do(Action<IActionBuilder<T>> Do);
+
+        IFluentActivityBuilder<T> Do(IAction<T> action);
+
         /// <summary>
         /// Chains another workflow to be executed as defined by this workflow.
         /// </summary>
@@ -368,6 +376,11 @@ namespace Mchnry.Flow
         /// <param name="rule">Implementation of <see cref="IRule{TModel}"/></param>
         void Rule(Action<IRuleBuilder<T>> rule);
         //void RefIsTrue(ExpressionRef xref);
+
+        void Valid(IValidatorRule<T> validator);
+        void True(IEvaluatorRule<T> evaluator);
+        void False(IEvaluatorRule<T> evaluator);
+
 
         /// <summary>
         /// Defines a rule where the result of the Expression defined by implementation of <see cref="IFluentExpressionBuilder{T}"/> must be true.
@@ -1046,7 +1059,37 @@ namespace Mchnry.Flow
 
         }
 
- 
+        public void Valid(IValidatorRule<T> validator)
+        {
+            Action<IRuleBuilder<T>> proxy = builder => builder.Validate(validator);
+            //void IFluentExpressionBuilder<T>.Rule(Action<IRuleBuilder<T>> action)
 
+            ((IFluentExpressionBuilder<T>)this).Rule(proxy);
+        }
+
+        public void True(IEvaluatorRule<T> evaluator)
+        {
+            Action<IRuleBuilder<T>> proxy = builder => builder.Eval(evaluator).IsTrue();
+            //void IFluentExpressionBuilder<T>.Rule(Action<IRuleBuilder<T>> action)
+
+            ((IFluentExpressionBuilder<T>)this).Rule(proxy);
+        }
+
+        public void False(IEvaluatorRule<T> evaluator)
+        {
+            Action<IRuleBuilder<T>> proxy = builder => builder.Eval(evaluator).IsFalse();
+            //void IFluentExpressionBuilder<T>.Rule(Action<IRuleBuilder<T>> action)
+
+            ((IFluentExpressionBuilder<T>)this).Rule(proxy);
+        }
+
+        public IFluentActivityBuilder<T> Do(IAction<T> action)
+        {
+            Action<IActionBuilder<T>> proxy = builder => builder.Do(action);
+
+            //IFluentActivityBuilder<T> IFluentActivityBuilder<T>.Do(Action<IActionBuilder<T>> builder)
+
+            return ((IFluentActivityBuilder<T>)this).Do(proxy);
+        }
     }
 }
