@@ -58,9 +58,17 @@ namespace Mchnry.Flow.Logic
                  {
                      if (s.Severity == ValidationSeverity.Confirm)
                      {
-                         var oride = engineRef.ValidationContainer.Overrides.FirstOrDefault(g => g.Key.EndsWith(s.Key, StringComparison.OrdinalIgnoreCase));
+                         string scope = engineRef.RunManager.CurrentRuleDefinition.Id;
+                         if (null != engineRef.RunManager.CurrentRuleDefinition.Context)
+                         {
+                             scope = string.Format("{0}.{1}", scope, engineRef.RunManager.CurrentRuleDefinition.Context.GetHashCode().ToString());
+                         }
+                         string key = $"{scope}.{s.Key}";
+
+                         var oride = engineRef.ValidationContainer.MyOverrides.FirstOrDefault(g => g.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
                          if (oride == null)
                          {
+                             
                              thisResult = a;
                              engineRef.AddValidation(s);
                          } else
